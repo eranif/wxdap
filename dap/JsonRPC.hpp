@@ -12,13 +12,13 @@ class JsonRPC
 public:
     JsonRPC();
     ~JsonRPC();
-    
+
     /**
      * @brief start JSON RPC server on a connection string
      * @throws dap::SocketException
      */
     void ServerStart(const string& connectString);
-    
+
     /**
      * @brief wait for new connection
      * @throws dap::SocketException
