@@ -1,9 +1,0 @@
--IC:\compilers\mingw64\lib\gcc\x86_64-w64-mingw32\8.1.0\include\c++
--IC:\compilers\mingw64\lib\gcc\x86_64-w64-mingw32\8.1.0\include\c++\x86_64-w64-mingw32
--IC:\compilers\mingw64\lib\gcc\x86_64-w64-mingw32\8.1.0\include\c++\backward
--IC:\compilers\mingw64\lib\gcc\x86_64-w64-mingw32\8.1.0\include
--IC:\compilers\mingw64\lib\gcc\x86_64-w64-mingw32\8.1.0\include-fixed
--IC:\compilers\mingw64\x86_64-w64-mingw32\include
--IC:\src\gdbd\dap
--target
-x86_64-pc-windows-gnu
