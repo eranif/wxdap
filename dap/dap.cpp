@@ -94,7 +94,6 @@ JSONItem Event::To(const string& name) const
 {
     JSONItem json = ProtocolMessage::To(name);
     json.add("event", event);
-    if(body) { json.add(body->To("body")); }
     return json;
 }
 
