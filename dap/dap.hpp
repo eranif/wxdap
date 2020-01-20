@@ -2,8 +2,10 @@
 #define PROTOCOLMESSAGE_HPP
 
 #include "json.hpp"
+#include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 /// C++ Implementation of Debug Adapter Protocol (DAP)
@@ -11,32 +13,51 @@
 /// IDE and a debugger or runtime The implementation is based on the
 /// specifications described here:
 /// https://microsoft.github.io/debug-adapter-protocol/specification
+using namespace std;
 
-#define JSON_SERIALIZE()                                \
-    virtual JSONItem To(const string& name = "") const; \
-    virtual void From(const JSONItem& json)
+#define JSON_SERIALIZE()                                 \
+    JSONItem To(const string& name = "") const override; \
+    void From(const JSONItem& json) override
 
-#define REQUEST_CLASS(Type, Command) \
-    Type() { command = Command; }    \
-    virtual ~Type() {}
+#define REQUEST_CLASS(Type, Command)                              \
+    Type()                                                        \
+    {                                                             \
+        command = Command;                                        \
+        ObjGenerator::Get().RegisterRequest(Command, &Type::New); \
+    }                                                             \
+    virtual ~Type() {}                                            \
+    static ProtocolMessage::Ptr_t New() { return ProtocolMessage::Ptr_t(new Type()); }
 
-#define RESPONSE_CLASS(Type) \
-    Type() {}                \
-    virtual ~Type() {}
+#define RESPONSE_CLASS(Type, Command)                              \
+    Type()                                                         \
+    {                                                              \
+        command = Command;                                         \
+        ObjGenerator::Get().RegisterResponse(Command, &Type::New); \
+    }                                                              \
+    virtual ~Type() {}                                             \
+    static ProtocolMessage::Ptr_t New() { return ProtocolMessage::Ptr_t(new Type()); }
+
+#define EVENT_CLASS(Type, Command)                              \
+    Type()                                                      \
+    {                                                           \
+        event = Command;                                        \
+        ObjGenerator::Get().RegisterEvent(Command, &Type::New); \
+    }                                                           \
+    virtual ~Type() {}                                          \
+    static ProtocolMessage::Ptr_t New() { return ProtocolMessage::Ptr_t(new Type()); }
+
+/// Register the class Type by creating a global dummy instance so the constructor will get called
+/// the registration is done in the ctor
+#define REGISTER_CLASS(Type) Type dummy_##Type
 
 #define ANY_CLASS(Type) \
     Type() {}           \
     virtual ~Type() {}
 
-#define EVENT_CLASS(Type, Command) \
-    Type() { event = Command; }    \
-    virtual ~Type() {}
-
 #define PTR_SIZE (sizeof(void*))
-
-using namespace std;
 namespace dap
 {
+void Initialize();
 // base class representing anything
 struct Any {
     Any() {}
@@ -50,16 +71,40 @@ struct Any {
     {
         return dynamic_cast<T*>(const_cast<Any*>(this));
     }
-    typedef shared_ptr<Any> Ptr_t;
 };
 
 /// Base class of requests, responses, and events
 struct ProtocolMessage : public Any {
     int seq = -1;
     string type;
-
+    typedef shared_ptr<ProtocolMessage> Ptr_t;
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
+};
+
+class ObjGenerator
+{
+    typedef function<ProtocolMessage::Ptr_t()> onNewObject;
+    unordered_map<string, onNewObject> m_responses;
+    unordered_map<string, onNewObject> m_events;
+    unordered_map<string, onNewObject> m_requests;
+
+protected:
+    ProtocolMessage::Ptr_t New(const string& name, const unordered_map<string, onNewObject>& pool);
+
+public:
+    static ObjGenerator& Get();
+    /**
+     * @brief create new ProtocolMessage.
+     * @param type can be one of ["response", "event", "request"] anything else will return nullptr
+     * @param name the class name
+     * @return
+     */
+    ProtocolMessage::Ptr_t New(const string& type, const string& name);
+
+    void RegisterResponse(const string& name, onNewObject func);
+    void RegisterEvent(const string& name, onNewObject func);
+    void RegisterRequest(const string& name, onNewObject func);
 };
 
 /// A client or debug adapter initiated request
@@ -96,6 +141,7 @@ struct Event : public ProtocolMessage {
 struct Response : public ProtocolMessage {
     int request_seq = -1;
     bool success = true;
+    string command;
 
     /**
      * Contains the raw error in short form if 'success' is false.
@@ -114,8 +160,9 @@ struct Response : public ProtocolMessage {
 /// field is required.
 /// <-
 struct CancelResponse : public Response {
-    virtual JSONItem To(const string& name = "") const { return Response::To(name); }
-    virtual void From(const JSONItem& json) { Response::From(json); }
+    RESPONSE_CLASS(CancelResponse, "cancel");
+    JSONItem To(const string& name = "") const override { return Response::To(name); }
+    void From(const JSONItem& json) override { Response::From(json); }
 };
 
 /// This event indicates that the debug adapter is ready to accept configuration
@@ -332,7 +379,7 @@ struct InitializeRequest : public Request {
 /// Response to 'initialize' request.
 /// <-
 struct InitializeResponse : public Response {
-    RESPONSE_CLASS(InitializeResponse);
+    RESPONSE_CLASS(InitializeResponse, "initialize");
     JSON_SERIALIZE();
 };
 
@@ -346,14 +393,16 @@ struct ConfigurationDoneRequest : public Request {
 };
 
 struct EmptyAckResponse : public Response {
-    RESPONSE_CLASS(EmptyAckResponse);
+    RESPONSE_CLASS(EmptyAckResponse, "");
     JSON_SERIALIZE();
 };
 
 /// Response to 'configurationDone' request. This is just an acknowledgement, so
 /// no body field is required.
 /// <-
-typedef EmptyAckResponse ConfigurationDoneResponse;
+struct ConfigurationDoneResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(ConfigurationDoneResponse, "configurationDone");
+};
 
 /// Arguments for 'launch' request. Additional attributes are implementation
 /// specific.
@@ -393,7 +442,9 @@ struct LaunchRequest : public Request {
 /// Response to 'launch' request. This is just an acknowledgement, so no body
 /// field is required.
 /// <-
-typedef EmptyAckResponse LaunchResponse;
+struct LaunchResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(LaunchResponse, "launch");
+};
 
 /// The 'disconnect' request is sent from the client to the debug adapter in
 /// order to stop debugging. It asks the debug adapter to disconnect from the
@@ -409,7 +460,10 @@ struct DisconnectRequest : public Request {
     REQUEST_CLASS(DisconnectRequest, "disconnect");
     JSON_SERIALIZE();
 };
-typedef EmptyAckResponse DisconnectResponse;
+
+struct DisconnectResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(DisconnectResponse, "disconnect");
+};
 
 struct BreakpointLocationsArguments : public Any {
     Source source;
@@ -432,11 +486,11 @@ struct BreakpointLocation : public Any {
     JSON_SERIALIZE();
 };
 
-/// Response to 'breakpointLocations request.
+/// Response to 'breakpointLocations' request.
 /// Contains possible locations for source breakpoints.
 struct BreakpointLocationsResponse : public Response {
     vector<BreakpointLocation> breakpoints;
-    RESPONSE_CLASS(BreakpointLocationsResponse);
+    RESPONSE_CLASS(BreakpointLocationsResponse, "breakpointLocations");
     JSON_SERIALIZE();
 };
 
@@ -475,6 +529,17 @@ struct SetBreakpointsRequest : public Request {
     JSON_SERIALIZE();
 };
 
+/// Response to 'setBreakpoints' request.
+/// Returned is information about each breakpoint created by this request.
+/// This includes the actual code location and whether the breakpoint could be verified.
+/// The breakpoints returned are in the same order as the elements of the 'breakpoints'
+///(or the deprecated 'lines') array in the arguments
+struct SetBreakpointsResponse : public Response {
+    vector<Breakpoint> breakpoints;
+    RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
+    JSON_SERIALIZE();
+};
+
 /// Arguments for the continue request
 struct ContinueArguments : public Any {
     /**
@@ -497,7 +562,7 @@ struct ContinueRequest : public Request {
 /// Response to 'continue' request.
 struct ContinueResponse : public Response {
     bool allThreadsContinued = true;
-    RESPONSE_CLASS(ContinueResponse);
+    RESPONSE_CLASS(ContinueResponse, "continue");
     JSON_SERIALIZE();
 };
 }; // namespace dap

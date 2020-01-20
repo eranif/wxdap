@@ -29,6 +29,85 @@
 
 namespace dap
 {
+void Initialize()
+{
+    REGISTER_CLASS(CancelRequest);
+    REGISTER_CLASS(InitializeRequest);
+    REGISTER_CLASS(BreakpointLocationsRequest);
+    REGISTER_CLASS(ConfigurationDoneRequest);
+    REGISTER_CLASS(LaunchRequest);
+    REGISTER_CLASS(SetBreakpointsRequest);
+    REGISTER_CLASS(ContinueRequest);
+    REGISTER_CLASS(DisconnectRequest);
+
+    REGISTER_CLASS(InitializedEvent);
+    REGISTER_CLASS(StoppedEvent);
+    REGISTER_CLASS(ContinuedEvent);
+    REGISTER_CLASS(ExitedEvent);
+    REGISTER_CLASS(TerminatedEvent);
+    REGISTER_CLASS(ThreadEvent);
+    REGISTER_CLASS(OutputEvent);
+    REGISTER_CLASS(BreakpointEvent);
+    REGISTER_CLASS(ProcessEvent);
+
+    REGISTER_CLASS(InitializeResponse);
+    REGISTER_CLASS(CancelResponse);
+    REGISTER_CLASS(ConfigurationDoneResponse);
+    REGISTER_CLASS(LaunchResponse);
+    REGISTER_CLASS(DisconnectResponse);
+    REGISTER_CLASS(BreakpointLocationsResponse);
+    REGISTER_CLASS(ContinueResponse);
+    REGISTER_CLASS(SetBreakpointsResponse);
+}
+ObjGenerator& ObjGenerator::Get()
+{
+    static ObjGenerator generator;
+    return generator;
+}
+
+ProtocolMessage::Ptr_t ObjGenerator::New(const string& type, const string& name)
+{
+    if(type == "response") {
+        return New(name, m_responses);
+    } else if(type == "request") {
+        return New(name, m_requests);
+    } else if(type == "event") {
+        return New(name, m_events);
+    } else {
+        return nullptr;
+    }
+}
+
+void ObjGenerator::RegisterResponse(const string& name, onNewObject func)
+{
+    // register new response class
+    m_responses.insert({ name, func });
+}
+
+void ObjGenerator::RegisterEvent(const string& name, onNewObject func)
+{
+    // register new event class
+    m_events.insert({ name, func });
+}
+
+void ObjGenerator::RegisterRequest(const string& name, onNewObject func)
+{
+    // register new request class
+    m_requests.insert({ name, func });
+}
+
+ProtocolMessage::Ptr_t ObjGenerator::New(const string& name, const unordered_map<string, onNewObject>& pool)
+{
+    const auto& iter = pool.find(name);
+    if(iter == pool.end()) {
+        return nullptr;
+    }
+    return iter->second();
+}
+
+///=====================================================================================================
+///=====================================================================================================
+///=====================================================================================================
 
 // ----------------------------------------
 // ----------------------------------------
@@ -82,7 +161,9 @@ JSONItem CancelRequest::To(const string& name) const
 void CancelRequest::From(const JSONItem& json)
 {
     Request::From(json);
-    if(json.hasProperty("arguments")) { requestId = json.property("requestId").toInt(); }
+    if(json.hasProperty("arguments")) {
+        requestId = json.property("requestId").toInt();
+    }
 }
 
 // ----------------------------------------
@@ -110,18 +191,20 @@ Response::~Response() {}
 JSONItem Response::To(const string& name) const
 {
     JSONItem json = ProtocolMessage::To(name);
-    json.add("request_seq", request_seq);
-    json.add("success", success);
-    json.add("message", message);
+    ADD_PROP(request_seq);
+    ADD_PROP(success);
+    ADD_PROP(message);
+    ADD_PROP(command);
     return json;
 }
 
 void Response::From(const JSONItem& json)
 {
     ProtocolMessage::From(json);
-    request_seq = json.property("request_seq").toInt(request_seq);
-    success = json.property("success").toBool(success);
-    message = json.property("message").toBool();
+    GET_PROP(request_seq, Int);
+    GET_PROP(success, Bool);
+    GET_PROP(message, String);
+    GET_PROP(command, String);
 }
 
 // ----------------------------------------
@@ -157,6 +240,7 @@ void StoppedEvent::From(const JSONItem& json)
     reason = body.property("reason").toString();
     text = body.property("text").toString();
 }
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -178,7 +262,6 @@ void ContinuedEvent::From(const JSONItem& json)
     threadId = body.property("threadId").toInt();
     allThreadsContinued = body.property("allThreadsContinued").toBool(false);
 }
-
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -198,7 +281,6 @@ void ExitedEvent::From(const JSONItem& json)
     JSONItem body = json.property("body");
     exitCode = body.property("exitCode").toInt();
 }
-
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -697,6 +779,36 @@ void ContinueResponse::From(const JSONItem& json)
     RESPONSE_FROM();
     READ_BODY();
     GET_BODY_PROP(allThreadsContinued, Int);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSONItem SetBreakpointsResponse::To(const string& name) const
+{
+    RESPONSE_TO();
+    ADD_BODY();
+    // create arr
+    ADD_ARRAY(body, "breakpoints");
+    for(const auto& b : breakpoints) {
+        arr.arrayAppend(b.To());
+    }
+    return json;
+}
+
+void SetBreakpointsResponse::From(const JSONItem& json)
+{
+    RESPONSE_FROM();
+    READ_BODY();
+    JSONItem arr = body.property("breakpoints");
+    breakpoints.clear();
+    int size = arr.arraySize();
+    for(int i = 0; i < size; ++i) {
+        Breakpoint bp;
+        bp.From(arr.arrayItem(i));
+        breakpoints.push_back(bp);
+    }
 }
 
 }; // namespace dap
