@@ -48,8 +48,9 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
         cerr << "ERROR: Invalid Content-Length header value: 0 or lower than 0" << endl;
         return nullptr;
     }
-
-    if((headerSize + msglen) > (long)m_buffer.length()) {
+    
+    long buflen = m_buffer.length();
+    if((headerSize + msglen) > buflen) {
         // not enough buffer
         return nullptr;
     }
@@ -92,3 +93,5 @@ int dap::JsonRPC::ReadHeaders(unordered_map<string, string>& headers)
     // return the headers section + the separator
     return (where + 4);
 }
+
+void dap::JsonRPC::SetBuffer(const string& buffer) { m_buffer = buffer; }

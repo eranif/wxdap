@@ -1,8 +1,13 @@
-#include "../dap/dap.hpp"
+#include "dap/JsonRPC.hpp"
+#include "dap/dap.hpp"
 #include "tester.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
+#include <string>
+#include "dap/StringUtils.hpp"
+
+using namespace std;
 
 #define CHECK_REQUEST(obj, str) \
     CHECK_CONDITION(obj, str);  \
@@ -94,4 +99,26 @@ TEST_FUNC(Check_Event_Allocations)
     obj = dap::ObjGenerator::Get().New("event", "thread");
     CHECK_EVENT(obj, "thread");
     return true;
+}
+
+TEST_FUNC(Check_Parsing_JSON_RPC_Message)
+{
+    dap::JsonRPC rpc;
+
+    const string buffer = "Content-Length: 112\r\n"
+                          "\r\n"
+                          "{\n"
+                          "    \"seq\": 153,\n"
+                          "    \"type\": \"request\",\n"
+                          "    \"command\": \"next\",\n"
+                          "    \"arguments\": {\n"
+                          "        \"threadId\": 3\n"
+                          "    }\n"
+                          "}";
+    
+    size_t msglen = buffer.length();
+    UNUSED(msglen);
+    rpc.SetBuffer(buffer);
+    dap::ProtocolMessage::Ptr_t message = rpc.ProcessBuffer();
+    CHECK_REQUEST(message, "next");
 }

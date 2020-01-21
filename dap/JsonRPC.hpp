@@ -20,7 +20,13 @@ protected:
 public:
     JsonRPC();
     ~JsonRPC();
-
+    
+    /**
+     * @brief provide input buffer. 
+     * NOTE: this method is intended for testing purposes and should not be used
+     */
+    void SetBuffer(const string& buffer);
+    
     /**
      * @brief start JSON RPC server on a connection string
      * @throws dap::SocketException
