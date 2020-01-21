@@ -28,43 +28,6 @@ int main(int argc, char** argv)
     dap::Initialize();
 
     try {
-        // dap::SetBreakpointsRequest setBrkReq;
-        // dap::SetBreakpointsResponse setBrkRes;
-        // dap::BreakpointLocationsRequest brkLocReq;
-        // dap::BreakpointLocationsResponse brkLocRes;
-        // cout << setBrkReq.To().Format() << endl;
-        // cout << setBrkRes.To().Format() << endl;
-        // cout << brkLocReq.To().Format() << endl;
-        // cout << brkLocRes.To().Format() << endl;
-        //
-        // dap::ProtocolMessage::Ptr_t obj;
-        // obj = dap::ObjGenerator::Get().New("request", "cancel");
-        // CHECK_PTR(obj, "cancel");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "initialize");
-        // CHECK_PTR(obj, "initialize");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "configurationDone");
-        // CHECK_PTR(obj, "configurationDone");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "launch");
-        // CHECK_PTR(obj, "launch");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "disconnect");
-        // CHECK_PTR(obj, "disconnect");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "breakpointLocations");
-        // CHECK_PTR(obj, "breakpointLocations");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "setBreakpoints");
-        // CHECK_PTR(obj, "setBreakpoints");
-        //
-        // obj = dap::ObjGenerator::Get().New("request", "continue");
-        // CHECK_PTR(obj, "continue");
-        //
-        // obj = dap::ObjGenerator::Get().New("event", "stopped");
-        // CHECK_PTR(obj, "stopped");
-
     } catch(dap::SocketException& e) {
         cerr << e.what() << endl;
         return -1;
