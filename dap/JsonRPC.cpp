@@ -48,7 +48,7 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
         cerr << "ERROR: Invalid Content-Length header value: 0 or lower than 0" << endl;
         return nullptr;
     }
-    
+
     long buflen = m_buffer.length();
     if((headerSize + msglen) > buflen) {
         // not enough buffer
@@ -59,7 +59,22 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
     // from the m_buffer member
     string payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
     m_buffer.erase(0, headerSize + msglen);
-    return nullptr;
+
+    JSON root(payload);
+    if(!root.isOk()) {
+        return nullptr;
+    }
+    JSONItem json = root.toElement();
+    string type = json.property("type").toString();
+    string command = (type == "event") ? json.property("event").toString() : json.property("command").toString();
+
+    // Allocate
+    ProtocolMessage::Ptr_t message = ObjGenerator::Get().New(type, command);
+    if(!message) {
+        return nullptr;
+    }
+    message->From(json);
+    return message;
 }
 
 void dap::JsonRPC::WriteMessge(ProtocolMessage::Ptr_t message) {}

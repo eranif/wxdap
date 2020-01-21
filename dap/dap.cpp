@@ -36,9 +36,10 @@ void Initialize()
     REGISTER_CLASS(BreakpointLocationsRequest);
     REGISTER_CLASS(ConfigurationDoneRequest);
     REGISTER_CLASS(LaunchRequest);
+    REGISTER_CLASS(DisconnectRequest);
     REGISTER_CLASS(SetBreakpointsRequest);
     REGISTER_CLASS(ContinueRequest);
-    REGISTER_CLASS(DisconnectRequest);
+    REGISTER_CLASS(NextRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -56,8 +57,9 @@ void Initialize()
     REGISTER_CLASS(LaunchResponse);
     REGISTER_CLASS(DisconnectResponse);
     REGISTER_CLASS(BreakpointLocationsResponse);
-    REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(SetBreakpointsResponse);
+    REGISTER_CLASS(ContinueResponse);
+    REGISTER_CLASS(NextResponse);
 }
 ObjGenerator& ObjGenerator::Get()
 {
@@ -749,6 +751,19 @@ void ContinueArguments::From(const JSONItem& json) { GET_PROP(threadId, Int); }
 // ----------------------------------------
 // ----------------------------------------
 
+JSONItem NextArguments::To(const string& name) const
+{
+    CREATE_JSON();
+    ADD_PROP(threadId);
+    return json;
+}
+
+void NextArguments::From(const JSONItem& json) { GET_PROP(threadId, Int); }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSONItem ContinueRequest::To(const string& name) const
 {
     REQUEST_TO();
@@ -757,6 +772,22 @@ JSONItem ContinueRequest::To(const string& name) const
 }
 
 void ContinueRequest::From(const JSONItem& json)
+{
+    REQUEST_FROM();
+    READ_OBJ(arguments);
+}
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSONItem NextRequest::To(const string& name) const
+{
+    REQUEST_TO();
+    ADD_OBJ(arguments);
+    return json;
+}
+
+void NextRequest::From(const JSONItem& json)
 {
     REQUEST_FROM();
     READ_OBJ(arguments);

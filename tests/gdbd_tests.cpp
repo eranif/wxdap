@@ -121,4 +121,7 @@ TEST_FUNC(Check_Parsing_JSON_RPC_Message)
     rpc.SetBuffer(buffer);
     dap::ProtocolMessage::Ptr_t message = rpc.ProcessBuffer();
     CHECK_REQUEST(message, "next");
+    CHECK_NUMBER(message->As<dap::NextRequest>()->arguments.threadId, 3);
+    CHECK_NUMBER(message->seq, 153);
+    return true;
 }

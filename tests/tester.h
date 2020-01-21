@@ -55,25 +55,25 @@ public:
 // Helper macros:
 ///////////////////////////////////////////////////////////
 
-#define TEST_FUNC(Name)                    \
-    class Test_##Name : public ITest       \
-    {                                      \
-    public:                                \
-        virtual bool test();               \
-        virtual bool Name();               \
-    };                                     \
-    Test_##Name theTest##Name;             \
-    bool Test_##Name::test()               \
-    {                                      \
+#define TEST_FUNC(Name)                  \
+    class Test_##Name : public ITest     \
+    {                                    \
+    public:                              \
+        virtual bool test();             \
+        virtual bool Name();             \
+    };                                   \
+    Test_##Name theTest##Name;           \
+    bool Test_##Name::test()             \
+    {                                    \
         printf("Checking %s...", #Name); \
-        bool res = Name();                 \
-        if(res) {                          \
-            printf("...OK!\n");            \
-        } else {                           \
-            printf("...ERROR!\n");         \
-        }                                  \
-        return res;                        \
-    }                                      \
+        bool res = Name();               \
+        if(res) {                        \
+            printf("...OK!\n");          \
+        } else {                         \
+            printf("...ERROR!\n");       \
+        }                                \
+        return res;                      \
+    }                                    \
     bool Test_##Name::Name()
 
 // Check values macros
@@ -85,6 +85,16 @@ public:
                    __FILE__, __LINE__, (int)expcSize, (int)actualSize);                                       \
             return false;                                                                                     \
         }                                                                                                     \
+    }
+
+#define CHECK_NUMBER(actualNumber, expcNumber)                                                                    \
+    {                                                                                                             \
+        m_testCount++;                                                                                            \
+        if(actualNumber != (int)expcNumber) {                                                                     \
+            printf("%-40s(%d): ERROR\n%s:%d: Expected Number: %d, Actual Number:%d\n", __FUNCTION__, m_testCount, \
+                   __FILE__, __LINE__, (int)expcNumber, (int)actualNumber);                                       \
+            return false;                                                                                         \
+        }                                                                                                         \
     }
 
 #define CHECK_STRING(str, expcStr)                                                                                \

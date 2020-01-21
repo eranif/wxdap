@@ -552,6 +552,16 @@ struct ContinueArguments : public Any {
     JSON_SERIALIZE();
 };
 
+/// Arguments for the continue request
+struct NextArguments : public Any {
+    /**
+     * Execute 'next' for this thread.
+     */
+    int threadId = -1;
+    ANY_CLASS(NextArguments);
+    JSON_SERIALIZE();
+};
+
 /// The request starts the debuggee to run again.
 struct ContinueRequest : public Request {
     ContinueArguments arguments;
@@ -564,6 +574,18 @@ struct ContinueResponse : public Response {
     bool allThreadsContinued = true;
     RESPONSE_CLASS(ContinueResponse, "continue");
     JSON_SERIALIZE();
+};
+
+/// The request starts the debuggee to run again.
+struct NextRequest : public Request {
+    NextArguments arguments;
+    REQUEST_CLASS(NextRequest, "next");
+    JSON_SERIALIZE();
+};
+
+/// Response to 'continue' request.
+struct NextResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(NextResponse, "next");
 };
 }; // namespace dap
 
