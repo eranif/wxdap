@@ -1,4 +1,5 @@
 #include "dap.hpp"
+#include "SocketBase.hpp"
 
 #define CREATE_JSON() JSONItem json = JSONItem::createObject(name)
 #define REQUEST_TO() JSONItem json = Request::To(name)
@@ -60,6 +61,8 @@ void Initialize()
     REGISTER_CLASS(SetBreakpointsResponse);
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
+    // Needed for windows socket library
+    SocketBase::Initialize();
 }
 ObjGenerator& ObjGenerator::Get()
 {

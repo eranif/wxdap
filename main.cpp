@@ -7,26 +7,17 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include "dap/JsonRPC.hpp"
 
 using namespace std;
-#define CHECK_STRING(str, expected_str)                               \
-    if(str == expected_str) {                                         \
-        cout << "Success: " << str << " == " << expected_str << endl; \
-    } else {                                                          \
-        cerr << "Error: " << str << " == " << expected_str << endl;   \
-    }
-
-#define CHECK_PTR(p, msg)                          \
-    if(!p) {                                       \
-        cerr << "Error: nullptr: " << msg << endl; \
-        return -1;                                 \
-    }
-
 int main(int argc, char** argv)
 {
-    // Open stdin and wait for incoming for the initialize request
+    // Initialize the dap library
     dap::Initialize();
-
+    
+    dap::JsonRPC* server = new dap::JsonRPC();
+    server->ServerStart("tcp://127.0.0.1:12345");
+    
     try {
     } catch(dap::SocketException& e) {
         cerr << e.what() << endl;
