@@ -10,7 +10,7 @@ Driver::~Driver() { DELETE_PTR(m_process); }
 
 void Driver::Start(const string& debuggerCommand, const string& workingDir, const vector<string>& debuggee)
 {
-    m_process = dap::ExecuteProcess(debuggerCommand, workingDir, dap::IProcessCreateWithHiddenConsole);
+    m_process = dap::ExecuteProcess(debuggerCommand);
     if(!m_process) { throw Exception("Failed to execute debugger: " + debuggerCommand); }
 }
 
