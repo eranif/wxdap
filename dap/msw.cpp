@@ -199,12 +199,10 @@ bool ProcessMSW::Write(const string& buff)
 {
     DWORD dwMode;
     DWORD dwTimeout;
-    char chBuf[4097];
 
     string tmpCmd = buff;
     StringUtils::Rtrim(tmpCmd);
     tmpCmd += "\n";
-    strcpy(chBuf, tmpCmd.c_str());
 
     // Make the pipe to non-blocking mode
     dwMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
