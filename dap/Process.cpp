@@ -34,13 +34,4 @@ void dap::Process::Cleanup()
     m_readerThread = nullptr;
 }
 
-bool dap::Process::Read(string& str, string& err_buff)
-{
-    pair<string, string> buff;
-    if(m_inQueue.pop(buff, chrono::milliseconds(1))) {
-        str = buff.first;
-        err_buff = buff.second;
-        return true;
-    }
-    return false;
-}
+pair<string, string> dap::Process::Read() { return m_inQueue.pop(chrono::milliseconds(1)); }

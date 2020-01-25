@@ -38,8 +38,9 @@ public:
     virtual void Terminate() = 0;
     /**
      * @brief this method checks the queue and returns immediately (up to 1 millisecond)
+     * @return pair of strings. first is stdout, second is stderr
      */
-    bool Read(string& str, string& err_buff);
+    pair<string, string> Read();
 };
 
 /**

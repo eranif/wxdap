@@ -21,7 +21,8 @@ public:
     virtual ~CommandLineParser();
 
     void Parse(int argc, char** argv);
-
+    void PrintUsage(const char* exename, struct option long_options[]);
+    
     void SetGdb(const string& gdb) { this->m_gdb = gdb; }
     void SetHost(const string& host) { this->m_host = host; }
     void SetPort(int port) { this->m_port = port; }
@@ -30,5 +31,7 @@ public:
     const string& GetHost() const { return m_host; }
     int GetPort() const { return m_port; }
     bool IsVerbose() const { return m_verbose; }
+    
+    string GetConnectionString() const;
 };
 #endif // COMMANDLINEPARSER_HPP

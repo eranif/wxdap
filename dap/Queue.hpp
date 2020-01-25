@@ -25,20 +25,20 @@ public:
         cv.notify_all();
     }
 
-    bool pop(T& o, const chrono::milliseconds& ms)
+    T pop(const chrono::milliseconds& ms)
     {
         unique_lock<mutex> locker(mutex_lock);
         if(cv.wait_for(locker, ms, [this]() { return !Q.empty(); })) {
             if(Q.empty()) {
                 // spuriously wakeup?
-                return false;
+                return T();
             }
             // get the first item from the list
-            o = *Q.begin();
+            T o = (*Q.begin());
             Q.erase(Q.begin());
-            return true;
+            return o;
         }
-        return false;
+        return T();
     }
 };
 };     // namespace dap

@@ -1,18 +1,35 @@
 #ifndef JSONRPC_HPP
 #define JSONRPC_HPP
 
+#include "Queue.hpp"
 #include "SocketBase.hpp"
 #include "dap.hpp"
+#include <atomic>
+#include <thread>
 #include <unordered_map>
 
 namespace dap
 {
+struct Reader {
+    thread* thr = nullptr;
+    SocketBase* conn = nullptr;
+    atomic_bool shutdown_flag;
+    atomic_bool terminated_flag;
+    Reader()
+    {
+        shutdown_flag.store(false);
+        terminated_flag.store(false);
+    }
+    void Cleanup();
+};
+
 class JsonRPC
 {
 protected:
     SocketBase::Ptr_t m_acceptSocket;
-    SocketBase::Ptr_t m_client;
     string m_buffer;
+    Queue<string> m_incQueue;
+    Reader m_reader;
 
 protected:
     int ReadHeaders(unordered_map<string, string>& headers);
@@ -20,13 +37,13 @@ protected:
 public:
     JsonRPC();
     ~JsonRPC();
-    
+
     /**
-     * @brief provide input buffer. 
+     * @brief provide input buffer.
      * NOTE: this method is intended for testing purposes and should not be used
      */
     void SetBuffer(const string& buffer);
-    
+
     /**
      * @brief start JSON RPC server on a connection string
      * @throws dap::SocketException

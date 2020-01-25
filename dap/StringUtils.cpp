@@ -69,3 +69,12 @@ vector<string> StringUtils::Split(const string& str, char ch)
     }
     return v;
 }
+
+string StringUtils::ToUpper(const string& str)
+{
+    string upper;
+    for(auto ch : str) {
+        upper.append(1, toupper(ch));
+    }
+    return upper;
+}

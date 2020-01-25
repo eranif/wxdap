@@ -1,5 +1,5 @@
-#include "Driver.hpp"
 #include "CommandLineParser.hpp"
+#include "Driver.hpp"
 #include "dap/JsonRPC.hpp"
 #include "dap/Process.hpp"
 #include "dap/SocketBase.hpp"
@@ -9,43 +9,53 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
-// clang-format on
 
 int main(int argc, char** argv)
 {
-    // Initialize the dap library
-    
+    // Parse the command line arguments (exit if needed)
     CommandLineParser parser;
     parser.Parse(argc, argv);
-    
-    dap::Initialize();
-    // Start the gdb process
-    dap::Process* gdb = dap::ExecuteProcess(parser.GetGdb());
-    
-    if(!gdb) {
-        cerr << "Unable to launch gdb: " << argc;
-    }
-    this_thread::sleep_for(chrono::milliseconds(100));
-    size_t counter = 0;
-    while(gdb->IsAlive() && (counter < 10)) {
-        string o, e;
-        if(gdb->Read(o, e)) {
-            if(!o.empty()) {
-                cout << o << endl;
-            }
-            if(!e.empty()) {
-                cerr << e << endl;
-            }
-            continue;
-        }
-        this_thread::sleep_for(chrono::milliseconds(10));
-        gdb->Write("help");
-        ++counter;
-    }
 
-    delete gdb;
+    try {
+        // Initialize the dap library
+        dap::Initialize();
+
+        dap::JsonRPC rpc;
+        cout << "Waiting for connection on " << parser.GetConnectionString() << endl;
+        rpc.ServerStart(parser.GetConnectionString());
+
+        // Wait for new connection to arrive
+        while(!rpc.WaitForNewConnection()) {
+        }
+
+        cout << "Connection established successfully" << endl;
+
+        // Construct a GDB Driver
+        Driver driver(parser);
+
+        // The main loop:
+        // - Check for any input from GDB and send it over JSONRpc to the client
+        // - Check for any request from the client and pass it to the gdb
+        while(driver.IsAlive()) {
+            dap::ProtocolMessage::Ptr_t message = driver.Check();
+            if(message) {
+                // send it to the driver
+                rpc.WriteMessge(message);
+            }
+            if(rpc.Read()) {
+                dap::ProtocolMessage::Ptr_t request = rpc.ProcessBuffer();
+                if(request) {
+                    // Pass the request to the driver
+                }
+            }
+        }
+    } catch(dap::SocketException& e) {
+        cerr << "ERROR: " << e.what() << endl;
+        return 1;
+    }
     // We are done
     return 0;
 }

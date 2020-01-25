@@ -1,6 +1,8 @@
 #ifndef DRIVER_HPP
 #define DRIVER_HPP
 
+#include "CommandLineParser.hpp"
+#include "dap/dap.hpp"
 #include <dap/Process.hpp>
 #include <string>
 #include <vector>
@@ -9,21 +11,21 @@ using namespace std;
 /// Control interface to the underlying debugger
 class Driver
 {
-    dap::Process* m_process = nullptr;
+    dap::Process* m_gdb = nullptr;
+    bool m_initialized = false;
+    dap::Queue<dap::ProtocolMessage::Ptr_t> m_queue;
 
 public:
-    Driver();
+    Driver(const CommandLineParser& parser);
     ~Driver();
 
+    bool IsAlive() const;
     /**
-     * @brief Start the debugger. The debuggee is not yet launched at this point
+     * @brief process DAP request coming from the client
      */
-    void Start(const string& debuggerCommand, const string& workingDir = "", const vector<string>& debuggee = {});
-
-    /**
-     * @brief wait for the debugger to terminate. This function blocks the execution of the calling thread
-     */
-    void Wait();
+    void ProcessRequest(dap::Request::Ptr_t request);
+    
+    dap::ProtocolMessage::Ptr_t Check();
 };
 
 #endif // DRIVER_HPP

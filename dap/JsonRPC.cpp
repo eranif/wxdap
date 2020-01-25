@@ -3,9 +3,21 @@
 #include "StringUtils.hpp"
 #include <iostream>
 
+void dap::Reader::Cleanup()
+{
+    shutdown_flag.store(true);
+    if(thr) {
+        thr->join();
+        delete thr;
+        thr = nullptr;
+    }
+    shutdown_flag.store(false);
+    terminated_flag.store(false);
+}
+
 dap::JsonRPC::JsonRPC() {}
 
-dap::JsonRPC::~JsonRPC() {}
+dap::JsonRPC::~JsonRPC() { m_reader.Cleanup(); }
 
 void dap::JsonRPC::ServerStart(const string& connectString)
 {
@@ -17,8 +29,32 @@ void dap::JsonRPC::ServerStart(const string& connectString)
 bool dap::JsonRPC::WaitForNewConnection()
 {
     // wait for new connection for 1 second
-    m_client = m_acceptSocket->As<dap::SocketServer>()->WaitForNewConnection(1);
-    return m_client != nullptr;
+    if(m_reader.thr) {
+        return false;
+    }
+    m_reader.conn = m_acceptSocket->As<dap::SocketServer>()->WaitForNewConnectionRaw(1);
+    if(m_reader.conn) {
+        m_reader.shutdown_flag.store(false);
+        m_reader.thr = new thread(
+            [](Reader* reader, Queue<string>& Q) {
+                try {
+                    while(!reader->shutdown_flag.load()) {
+                        string content;
+                        if(reader->conn->Read(content, 1) == SocketBase::kSuccess) {
+                            Q.push(content);
+                        }
+                    }
+                    reader->Cleanup();
+
+                } catch(SocketException& e) {
+                    cerr << "Socket error: " << e.what() << endl;
+                    reader->terminated_flag.store(true);
+                }
+            },
+            &m_reader, ref(m_incQueue));
+        return true;
+    }
+    return false;
 }
 
 dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
@@ -77,15 +113,27 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
     return message;
 }
 
-void dap::JsonRPC::WriteMessge(ProtocolMessage::Ptr_t message) {}
+void dap::JsonRPC::WriteMessge(ProtocolMessage::Ptr_t message)
+{
+    if(!m_reader.conn) {
+        throw SocketException("ERROR: WriteMessge() error: connection not opened");
+    }
+    if(!message) {
+        throw SocketException("ERROR: WriteMessge() error: null message");
+    }
+    // Write the message over the socket
+    m_reader.conn->Send(message->To().Format());
+}
 
 bool dap::JsonRPC::Read()
 {
-    if(!m_client) {
-        throw SocketException("Connection is not opened");
+    if(m_reader.terminated_flag.load()) {
+        m_reader.Cleanup();
+        throw SocketException("ERROR: connection reset by peer");
     }
-    string buffer;
-    if(m_client->Read(buffer, 1) == SocketBase::kSuccess) {
+
+    string buffer = m_incQueue.pop(chrono::milliseconds(1));
+    if(!buffer.empty()) {
         m_buffer.append(buffer);
     }
     return !buffer.empty();

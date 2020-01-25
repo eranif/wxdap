@@ -1,12 +1,41 @@
 #include "CommandLineParser.hpp"
 
+#include "dap/StringUtils.hpp"
 #include <getopt.h>
+#include <iostream>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 
 CommandLineParser::CommandLineParser() {}
 
 CommandLineParser::~CommandLineParser() {}
+
+void CommandLineParser::PrintUsage(const char* exename, struct option long_options[])
+{
+    size_t i = 0;
+    stringstream ss;
+    ss << "Usage: " << exename;
+    while(true) {
+        auto entry = long_options[i];
+        if(entry.name == nullptr) {
+            break;
+        }
+        ss << " --" << entry.name << "|-" << (char)entry.val;
+        switch(entry.has_arg) {
+        case no_argument:
+            break;
+        case required_argument:
+            ss << " <" << StringUtils::ToUpper(entry.name) << ">";
+            break;
+        case optional_argument:
+            ss << " [" << StringUtils::ToUpper(entry.name) << "]";
+            break;
+        }
+        ++i;
+    }
+    cerr << ss.str() << endl;
+}
 
 void CommandLineParser::Parse(int argc, char** argv)
 {
@@ -50,7 +79,8 @@ void CommandLineParser::Parse(int argc, char** argv)
             // getopt_long already printed an error message
             break;
         default:
-            break;
+            PrintUsage(argv[0], long_options);
+            exit(1);
         }
     }
 
@@ -59,3 +89,5 @@ void CommandLineParser::Parse(int argc, char** argv)
         m_arguments.push_back(argv[optind++]);
     }
 }
+
+string CommandLineParser::GetConnectionString() const { return "tcp://" + GetHost() + ":" + to_string(m_port); }

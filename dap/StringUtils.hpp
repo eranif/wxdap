@@ -32,6 +32,9 @@ public:
     
     /// Split a string
     static vector<string> Split(const string& str, char ch = '\n');
+    
+    /// Convert to string to uppercase
+    static string ToUpper(const string& str);
 };
 
 #endif // STRINGUTILS_H

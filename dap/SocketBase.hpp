@@ -52,7 +52,6 @@ public:
     enum {
         kSuccess = 1,
         kTimeout = 2,
-        kError = 3,
     };
 
 #ifdef _WIN32
@@ -132,7 +131,11 @@ public:
      */
     int SelectWriteMS(long milliSeconds = -1);
 
-    template <typename T> T* As() const { return dynamic_cast<T*>(const_cast<SocketBase*>(this)); }
+    template <typename T>
+    T* As() const
+    {
+        return dynamic_cast<T*>(const_cast<SocketBase*>(this));
+    }
 
 protected:
     /**
