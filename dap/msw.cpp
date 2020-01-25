@@ -100,7 +100,13 @@ void ProcessMSW::Cleanup()
 
 bool ProcessMSW::DoRead(string& ostrout, string& ostrerr)
 {
-    return IsAlive() && (DoReadFromPipe(m_stdoutRead, ostrout) || DoReadFromPipe(m_stderrRead, ostrerr));
+    if(!IsAlive()) {
+        return false;
+    }
+
+    DoReadFromPipe(m_stdoutRead, ostrout);
+    DoReadFromPipe(m_stderrRead, ostrerr);
+    return !ostrerr.empty() || !ostrout.empty();
 }
 
 Process* ExecuteProcess(const string& cmd, const string& workingDir)

@@ -9,7 +9,11 @@ void dap::Process::StartReaderThread()
             string stdoutBuff;
             string stderrBuff;
             while(!shutdown.load()) {
-                if(process->DoRead(stdoutBuff, stderrBuff)) {
+                stdoutBuff.clear();
+                stderrBuff.clear();
+                bool readSuccess = process->DoRead(stdoutBuff, stderrBuff);
+                bool readSomething = (!stdoutBuff.empty() || !stderrBuff.empty());
+                if(readSomething && readSuccess) {
                     Q.push({ stdoutBuff, stderrBuff });
                 } else {
                     this_thread::sleep_for(chrono::milliseconds(10));

@@ -15,6 +15,7 @@ int main(int argc, char** argv)
     // Initialize the dap library
     dap::Initialize();
     dap::Process* gdb = dap::ExecuteProcess("C:\\compilers\\mingw64\\bin\\gdb.exe");
+    this_thread::sleep_for(chrono::milliseconds(100));
     size_t counter = 0;
     while(gdb->IsAlive() && (counter < 10)) {
         string o, e;
@@ -25,6 +26,7 @@ int main(int argc, char** argv)
             if(!e.empty()) {
                 cerr << e << endl;
             }
+            continue;
         }
         this_thread::sleep_for(chrono::milliseconds(10));
         gdb->Write("help");
