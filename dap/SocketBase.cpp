@@ -44,13 +44,17 @@ int SocketBase::Read(string& content, long timeout)
 
 int SocketBase::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeout)
 {
-    if(SelectRead(timeout) == kTimeout) { return kTimeout; }
+    if(SelectReadMS(timeout) == kTimeout) {
+        return kTimeout;
+    }
     memset(buffer, 0, bufferSize);
     const int res = recv(m_socket, buffer, bufferSize, 0);
 
     if(res < 0) {
         const int err = GetLastError();
-        if(eWouldBlock == err) { return kTimeout; }
+        if(eWouldBlock == err) {
+            return kTimeout;
+        }
 
         throw SocketException("Read failed: " + error(err));
     } else if(0 == res) {
@@ -63,10 +67,12 @@ int SocketBase::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long ti
 
 int SocketBase::SelectRead(long seconds)
 {
-    if(seconds == -1) { return kSuccess; }
-
-    if(m_socket == INVALID_SOCKET) { throw SocketException("Invalid socket!"); }
-
+    if(seconds == -1) {
+        return kSuccess;
+    }
+    if(m_socket == INVALID_SOCKET) {
+        throw SocketException("Invalid socket!");
+    }
     struct timeval tv = { seconds, 0 };
 
     fd_set readfds;
@@ -90,14 +96,20 @@ int SocketBase::SelectRead(long seconds)
 // Send API
 void SocketBase::Send(const string& msg)
 {
-    if(m_socket == INVALID_SOCKET) { throw SocketException("Invalid socket!"); }
-    if(msg.empty()) { return; }
+    if(m_socket == INVALID_SOCKET) {
+        throw SocketException("Invalid socket!");
+    }
+    if(msg.empty()) {
+        return;
+    }
     char* pdata = (char*)msg.c_str();
     int bytesLeft = msg.length();
     while(bytesLeft) {
-        if(SelectWriteMS(1000) == kTimeout) continue;
+        if(SelectWriteMS(1000) == kTimeout)
+            continue;
         int bytesSent = ::send(m_socket, (const char*)pdata, bytesLeft, 0);
-        if(bytesSent <= 0) throw SocketException("Send error: " + error());
+        if(bytesSent <= 0)
+            throw SocketException("Send error: " + error());
         pdata += bytesSent;
         bytesLeft -= bytesSent;
     }
@@ -119,7 +131,8 @@ std::string SocketBase::error(const int errorCode)
     std::string err;
 #ifdef _WIN32
     // Get the error message, if any.
-    if(errorCode == 0) return "No error message has been recorded";
+    if(errorCode == 0)
+        return "No error message has been recorded";
 
     LPSTR messageBuffer = nullptr;
     size_t size =
@@ -180,9 +193,13 @@ void SocketBase::MakeSocketBlocking(bool blocking)
 
 int SocketBase::SelectWriteMS(long milliSeconds)
 {
-    if(milliSeconds == -1) { return kSuccess; }
+    if(milliSeconds == -1) {
+        return kSuccess;
+    }
 
-    if(m_socket == INVALID_SOCKET) { throw SocketException("Invalid socket!"); }
+    if(m_socket == INVALID_SOCKET) {
+        throw SocketException("Invalid socket!");
+    }
 
     struct timeval tv;
     tv.tv_sec = milliSeconds / 1000;
@@ -209,9 +226,13 @@ int SocketBase::SelectWriteMS(long milliSeconds)
 
 int SocketBase::SelectWrite(long seconds)
 {
-    if(seconds == -1) { return kSuccess; }
+    if(seconds == -1) {
+        return kSuccess;
+    }
 
-    if(m_socket == INVALID_SOCKET) { throw SocketException("Invalid socket!"); }
+    if(m_socket == INVALID_SOCKET) {
+        throw SocketException("Invalid socket!");
+    }
 
     struct timeval tv = { seconds, 0 };
 
@@ -236,9 +257,13 @@ int SocketBase::SelectWrite(long seconds)
 
 int SocketBase::SelectReadMS(long milliSeconds)
 {
-    if(milliSeconds == -1) { return kSuccess; }
+    if(milliSeconds == -1) {
+        return kSuccess;
+    }
 
-    if(m_socket == INVALID_SOCKET) { throw SocketException("Invalid socket!"); }
+    if(m_socket == INVALID_SOCKET) {
+        throw SocketException("Invalid socket!");
+    }
 
     int seconds = milliSeconds / 1000; // convert the number into seconds
     int ms = milliSeconds % 1000;      // the remainder is less than a second

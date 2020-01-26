@@ -23,14 +23,12 @@ int main(int argc, char** argv)
         // Initialize the dap library
         dap::Initialize();
 
-        dap::JsonRPC rpc;
+        cout << "Listening on " << parser.GetConnectionString() << endl;
+        dap::SocketServer server;
+        server.Start(parser.GetConnectionString());
+
         cout << "Waiting for connection on " << parser.GetConnectionString() << endl;
-        rpc.ServerStart(parser.GetConnectionString());
-
-        // Wait for new connection to arrive
-        while(!rpc.WaitForNewConnection()) {
-        }
-
+        dap::SocketBase::Ptr_t client = server.WaitForNewConnection();
         cout << "Connection established successfully" << endl;
 
         // Construct a GDB Driver
@@ -39,13 +37,24 @@ int main(int argc, char** argv)
         // The main loop:
         // - Check for any input from GDB and send it over JSONRpc to the client
         // - Check for any request from the client and pass it to the gdb
+        dap::JsonRPC rpc;
         while(driver.IsAlive()) {
+            string network_buffer;
             dap::ProtocolMessage::Ptr_t message = driver.Check();
             if(message) {
                 // send it to the driver
-                rpc.WriteMessge(message);
+                client->Send(message->To().Format());
             }
-            if(rpc.Read()) {
+
+            // Attempt to read something from the network
+            if(client->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
+                
+                cout << "Read: " << network_buffer << endl;
+                
+                // Append the buffer to what we already have
+                rpc.AppendBuffer(network_buffer);
+
+                // Try to construct a message and process it
                 dap::ProtocolMessage::Ptr_t request = rpc.ProcessBuffer();
                 if(request) {
                     // Pass the request to the driver

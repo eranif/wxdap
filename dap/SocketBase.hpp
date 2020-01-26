@@ -85,49 +85,61 @@ public:
      * @brief initialize the socket library
      */
     static void Initialize();
-
+    
+    /**
+     * @brief return platform specific socket handle
+     */
     socket_t GetSocket() const { return m_socket; }
 
     /**
-     * @brief
-     * @param msg
+     * @brief send message. This function blocks until the entire buffer is sent
+     * @throws SocketException
      */
     void Send(const string& msg);
 
     /**
      * @brief
-     * @return
+     * @param timeout milliseconds to wait
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
-    int Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeout = -1);
+    int Read(char* buffer, size_t bufferSize, size_t& bytesRead, long milliSeconds = -1);
     /**
      * @brief read string content from remote server
      * @param content [output]
-     * @param timeout seconds to wait
+     * @param timeout milliseconds to wait
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
-    int Read(string& content, long timeout = -1);
+    int Read(string& content, long milliSeconds = -1);
+    
     /**
      * @brief
      * @param seconds
-     * @return
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
     int SelectRead(long seconds = -1);
 
     /**
      * @brief select for read. Same as above, but use milli seconds instead
      * @param milliSeconds number of _milliseconds_ to wait
-     * @return
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
     int SelectReadMS(long milliSeconds = -1);
 
     /**
      * @brief select for write
-     * @return
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
     int SelectWrite(long seconds = -1);
 
     /**
      * @brief select for write (milli seconds version)
-     * @return
+     * @return kSuccess or kTimeout
+     * @throws SocketException
      */
     int SelectWriteMS(long milliSeconds = -1);
 

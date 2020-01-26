@@ -3,59 +3,9 @@
 #include "StringUtils.hpp"
 #include <iostream>
 
-void dap::Reader::Cleanup()
-{
-    shutdown_flag.store(true);
-    if(thr) {
-        thr->join();
-        delete thr;
-        thr = nullptr;
-    }
-    shutdown_flag.store(false);
-    terminated_flag.store(false);
-}
-
 dap::JsonRPC::JsonRPC() {}
 
-dap::JsonRPC::~JsonRPC() { m_reader.Cleanup(); }
-
-void dap::JsonRPC::ServerStart(const string& connectString)
-{
-    m_acceptSocket.reset(new dap::SocketServer());
-    m_acceptSocket->SetCloseOnExit(true);
-    m_acceptSocket->As<dap::SocketServer>()->Start(connectString);
-}
-
-bool dap::JsonRPC::WaitForNewConnection()
-{
-    // wait for new connection for 1 second
-    if(m_reader.thr) {
-        return false;
-    }
-    m_reader.conn = m_acceptSocket->As<dap::SocketServer>()->WaitForNewConnectionRaw(1);
-    if(m_reader.conn) {
-        m_reader.shutdown_flag.store(false);
-        m_reader.thr = new thread(
-            [](Reader* reader, Queue<string>& Q) {
-                try {
-                    while(!reader->shutdown_flag.load()) {
-                        string content;
-                        if(reader->conn->Read(content, 1) == SocketBase::kSuccess) {
-                            Q.push(content);
-                        }
-                    }
-                    reader->Cleanup();
-
-                } catch(SocketException& e) {
-                    cerr << "Socket error: " << e.what() << endl;
-                    reader->terminated_flag.store(true);
-                }
-            },
-            &m_reader, ref(m_incQueue));
-        return true;
-    }
-    return false;
-}
+dap::JsonRPC::~JsonRPC() {}
 
 dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
 {
@@ -113,32 +63,6 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
     return message;
 }
 
-void dap::JsonRPC::WriteMessge(ProtocolMessage::Ptr_t message)
-{
-    if(!m_reader.conn) {
-        throw SocketException("ERROR: WriteMessge() error: connection not opened");
-    }
-    if(!message) {
-        throw SocketException("ERROR: WriteMessge() error: null message");
-    }
-    // Write the message over the socket
-    m_reader.conn->Send(message->To().Format());
-}
-
-bool dap::JsonRPC::Read()
-{
-    if(m_reader.terminated_flag.load()) {
-        m_reader.Cleanup();
-        throw SocketException("ERROR: connection reset by peer");
-    }
-
-    string buffer = m_incQueue.pop(chrono::milliseconds(1));
-    if(!buffer.empty()) {
-        m_buffer.append(buffer);
-    }
-    return !buffer.empty();
-}
-
 int dap::JsonRPC::ReadHeaders(unordered_map<string, string>& headers)
 {
     size_t where = m_buffer.find("\r\n\r\n");
@@ -158,3 +82,5 @@ int dap::JsonRPC::ReadHeaders(unordered_map<string, string>& headers)
 }
 
 void dap::JsonRPC::SetBuffer(const string& buffer) { m_buffer = buffer; }
+
+void dap::JsonRPC::AppendBuffer(const string& buffer) { m_buffer.append(buffer); }
