@@ -1,5 +1,6 @@
 #include "CommandLineParser.hpp"
 #include "Driver.hpp"
+#include "Log.hpp"
 #include "dap/JsonRPC.hpp"
 #include "dap/Process.hpp"
 #include "dap/SocketBase.hpp"
@@ -19,16 +20,23 @@ int main(int argc, char** argv)
     CommandLineParser parser;
     parser.Parse(argc, argv);
 
+    // Open the log file
+    Log::OpenLog("dap.log", Log::Developer);
+    LOG_DEBUG() << "Started";
+
     try {
         // Initialize the dap library
         dap::Initialize();
 
-        cout << "Listening on " << parser.GetConnectionString() << endl;
+        LOG_DEBUG() << "Listening on " << parser.GetConnectionString();
+
         dap::SocketServer server;
         server.Start(parser.GetConnectionString());
+        LOG_DEBUG() << "Waiting for a new connection";
 
-        cout << "Waiting for connection on " << parser.GetConnectionString() << endl;
         dap::SocketBase::Ptr_t client = server.WaitForNewConnection();
+        LOG_DEBUG() << "Connection established successfully";
+
         cout << "Connection established successfully" << endl;
 
         // Construct a GDB Driver
@@ -50,8 +58,8 @@ int main(int argc, char** argv)
             network_buffer.clear();
             if(client->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
                 
-                cout << "Read: " << network_buffer << endl;
-                
+                LOG_DEBUG1() << "Read: " << network_buffer;
+
                 // Append the buffer to what we already have
                 rpc.AppendBuffer(network_buffer);
 
@@ -63,7 +71,7 @@ int main(int argc, char** argv)
             }
         }
     } catch(dap::SocketException& e) {
-        cerr << "ERROR: " << e.what() << endl;
+        LOG_ERROR() << "ERROR: " << e.what();
         return 1;
     }
     // We are done
