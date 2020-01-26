@@ -38,8 +38,8 @@ int main(int argc, char** argv)
         // - Check for any input from GDB and send it over JSONRpc to the client
         // - Check for any request from the client and pass it to the gdb
         dap::JsonRPC rpc;
+        string network_buffer;
         while(driver.IsAlive()) {
-            string network_buffer;
             dap::ProtocolMessage::Ptr_t message = driver.Check();
             if(message) {
                 // send it to the driver
@@ -47,6 +47,7 @@ int main(int argc, char** argv)
             }
 
             // Attempt to read something from the network
+            network_buffer.clear();
             if(client->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
                 
                 cout << "Read: " << network_buffer << endl;
