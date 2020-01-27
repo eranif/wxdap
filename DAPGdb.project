@@ -16,9 +16,6 @@
     <File Name="Driver.hpp"/>
     <File Name="main.cpp"/>
   </VirtualDirectory>
-  <Dependencies Name="Debug">
-    <Project Name="dapcxx"/>
-  </Dependencies>
   <Dependencies Name="Release">
     <Project Name="dapcxx"/>
   </Dependencies>
@@ -119,4 +116,8 @@
       </Completion>
     </Configuration>
   </Settings>
+  <Dependencies Name="Debug">
+    <Project Name="dapcxx"/>
+    <Project Name="gdbcli"/>
+  </Dependencies>
 </CodeLite_Project>

@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     // Open the log file
     Log::OpenStdout(Log::Developer);
     LOG_INFO() << "Started";
-    
+
     try {
         // Initialize the dap library
         dap::Initialize();
@@ -44,6 +44,7 @@ int main(int argc, char** argv)
         // - Check for any request from the client and pass it to the gdb
         dap::JsonRPC rpc;
         string network_buffer;
+        bool initializeCompleted = false;
         while(driver.IsAlive()) {
             dap::ProtocolMessage::Ptr_t message = driver.Check();
             if(message) {
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
             // Attempt to read something from the network
             network_buffer.clear();
             if(client->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
-                
+
                 LOG_DEBUG1() << "Read: " << network_buffer;
 
                 // Append the buffer to what we already have
@@ -63,7 +64,12 @@ int main(int argc, char** argv)
                 // Try to construct a message and process it
                 dap::ProtocolMessage::Ptr_t request = rpc.ProcessBuffer();
                 if(request) {
-                    // Pass the request to the driver
+                    if(!initializeCompleted) {
+                        dap::InitializeResponse response;
+                        rpc.Send(response, client);
+                        LOG_DEBUG() << "Initialization completed";
+                    } else {
+                    }
                 }
             }
         }

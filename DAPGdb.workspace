@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="DAPGdb" Database="" Version="10000">
-  <Project Name="DAPGdb" Path="DAPGdb.project" Active="Yes"/>
+  <Project Name="DAPGdb" Path="DAPGdb.project" Active="No"/>
   <Project Name="dapcxx" Path="dap/dapcxx.project" Active="No"/>
   <Project Name="gdbd_tests" Path="gdbd_tests.project" Active="No"/>
+  <Project Name="gdbcli" Path="gdbcli/gdbcli.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="DAPGdb" ConfigName="Debug"/>
       <Project Name="dapcxx" ConfigName="Debug"/>
       <Project Name="gdbd_tests" ConfigName="Debug"/>
+      <Project Name="gdbcli" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="DAPGdb" ConfigName="Release"/>
       <Project Name="dapcxx" ConfigName="Release"/>
       <Project Name="gdbd_tests" ConfigName="Release"/>
+      <Project Name="gdbcli" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>
