@@ -7,8 +7,10 @@
 
 // manipulator function
 class Log;
-typedef Log& (*LogFunction)(Log&);
 using namespace std;
+namespace dap
+{
+typedef Log& (*LogFunction)(Log&);
 class Log
 {
 public:
@@ -103,11 +105,11 @@ inline stringstream& clEndl(Log& d)
 }
 
 // New API
-#define LOG_DEBUG() Log(Log::Dbg) << Log::Prefix(Log::Dbg)
-#define LOG_DEBUG1() Log(Log::Developer) << Log::Prefix(Log::Developer)
-#define LOG_ERROR() Log(Log::Error) << Log::Prefix(Log::Error)
-#define LOG_WARNING() Log(Log::Warning) << Log::Prefix(Log::Warning)
-#define LOG_SYSTEM() Log(Log::System) << Log::Prefix(Log::System)
-#define LOG_INFO() Log(Log::Info) << Log::Prefix(Log::Info)
-
+#define LOG_DEBUG() dap::Log(dap::Log::Dbg) << dap::Log::Prefix(dap::Log::Dbg)
+#define LOG_DEBUG1() dap::Log(dap::Log::Developer) << dap::Log::Prefix(dap::Log::Developer)
+#define LOG_ERROR() dap::Log(dap::Log::Error) << dap::Log::Prefix(dap::Log::Error)
+#define LOG_WARNING() dap::Log(dap::Log::Warning) << dap::Log::Prefix(dap::Log::Warning)
+#define LOG_SYSTEM() dap::Log(dap::Log::System) << dap::Log::Prefix(dap::Log::System)
+#define LOG_INFO() dap::Log(dap::Log::Info) << dap::Log::Prefix(dap::Log::Info)
+};     // namespace dap
 #endif // LOG_HPP

@@ -1,9 +1,10 @@
 #include "Log.hpp"
-#include "dap/StringUtils.hpp"
+#include "StringUtils.hpp"
 #include <chrono>
 #include <sstream>
 #include <sys/time.h>
-
+namespace dap
+{
 int Log::m_verbosity = Log::Error;
 string Log::m_logfile;
 bool Log::m_useStdout = false;
@@ -254,3 +255,4 @@ const string& Log::GetColourEnd()
         return COLOUR_END;
     }
 }
+}; // namespace dap

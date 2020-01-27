@@ -1,8 +1,9 @@
 #include "CommandLineParser.hpp"
 #include "Driver.hpp"
-#include "Log.hpp"
 #include "dap/JsonRPC.hpp"
+#include "dap/Log.hpp"
 #include "dap/Process.hpp"
+#include "dap/ServerProtocol.hpp"
 #include "dap/SocketBase.hpp"
 #include "dap/SocketServer.hpp"
 #include "dap/StringUtils.hpp"
@@ -21,7 +22,7 @@ int main(int argc, char** argv)
     parser.Parse(argc, argv);
 
     // Open the log file
-    Log::OpenStdout(Log::Developer);
+    dap::Log::OpenStdout(dap::Log::Developer);
     LOG_INFO() << "Started";
 
     try {
@@ -29,62 +30,27 @@ int main(int argc, char** argv)
         dap::Initialize();
         LOG_INFO() << "Listening on " << parser.GetConnectionString();
 
-        dap::SocketServer server;
-        server.Start(parser.GetConnectionString());
+        dap::SocketServer socketServer;
+        socketServer.Start(parser.GetConnectionString());
         LOG_INFO() << "Waiting for a new connection";
 
-        dap::SocketBase::Ptr_t client = server.WaitForNewConnection();
+        dap::SocketBase::Ptr_t client = socketServer.WaitForNewConnection();
         LOG_INFO() << "Connection established successfully";
 
         // Construct a GDB Driver
         Driver driver(parser);
 
+        dap::ServerProtocol server;
+        server.Initialize(client);
+
         // The main loop:
         // - Check for any input from GDB and send it over JSONRpc to the client
         // - Check for any request from the client and pass it to the gdb
-        dap::JsonRPC rpc;
-        string network_buffer;
-        enum eState { kWaitingInitRequest, kExecute };
-        eState state = kWaitingInitRequest;
         while(driver.IsAlive()) {
             dap::ProtocolMessage::Ptr_t message = driver.Check();
             if(message) {
                 // send it to the driver
                 client->Send(message->To().Format());
-            }
-
-            // Attempt to read something from the network
-            network_buffer.clear();
-            if(client->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
-
-                LOG_DEBUG1() << "Read: " << network_buffer;
-
-                // Append the buffer to what we already have
-                rpc.AppendBuffer(network_buffer);
-
-                // Try to construct a message and process it
-                dap::ProtocolMessage::Ptr_t request = rpc.ProcessBuffer();
-                if(request) {
-                    switch(state) {
-                    case kWaitingInitRequest: {
-                        if(request->type == "request" && request->As<dap::InitializeRequest>()) {
-                            dap::InitializeResponse initResponse;
-                            rpc.Send(initResponse, client);
-                            LOG_DEBUG() << "Sending InitializeRequest";
-
-                            // Send InitializedEvent
-                            dap::InitializedEvent initEvent;
-                            rpc.Send(initEvent, client);
-                            LOG_DEBUG() << "Sending InitializedEvent";
-                            LOG_INFO() << "Initialization completed";
-                        }
-                        break;
-                    }
-                    case kExecute: {
-                        break;
-                    }
-                    }
-                }
             }
         }
     } catch(dap::SocketException& e) {

@@ -3,8 +3,6 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="Log.cpp"/>
-    <File Name="Log.hpp"/>
     <File Name="Config.cpp"/>
     <File Name="Config.hpp"/>
     <File Name="CommandLineParser.hpp"/>
