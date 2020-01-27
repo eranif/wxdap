@@ -6,9 +6,17 @@
 
 int Log::m_verbosity = Log::Error;
 string Log::m_logfile;
+bool Log::m_useStdout = false;
+
+static const char ESCAPE = 0x1B;
+static const string GREEN = "\e[32m";
+static const string RED = "\e[31m";
+static const string YELLOW = "\e[93m";
+static const string CYAN = "\e[96m";
+static const string COLOUR_END = "\e[0m";
 
 Log::Log(int requestedVerbo)
-    : _requestedLogLevel(requestedVerbo)
+    : m_requestedLogLevel(requestedVerbo)
     , m_fp(nullptr)
 {
 }
@@ -87,6 +95,14 @@ void Log::OpenLog(const string& fullpath, int verbosity)
 {
     m_logfile = fullpath;
     m_verbosity = verbosity;
+    m_useStdout = false;
+}
+
+void Log::OpenStdout(int verbosity)
+{
+    m_logfile.clear();
+    m_useStdout = true;
+    m_verbosity = verbosity;
 }
 
 void Log::Flush()
@@ -94,13 +110,21 @@ void Log::Flush()
     if(m_buffer.str().empty()) {
         return;
     }
+
+    if(m_useStdout) {
+        m_fp = stdout;
+    }
+
     if(!m_fp) {
         m_fp = fopen(m_logfile.c_str(), "a+");
     }
 
     if(m_fp) {
         fprintf(m_fp, "%s\n", m_buffer.str().c_str());
-        fclose(m_fp);
+        // Dont close stdout
+        if(!m_useStdout) {
+            fclose(m_fp);
+        }
         m_fp = nullptr;
     }
     m_buffer.clear();
@@ -109,7 +133,6 @@ void Log::Flush()
 string Log::Prefix(int verbosity)
 {
     if(verbosity <= m_verbosity) {
-        stringstream prefix;
         timeval tim;
         gettimeofday(&tim, NULL);
         auto start = chrono::system_clock::now();
@@ -117,26 +140,26 @@ string Log::Prefix(int verbosity)
         string timeString = ctime(&as_time_t);
         StringUtils::Trim(timeString);
 
-        prefix << "[" << timeString;
+        stringstream prefix;
         switch(verbosity) {
         case System:
-            prefix << " SYS]";
+            prefix << CYAN << "[" << timeString << " SYS]" << COLOUR_END;
             break;
 
         case Error:
-            prefix << " ERR]";
+            prefix << RED << "[" << timeString << " ERR]" << COLOUR_END;
             break;
 
         case Warning:
-            prefix << " WRN]";
+            prefix << YELLOW << "[" << timeString << " WRN]" << COLOUR_END;
             break;
 
         case Dbg:
-            prefix << " DBG]";
+            prefix << "[" << timeString << " DBG]";
             break;
 
         case Developer:
-            prefix << " DVL]";
+            prefix << "[" << timeString << " DVL]";
             break;
         }
 

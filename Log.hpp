@@ -17,26 +17,27 @@ public:
 protected:
     static int m_verbosity;
     static string m_logfile;
-    int _requestedLogLevel;
-    FILE* m_fp;
+    static bool m_useStdout;
+    int m_requestedLogLevel = Error;
+    FILE* m_fp = nullptr;
     stringstream m_buffer;
-
-protected:
-    static string GetCurrentThreadName();
-
+    
 public:
     Log(int requestedVerbo);
     ~Log();
-
+    
+    /**
+     * @brief return the internal stream buffer
+     */
     stringstream& GetStream() { return m_buffer; }
 
     Log& SetRequestedLogLevel(int level)
     {
-        _requestedLogLevel = level;
+        m_requestedLogLevel = level;
         return *this;
     }
 
-    int GetRequestedLogLevel() const { return _requestedLogLevel; }
+    int GetRequestedLogLevel() const { return m_requestedLogLevel; }
 
     /**
      * @brief create log entry prefix
@@ -53,7 +54,11 @@ public:
      * @brief open the log file
      */
     static void OpenLog(const string& fullpath, int verbosity);
-    
+    /**
+     * @brief open stdout as the log stream
+     */
+    static void OpenStdout(int verbosity);
+
     // Various util methods
     static string GetVerbosityAsString(int verbosity);
     static int GetVerbosityAsNumber(const string& verbosity);

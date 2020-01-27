@@ -21,8 +21,8 @@ int main(int argc, char** argv)
     parser.Parse(argc, argv);
 
     // Open the log file
-    Log::OpenLog("dap.log", Log::Developer);
-    LOG_DEBUG() << "Started";
+    Log::OpenStdout(Log::Developer);
+    LOG_SYSTEM() << "Started";
 
     try {
         // Initialize the dap library
