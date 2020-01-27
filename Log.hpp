@@ -21,11 +21,15 @@ protected:
     int m_requestedLogLevel = Error;
     FILE* m_fp = nullptr;
     stringstream m_buffer;
-    
+
+protected:
+    static const string& GetColour(int verbo);
+    static const string& GetColourEnd();
+
 public:
     Log(int requestedVerbo);
     ~Log();
-    
+
     /**
      * @brief return the internal stream buffer
      */

@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     // Open the log file
     Log::OpenStdout(Log::Developer);
     LOG_SYSTEM() << "Started";
-
+    
     try {
         // Initialize the dap library
         dap::Initialize();

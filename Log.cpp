@@ -8,17 +8,54 @@ int Log::m_verbosity = Log::Error;
 string Log::m_logfile;
 bool Log::m_useStdout = false;
 
-static const char ESCAPE = 0x1B;
-static const string GREEN = "\e[32m";
-static const string RED = "\e[31m";
-static const string YELLOW = "\e[93m";
-static const string CYAN = "\e[96m";
-static const string COLOUR_END = "\e[0m";
+static const string GREEN = "\x1b[32m";
+static const string RED = "\x1b[31m";
+static const string YELLOW = "\x1b[93m";
+static const string CYAN = "\x1b[96m";
+static const string WHITE = "\x1b[37m";
+static const string COLOUR_END = "\x1b[0m";
+static const string EMPTY_STR = "";
+
+// Needed for Windows
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+#ifdef _WIN32
+// Some old MinGW/CYGWIN distributions don't define this:
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
+static void SetupConsole()
+{
+    DWORD outMode = 0;
+    HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if(stdoutHandle == INVALID_HANDLE_VALUE) {
+        exit(GetLastError());
+    }
+
+    if(!GetConsoleMode(stdoutHandle, &outMode)) {
+        exit(GetLastError());
+    }
+
+    // Enable ANSI escape codes
+    outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+    if(!SetConsoleMode(stdoutHandle, outMode)) {
+        exit(GetLastError());
+    }
+}
+#else
+static void SetupConsole() {}
+#endif
 
 Log::Log(int requestedVerbo)
     : m_requestedLogLevel(requestedVerbo)
     , m_fp(nullptr)
 {
+    SetupConsole();
 }
 
 Log::~Log()
@@ -107,12 +144,14 @@ void Log::OpenStdout(int verbosity)
 
 void Log::Flush()
 {
-    if(m_buffer.str().empty()) {
+    string buffer = m_buffer.str();
+    if(buffer.empty()) {
         return;
     }
 
     if(m_useStdout) {
         m_fp = stdout;
+        buffer += GetColourEnd();
     }
 
     if(!m_fp) {
@@ -120,7 +159,7 @@ void Log::Flush()
     }
 
     if(m_fp) {
-        fprintf(m_fp, "%s\n", m_buffer.str().c_str());
+        fprintf(m_fp, "%s\n", buffer.c_str());
         // Dont close stdout
         if(!m_useStdout) {
             fclose(m_fp);
@@ -141,17 +180,18 @@ string Log::Prefix(int verbosity)
         StringUtils::Trim(timeString);
 
         stringstream prefix;
+        prefix << GetColour(verbosity);
         switch(verbosity) {
         case System:
-            prefix << CYAN << "[" << timeString << " SYS]" << COLOUR_END;
+            prefix << "[" << timeString << " SYS]";
             break;
 
         case Error:
-            prefix << RED << "[" << timeString << " ERR]" << COLOUR_END;
+            prefix << "[" << timeString << " ERR]";
             break;
 
         case Warning:
-            prefix << YELLOW << "[" << timeString << " WRN]" << COLOUR_END;
+            prefix << "[" << timeString << " WRN]";
             break;
 
         case Dbg:
@@ -164,9 +204,34 @@ string Log::Prefix(int verbosity)
         }
 
         prefix << " ";
-        string p = prefix.str();
-        return p;
+        return prefix.str();
     } else {
         return "";
+    }
+}
+
+const string& Log::GetColour(int verbo)
+{
+    if(!m_useStdout) {
+        return EMPTY_STR;
+    }
+    switch(verbo) {
+    case System:
+        return CYAN;
+    case Error:
+        return RED;
+    case Warning:
+        return YELLOW;
+    default:
+        return WHITE;
+    }
+}
+
+const string& Log::GetColourEnd()
+{
+    if(m_useStdout) {
+        return EMPTY_STR;
+    } else {
+        return COLOUR_END;
     }
 }
