@@ -44,7 +44,8 @@ int main(int argc, char** argv)
         // - Check for any request from the client and pass it to the gdb
         dap::JsonRPC rpc;
         string network_buffer;
-        bool initializeCompleted = false;
+        enum eState { kWaitingInitRequest, kExecute };
+        eState state = kWaitingInitRequest;
         while(driver.IsAlive()) {
             dap::ProtocolMessage::Ptr_t message = driver.Check();
             if(message) {
@@ -64,11 +65,24 @@ int main(int argc, char** argv)
                 // Try to construct a message and process it
                 dap::ProtocolMessage::Ptr_t request = rpc.ProcessBuffer();
                 if(request) {
-                    if(!initializeCompleted) {
-                        dap::InitializeResponse response;
-                        rpc.Send(response, client);
-                        LOG_DEBUG() << "Initialization completed";
-                    } else {
+                    switch(state) {
+                    case kWaitingInitRequest: {
+                        if(request->type == "request" && request->As<dap::InitializeRequest>()) {
+                            dap::InitializeResponse initResponse;
+                            rpc.Send(initResponse, client);
+                            LOG_DEBUG() << "Sending InitializeRequest";
+
+                            // Send InitializedEvent
+                            dap::InitializedEvent initEvent;
+                            rpc.Send(initEvent, client);
+                            LOG_DEBUG() << "Sending InitializedEvent";
+                            LOG_INFO() << "Initialization completed";
+                        }
+                        break;
+                    }
+                    case kExecute: {
+                        break;
+                    }
                     }
                 }
             }

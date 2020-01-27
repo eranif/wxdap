@@ -27,6 +27,7 @@ static const string EMPTY_STR = "";
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
 
+static DWORD initMode = 0;
 static void SetupConsole()
 {
     DWORD outMode = 0;
@@ -39,7 +40,7 @@ static void SetupConsole()
     if(!GetConsoleMode(stdoutHandle, &outMode)) {
         exit(GetLastError());
     }
-
+    initMode = outMode;
     // Enable ANSI escape codes
     outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
@@ -47,8 +48,14 @@ static void SetupConsole()
         exit(GetLastError());
     }
 }
+static void ResetConsole()
+{
+    HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleMode(stdoutHandle, initMode);
+}
 #else
 static void SetupConsole() {}
+static void ResetConsole() {}
 #endif
 
 Log::Log(int requestedVerbo)
@@ -62,6 +69,7 @@ Log::~Log()
 {
     // flush any content that remain
     Flush();
+    ResetConsole();
 }
 
 void Log::AddLogLine(const string& msg, int verbosity)
@@ -156,7 +164,6 @@ void Log::Flush()
 
     if(m_useStdout) {
         m_fp = stdout;
-        buffer += GetColourEnd();
     }
 
     if(!m_fp) {
@@ -185,30 +192,29 @@ string Log::Prefix(int verbosity)
         StringUtils::Trim(timeString);
 
         stringstream prefix;
-        prefix << GetColour(verbosity);
         switch(verbosity) {
         case Info:
-            prefix << "[" << timeString << " INF]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ INF ]" << GetColourEnd();
             break;
-            
+
         case System:
-            prefix << "[" << timeString << " SYS]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ SYS ]" << GetColourEnd();
             break;
 
         case Error:
-            prefix << "[" << timeString << " ERR]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ ERR ]" << GetColourEnd();
             break;
 
         case Warning:
-            prefix << "[" << timeString << " WRN]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ WRN ]" << GetColourEnd();
             break;
 
         case Dbg:
-            prefix << "[" << timeString << " DBG]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ DBG ]" << GetColourEnd();
             break;
 
         case Developer:
-            prefix << "[" << timeString << " DVL]";
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ DVL ]" << GetColourEnd();
             break;
         }
 
@@ -233,6 +239,8 @@ const string& Log::GetColour(int verbo)
         return RED;
     case Warning:
         return YELLOW;
+    case Dbg:
+        return CYAN;
     default:
         return WHITE;
     }
@@ -240,7 +248,7 @@ const string& Log::GetColour(int verbo)
 
 const string& Log::GetColourEnd()
 {
-    if(m_useStdout) {
+    if(!m_useStdout) {
         return EMPTY_STR;
     } else {
         return COLOUR_END;
