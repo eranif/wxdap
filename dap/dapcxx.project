@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="Protocol.cpp"/>
+    <File Name="Protocol.hpp"/>
     <File Name="Queue.hpp"/>
     <File Name="JsonRPC.cpp"/>
     <File Name="JsonRPC.hpp"/>
