@@ -101,6 +101,8 @@ int Log::GetVerbosityAsNumber(const string& verbosity)
     } else if(verbosity == "Developer") {
         return Log::Developer;
 
+    } else if(verbosity == "Info") {
+        return Log::Info;
     } else {
         return Log::Error;
     }
@@ -120,6 +122,9 @@ string Log::GetVerbosityAsString(int verbosity)
 
     case Log::Developer:
         return "Developer";
+
+    case Log::Info:
+        return "Info";
 
     default:
         return "Error";
@@ -182,6 +187,10 @@ string Log::Prefix(int verbosity)
         stringstream prefix;
         prefix << GetColour(verbosity);
         switch(verbosity) {
+        case Info:
+            prefix << "[" << timeString << " INF]";
+            break;
+            
         case System:
             prefix << "[" << timeString << " SYS]";
             break;
@@ -216,6 +225,8 @@ const string& Log::GetColour(int verbo)
         return EMPTY_STR;
     }
     switch(verbo) {
+    case Info:
+        return GREEN;
     case System:
         return CYAN;
     case Error:

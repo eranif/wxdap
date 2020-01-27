@@ -12,7 +12,7 @@ using namespace std;
 class Log
 {
 public:
-    enum { System = -1, Error = 0, Warning = 1, Dbg = 2, Developer = 3 };
+    enum eLogVerbosity { System = -1, Error, Warning, Info, Dbg, Developer };
 
 protected:
     static int m_verbosity;
@@ -108,8 +108,6 @@ inline stringstream& clEndl(Log& d)
 #define LOG_ERROR() Log(Log::Error) << Log::Prefix(Log::Error)
 #define LOG_WARNING() Log(Log::Warning) << Log::Prefix(Log::Warning)
 #define LOG_SYSTEM() Log(Log::System) << Log::Prefix(Log::System)
-
-// A replacement for wxLogMessage
-#define clLogMessage(msg) clDEBUG() << msg
+#define LOG_INFO() Log(Log::Info) << Log::Prefix(Log::Info)
 
 #endif // LOG_HPP

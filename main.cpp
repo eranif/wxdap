@@ -22,22 +22,19 @@ int main(int argc, char** argv)
 
     // Open the log file
     Log::OpenStdout(Log::Developer);
-    LOG_SYSTEM() << "Started";
+    LOG_INFO() << "Started";
     
     try {
         // Initialize the dap library
         dap::Initialize();
-
-        LOG_DEBUG() << "Listening on " << parser.GetConnectionString();
+        LOG_INFO() << "Listening on " << parser.GetConnectionString();
 
         dap::SocketServer server;
         server.Start(parser.GetConnectionString());
-        LOG_DEBUG() << "Waiting for a new connection";
+        LOG_INFO() << "Waiting for a new connection";
 
         dap::SocketBase::Ptr_t client = server.WaitForNewConnection();
-        LOG_DEBUG() << "Connection established successfully";
-
-        cout << "Connection established successfully" << endl;
+        LOG_INFO() << "Connection established successfully";
 
         // Construct a GDB Driver
         Driver driver(parser);
