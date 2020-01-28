@@ -10,6 +10,7 @@
 #include "dap/dap.hpp"
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <sstream>
 
@@ -38,20 +39,36 @@ int main(int argc, char** argv)
         LOG_INFO() << "Connection established successfully";
 
         // Construct a GDB Driver
-        Driver driver(parser);
+        Driver gdb(parser);
 
-        dap::ServerProtocol server;
-        server.Initialize(client);
+        // We dont start the main loop until 'initialize' is completed
+        // between gdbd and the client
+        dap::ServerProtocol server(client);
+        server.Initialize();
+
+        // Prepare callbacks
+        auto onNetworkMessage = [&gdb](dap::ProtocolMessage::Ptr_t message) {
+            // Pass the message to gdb for processing
+            gdb.ProcessNetworkMessage(message);
+        };
+
+        auto onGdbOutput = [&server](dap::ProtocolMessage::Ptr_t message) {
+            // Pass the message to the network server for processing
+            server.ProcessGdbMessage(message);
+        };
 
         // The main loop:
         // - Check for any input from GDB and send it over JSONRpc to the client
         // - Check for any request from the client and pass it to the gdb
-        while(driver.IsAlive()) {
-            dap::ProtocolMessage::Ptr_t message = driver.Check();
-            if(message) {
-                // send it to the driver
-                client->Send(message->To().Format());
-            }
+        while(gdb.IsAlive()) {
+            // If we got something from gdb, process it
+            // by converting it to the proper dap message
+            // and send it over
+            gdb.Check(onGdbOutput);
+
+            // Check if a request arrived from the client
+            // If so, convert it back gdb commands and send it over to gdb
+            server.Check(onNetworkMessage);
         }
     } catch(dap::SocketException& e) {
         LOG_ERROR() << "ERROR: " << e.what();

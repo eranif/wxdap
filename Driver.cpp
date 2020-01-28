@@ -17,20 +17,40 @@ Driver::~Driver() { DELETE_PTR(m_gdb); }
 
 bool Driver::IsAlive() const { return m_gdb && m_gdb->IsAlive(); }
 
-void Driver::ProcessRequest(dap::Request::Ptr_t request)
+void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
 {
-    if(!m_initialized && (request->type == "initialize")) {
-        // Send back "initialize response"
-        m_initialized = true;
-    } else if(m_initialized) {
-        
-    } else {
-        // We can only accept initialize request at this stage
+    // Handle DAP request message
+}
+
+void Driver::Check(function<void(dap::ProtocolMessage::Ptr_t)> onGdbMessage)
+{
+    auto output = m_gdb->Read();
+    if(!output.first.empty()) {
+        // Process the raw buffer
+        m_stdout.append(output.first);
+        auto msg = ProcessGdbStdout();
+        if(msg) {
+            onGdbMessage(msg);
+        }
+    }
+    if(!output.second.empty()) {
+        // Process the raw buffer
+        m_stderr.append(output.second);
+        auto msg = ProcessGdbStderr();
+        if(msg) {
+            onGdbMessage(msg);
+        }
     }
 }
 
-dap::ProtocolMessage::Ptr_t Driver::Check()
+dap::ProtocolMessage::Ptr_t Driver::ProcessGdbStdout()
 {
-    dap::ProtocolMessage::Ptr_t message = m_queue.pop(chrono::milliseconds(1));
-    return message;
+    // Given a raw gdb output, convert it into
+    return nullptr;
+}
+
+dap::ProtocolMessage::Ptr_t Driver::ProcessGdbStderr()
+{
+    // Given a raw gdb output, convert it into
+    return nullptr;
 }
