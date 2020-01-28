@@ -43,7 +43,7 @@ void dap::ServerProtocol::Initialize()
 void dap::ServerProtocol::Check(function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage)
 {
     string content;
-    if(m_conn->Read(content) == SocketBase::kSuccess) {
+    if(m_conn->Read(content, 10) == SocketBase::kSuccess) {
         m_rpc.AppendBuffer(content);
         dap::ProtocolMessage::Ptr_t message = m_rpc.ProcessBuffer();
         if(message) {
