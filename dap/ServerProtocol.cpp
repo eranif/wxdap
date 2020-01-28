@@ -37,6 +37,7 @@ void dap::ServerProtocol::Initialize()
                         m_rpc.Send(initEvent, m_conn);
                         LOG_DEBUG() << "Sending InitializedEvent";
                         LOG_INFO() << "Initialization completed";
+                        state = kDone;
                     }
                     break;
                 }
