@@ -179,7 +179,7 @@ void Log::Flush()
         }
         m_fp = nullptr;
     }
-    m_buffer.clear();
+    m_buffer = stringstream();
 }
 
 string Log::Prefix(int verbosity)

@@ -1,5 +1,6 @@
 #include "StringUtils.hpp"
 #include <codecvt>
+#include <cstring>
 #include <locale>
 #include <sstream>
 
@@ -77,4 +78,184 @@ string StringUtils::ToUpper(const string& str)
         upper.append(1, toupper(ch));
     }
     return upper;
+}
+#define ARGV_STATE_NORMAL 0
+#define ARGV_STATE_DQUOTE 1
+#define ARGV_STATE_SQUOTE 2
+#define ARGV_STATE_ESCAPE 3
+#define ARGV_STATE_BACKTICK 4
+#define PUSH_CURTOKEN()                \
+    {                                  \
+        if(!curstr.str().empty()) {    \
+            A.push_back(curstr.str()); \
+            curstr = stringstream();   \
+        }                              \
+    }
+
+#define CHANGE_STATE(new_state) \
+    {                           \
+        prev_state = state;     \
+        state = new_state;      \
+    }
+
+#define RESTORE_STATE()                 \
+    {                                   \
+        state = prev_state;             \
+        prev_state = ARGV_STATE_NORMAL; \
+    }
+
+char** StringUtils::BuildArgv(const string& str, int& argc)
+{
+    vector<string> A;
+    int state = ARGV_STATE_NORMAL;
+    int prev_state = ARGV_STATE_NORMAL;
+    stringstream curstr;
+    for(char ch : str) {
+        switch(state) {
+        case ARGV_STATE_NORMAL: {
+            switch(ch) {
+            case ' ':
+            case '\t':
+                PUSH_CURTOKEN();
+                break;
+            case '\'':
+                CHANGE_STATE(ARGV_STATE_SQUOTE);
+                curstr << ch;
+                break;
+            case '"':
+                CHANGE_STATE(ARGV_STATE_DQUOTE);
+                curstr << ch;
+                break;
+            case '`':
+                CHANGE_STATE(ARGV_STATE_BACKTICK);
+                curstr << ch;
+                break;
+            default:
+                curstr << ch;
+                break;
+            }
+        } break;
+        case ARGV_STATE_ESCAPE: {
+            if(prev_state == ARGV_STATE_DQUOTE) {
+                switch(ch) {
+                case '"':
+                    curstr << "\"";
+                    RESTORE_STATE();
+                    break;
+                default:
+                    curstr << "\\" << ch;
+                    RESTORE_STATE();
+                    break;
+                }
+            } else if(prev_state == ARGV_STATE_BACKTICK) {
+                switch(ch) {
+                case '`':
+                    curstr << "`";
+                    RESTORE_STATE();
+                    break;
+                default:
+                    curstr << "\\" << ch;
+                    RESTORE_STATE();
+                    break;
+                }
+            } else { // single quote
+                switch(ch) {
+                case '\'':
+                    curstr << "'";
+                    RESTORE_STATE();
+                    break;
+                default:
+                    curstr << "\\" << ch;
+                    RESTORE_STATE();
+                    break;
+                }
+            }
+        } break;
+        case ARGV_STATE_DQUOTE: {
+            switch(ch) {
+            case '\\':
+                CHANGE_STATE(ARGV_STATE_ESCAPE);
+                break;
+            case '"':
+                curstr << ch;
+                RESTORE_STATE();
+                break;
+            default:
+                curstr << ch;
+                break;
+            }
+        } break;
+        case ARGV_STATE_SQUOTE: {
+            switch(ch) {
+            case '\\':
+                CHANGE_STATE(ARGV_STATE_ESCAPE);
+                break;
+            case '\'':
+                curstr << ch;
+                RESTORE_STATE();
+                break;
+            default:
+                curstr << ch;
+                break;
+            }
+        } break;
+        case ARGV_STATE_BACKTICK: {
+            switch(ch) {
+            case '\\':
+                CHANGE_STATE(ARGV_STATE_ESCAPE);
+                break;
+            case '`':
+                curstr << ch;
+                RESTORE_STATE();
+                break;
+            default:
+                curstr << ch;
+                break;
+            }
+        } break;
+        }
+    }
+
+    if(!curstr.str().empty()) {
+        A.push_back(curstr.str());
+    }
+
+    if(A.empty()) {
+        return nullptr;
+    }
+
+    char** argv = new char*[A.size() + 1];
+    argv[A.size()] = NULL;
+    for(size_t i = 0; i < A.size(); ++i) {
+        argv[i] = strdup(A[i].c_str());
+    }
+    argc = (int)A.size();
+    return argv;
+}
+
+void StringUtils::FreeArgv(char** argv, int argc)
+{
+    for(int i = 0; i < argc; ++i) {
+        free(argv[i]);
+    }
+    delete[] argv;
+}
+
+vector<string> StringUtils::BuildArgv(const string& str)
+{
+    int argc = 0;
+    char** argv = BuildArgv(str, argc);
+    vector<string> arrArgv;
+    for(int i = 0; i < argc; ++i) {
+        arrArgv.push_back(argv[i]);
+    }
+    FreeArgv(argv, argc);
+
+    for(string& s : arrArgv) {
+        if((s.length() > 1) && (s[0] == '"') && (s.back() == '"')) {
+            s.pop_back();
+            s.erase(0, 1);
+        }
+    }
+    return arrArgv;
 }

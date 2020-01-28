@@ -69,27 +69,50 @@ public:
     static string GetVerbosityAsString(int verbosity);
     static int GetVerbosityAsNumber(const string& verbosity);
 
-    template <typename T>
-    stringstream& operator<<(const T& str)
+    inline Log& Append(const vector<string>& arr, int level)
     {
+        if(arr.empty()) {
+            return *this;
+        }
+        string str;
+        str += "[";
+        for(auto s : arr) {
+            str += s;
+            str += ", ";
+        }
+        str.pop_back();
+        str.pop_back();
+        str += "]";
         Append(str, GetRequestedLogLevel());
-        return GetStream();
+        return *this;
+    }
+
+    inline Log& operator<<(const string& str)
+    {
+        if(GetRequestedLogLevel() > m_verbosity) {
+            return *this;
+        }
+        if(!m_buffer.str().empty()) {
+            m_buffer << " ";
+        }
+        m_buffer << str;
+        return *this;
     }
 
     /**
      * @brief append any type to the buffer, take log level into consideration
      */
     template <typename T>
-    stringstream& Append(const T& elem, int level)
+    Log& Append(const T& elem, int level)
     {
         if(level > m_verbosity) {
-            return m_buffer;
+            return *this;
         }
         if(!m_buffer.str().empty()) {
             m_buffer << " ";
         }
         m_buffer << elem;
-        return m_buffer;
+        return *this;
     }
 
     /**
@@ -102,6 +125,13 @@ inline stringstream& clEndl(Log& d)
 {
     d.Flush();
     return d.GetStream();
+}
+
+template <typename T>
+Log& operator<<(Log& logger, const T& obj)
+{
+    logger.Append(obj, logger.GetRequestedLogLevel());
+    return logger;
 }
 
 // New API

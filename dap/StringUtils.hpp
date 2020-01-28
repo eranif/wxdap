@@ -9,6 +9,10 @@ using namespace std;
 
 class StringUtils
 {
+protected:
+    static char** BuildArgv(const string& str, int& argc);
+    static void FreeArgv(char** argv, int argc);
+    
 public:
     /// Right trim
     static wstring& Rtrim(wstring& str);
@@ -35,6 +39,9 @@ public:
     
     /// Convert to string to uppercase
     static string ToUpper(const string& str);
+    
+    /// Split command line into array
+    static vector<string> BuildArgv(const string& str);
 };
 
 #endif // STRINGUTILS_H
