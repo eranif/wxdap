@@ -3,6 +3,9 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="linux.cpp"/>
+    <File Name="UnixProcess.hpp"/>
+    <File Name="UnixProcess.cpp"/>
     <File Name="Log.hpp"/>
     <File Name="Log.cpp"/>
     <File Name="ServerProtocol.hpp"/>

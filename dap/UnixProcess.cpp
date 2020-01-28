@@ -148,6 +148,9 @@ bool UnixProcess::Write(const string& message)
 
 bool UnixProcess::DoRead(string& str, string& err_buff)
 {
+    if(!IsAlive()) {
+        return false;
+    }
     ReadAll(m_childStdout.GetReadFd(), str, 10);
     ReadAll(m_childStderr.GetReadFd(), err_buff, 10);
     return !str.empty() || !err_buff.empty();

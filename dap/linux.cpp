@@ -12,6 +12,7 @@ Process* ExecuteProcess(const string& cmd, const string& workingDir)
     vector<string> args = StringUtils::BuildArgv(cmd);
     LOG_DEBUG() << "Starting process:" << args;
     UnixProcess* process = new UnixProcess(args);
+    process->StartReaderThread();
     return process;
 }
 
