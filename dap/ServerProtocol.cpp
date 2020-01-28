@@ -13,7 +13,7 @@ void dap::ServerProtocol::Initialize()
     // Attempt to read something from the network
     enum eState { kWaitingInitRequest, kDone };
     eState state = kWaitingInitRequest;
-    while(true) {
+    while(state != kDone) {
         string network_buffer;
         if(m_conn->Read(network_buffer, 10) == dap::SocketBase::kSuccess) {
 
@@ -24,27 +24,17 @@ void dap::ServerProtocol::Initialize()
 
             // Try to construct a message and process it
             dap::ProtocolMessage::Ptr_t request = m_rpc.ProcessBuffer();
-            if(request) {
-                switch(state) {
-                case kWaitingInitRequest: {
-                    if(request->type == "request" && request->As<dap::InitializeRequest>()) {
-                        dap::InitializeResponse initResponse;
-                        m_rpc.Send(initResponse, m_conn);
-                        LOG_DEBUG() << "Sending InitializeRequest";
+            if(request->type == "request" && request->As<dap::InitializeRequest>()) {
+                dap::InitializeResponse initResponse;
+                m_rpc.Send(initResponse, m_conn);
+                LOG_DEBUG() << "Sending InitializeRequest";
 
-                        // Send InitializedEvent
-                        dap::InitializedEvent initEvent;
-                        m_rpc.Send(initEvent, m_conn);
-                        LOG_DEBUG() << "Sending InitializedEvent";
-                        LOG_INFO() << "Initialization completed";
-                        state = kDone;
-                    }
-                    break;
-                }
-                case kDone: {
-                    return;
-                }
-                }
+                // Send InitializedEvent
+                dap::InitializedEvent initEvent;
+                m_rpc.Send(initEvent, m_conn);
+                LOG_DEBUG() << "Sending InitializedEvent";
+                LOG_INFO() << "Initialization completed";
+                state = kDone;
             }
         }
     }
