@@ -349,7 +349,7 @@ void OutputEvent::From(const JSONItem& json)
 JSONItem Source::To(const string& name) const
 {
     CREATE_JSON();
-    ADD_PROP(name);
+    json.add("name", this->name);
     ADD_PROP(path);
     return json;
 }
@@ -527,8 +527,7 @@ JSONItem LaunchRequestArguments::To(const string& name) const
     CREATE_JSON();
     ADD_PROP(noDebug);
     ADD_PROP(debuggee);
-    ADD_PROP(debugger);
-    ADD_PROP(stopAtMain);
+    ADD_PROP(workingDirectory);
     return json;
 }
 
@@ -536,8 +535,7 @@ void LaunchRequestArguments::From(const JSONItem& json)
 {
     GET_PROP(noDebug, Bool);
     GET_PROP(debuggee, StringArray);
-    GET_PROP(debugger, String);
-    GET_PROP(stopAtMain, Bool);
+    GET_PROP(workingDirectory, String);
 }
 
 // ----------------------------------------

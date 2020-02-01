@@ -259,3 +259,35 @@ vector<string> StringUtils::BuildArgv(const string& str)
     }
     return arrArgv;
 }
+
+#ifdef __WIN32
+#define PATH_SEP '\\'
+#define SOURCE_SEP '/'
+#else
+#define PATH_SEP '/'
+#define SOURCE_SEP '\\'
+#endif
+
+static string& ConvertSlashes(string& path, char source, char target)
+{
+    char last_char = 0;
+    string tmp;
+    tmp.reserve(path.length());
+    for(char& ch : path) {
+        if(ch == source) {
+            ch = target;
+        }
+        if(ch == target && last_char == target) {
+            // Skip it
+        } else {
+            tmp.append(1, ch);
+        }
+        last_char = ch;
+    }
+    path = tmp;
+    return path;
+}
+
+string& StringUtils::ToNativePath(string& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
+
+string& StringUtils::ToUnixPath(string& path) { return ConvertSlashes(path, '\\', '/'); }

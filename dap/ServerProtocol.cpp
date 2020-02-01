@@ -40,15 +40,24 @@ void dap::ServerProtocol::Initialize()
     }
 }
 
-void dap::ServerProtocol::Check(function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage)
+void dap::ServerProtocol::Check()
 {
-    string content;
-    if(m_conn->Read(content, 10) == SocketBase::kSuccess) {
-        m_rpc.AppendBuffer(content);
-        dap::ProtocolMessage::Ptr_t message = m_rpc.ProcessBuffer();
+    dap::ProtocolMessage::Ptr_t message = m_rpc.ProcessBuffer();
+    if(m_onNetworkMessage) {
         if(message) {
-            // Call the handler
-            onNetworkMessage(message);
+            return m_onNetworkMessage(message);
+        } else {
+            // try to read something from the network and try again
+            string content;
+            if(m_conn->Read(content, 10) == SocketBase::kSuccess) {
+                m_rpc.AppendBuffer(content);
+                // Try again now that we have read something
+                message = m_rpc.ProcessBuffer();
+                if(message) {
+                    // Call the handler
+                    m_onNetworkMessage(message);
+                }
+            }
         }
     }
 }

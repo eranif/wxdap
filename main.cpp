@@ -47,15 +47,15 @@ int main(int argc, char** argv)
         server.Initialize();
 
         // Prepare callbacks
-        auto onNetworkMessage = [&gdb](dap::ProtocolMessage::Ptr_t message) {
+        server.RegisterNetworkCallback([&gdb](dap::ProtocolMessage::Ptr_t message) {
             // Pass the message to gdb for processing
             gdb.ProcessNetworkMessage(message);
-        };
-
-        auto onGdbOutput = [&server](dap::ProtocolMessage::Ptr_t message) {
+        });
+        
+        gdb.RegisterGdbOutputCallback([&server](dap::ProtocolMessage::Ptr_t message) {
             // Pass the message to the network server for processing
             server.ProcessGdbMessage(message);
-        };
+        });
 
         // The main loop:
         // - Check for any input from GDB and send it over JSONRpc to the client
@@ -64,11 +64,11 @@ int main(int argc, char** argv)
             // If we got something from gdb, process it
             // by converting it to the proper dap message
             // and send it over
-            gdb.Check(onGdbOutput);
+            gdb.Check();
 
             // Check if a request arrived from the client
             // If so, convert it back gdb commands and send it over to gdb
-            server.Check(onNetworkMessage);
+            server.Check();
         }
     } catch(dap::SocketException& e) {
         LOG_ERROR() << "ERROR: " << e.what();

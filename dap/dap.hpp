@@ -417,14 +417,10 @@ struct LaunchRequestArguments : public Any {
      * the other items in the vector are passed to the debuggee
      */
     vector<string> debuggee;
-    /**
-     * debugger exeutable path
+    /*
+     * start the debugger from this directory
      */
-    string debugger;
-
-    /** stop at main function */
-    bool stopAtMain = false;
-
+    string workingDirectory = ".";
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();
 };

@@ -10,6 +10,7 @@ class ServerProtocol
 {
     JsonRPC m_rpc;
     SocketBase::Ptr_t m_conn;
+    function<void(dap::ProtocolMessage::Ptr_t)> m_onNetworkMessage = nullptr;
 
 public:
     ServerProtocol(SocketBase::Ptr_t conn);
@@ -18,10 +19,18 @@ public:
     void Initialize();
 
     /**
+     * @brief register a callback for handling network messages
+     */
+    void RegisterNetworkCallback(function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage)
+    {
+        m_onNetworkMessage = onNetworkMessage;
+    }
+
+    /**
      * @brief Check to see if any messages have arrived on the network
      * and process them
      */
-    void Check(function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage);
+    void Check();
 
     /**
      * @brief process gdb output

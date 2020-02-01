@@ -23,23 +23,6 @@ typedef int socket_t;
 using namespace std;
 namespace dap
 {
-class SocketException
-{
-    string m_what;
-
-public:
-    SocketException(const string& what)
-        : m_what(what)
-    {
-        // trim whitespaces
-        static string trimString("\r\n\t\v ");
-        m_what.erase(0, m_what.find_first_not_of(trimString));
-        m_what.erase(m_what.find_last_not_of(trimString) + 1);
-    }
-    ~SocketException() {}
-    const string& what() const { return m_what; }
-};
-
 class SocketBase
 {
 protected:
@@ -85,7 +68,7 @@ public:
      * @brief initialize the socket library
      */
     static void Initialize();
-    
+
     /**
      * @brief return platform specific socket handle
      */
@@ -112,7 +95,7 @@ public:
      * @throws SocketException
      */
     int Read(string& content, long milliSeconds = -1);
-    
+
     /**
      * @brief
      * @param seconds

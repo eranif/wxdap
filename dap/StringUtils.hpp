@@ -42,6 +42,13 @@ public:
     
     /// Split command line into array
     static vector<string> BuildArgv(const string& str);
+    
+    /// Convert file's path to native path
+    /// this function also removes double \\ or //
+    static string& ToNativePath(string& path);
+    
+    /// Convert file's path to UNIX slashes
+    static string& ToUnixPath(string& path);
 };
 
 #endif // STRINGUTILS_H
