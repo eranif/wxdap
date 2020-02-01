@@ -23,7 +23,18 @@ class Driver
 
 protected:
     void OnLaunch(dap::ProtocolMessage::Ptr_t request);
-    void ReportLaunchError(int seq, const string& what);
+    void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t request);
+    template <typename T>
+    void ReportError(int seq, const string& what)
+    {
+        T* response = new T();
+        response->message = what;
+        response->request_seq = seq;
+        response->success = false;
+        if(m_onGdbOutput) {
+            m_onGdbOutput(dap::ProtocolMessage::Ptr_t(response));
+        }
+    }
 
 public:
     Driver(const CommandLineParser& parser, DebuggerHandler::Ptr_t handler);

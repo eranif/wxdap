@@ -24,9 +24,14 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
 {
     // Handle DAP request message
     LOG_DEBUG() << "<==" << message->To().Format();
-    if(message->type == "request" && message->As<dap::Request>()->command == "launch") {
-        // Handle launch command
-        OnLaunch(message);
+    if(message->type == "request") {
+        dap::Request* request = message->As<dap::Request>();
+        if(request->command == "launch") {
+            // Handle launch command
+            OnLaunch(message);
+        } else if(request->command == "setBreakpoints") {
+            OnSetBreakpoints(message);
+        }
     }
 }
 
@@ -60,19 +65,20 @@ void Driver::OnLaunch(dap::ProtocolMessage::Ptr_t request)
         m_backend->OnLaunchRequest(request);
     } catch(dap::Exception& e) {
         LOG_ERROR() << "Launch error:" << e.What();
-        ReportLaunchError(request->seq, e.What());
+        ReportError<dap::LaunchResponse>(request->seq, e.What());
     }
 }
 
-void Driver::ReportLaunchError(int seq, const string& what)
+void Driver::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t request)
 {
-    dap::LaunchResponse* response = new dap::LaunchResponse();
-    response->message = what;
-    response->request_seq = seq;
-    response->success = false;
-    if(m_onGdbOutput) {
-        m_onGdbOutput(dap::ProtocolMessage::Ptr_t(response));
+    try {
+        m_backend->OnSetBreakpoints(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "SetBreakpoints error:" << e.What();
+        ReportError<dap::SetBreakpointsResponse>(request->seq, e.What());
     }
 }
+
 
 void Driver::SetHandler(DebuggerHandler::Ptr_t handler) { m_backend = handler; }
+

@@ -1,7 +1,9 @@
 #include "CommandLineParser.hpp"
 #include "Driver.hpp"
-#include "dap/JsonRPC.hpp"
+#include "GDBMI.hpp"
+#include "GdbHandler.hpp"
 #include "dap/Exception.hpp"
+#include "dap/JsonRPC.hpp"
 #include "dap/Log.hpp"
 #include "dap/Process.hpp"
 #include "dap/ServerProtocol.hpp"
@@ -14,7 +16,6 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
-#include "GdbHandler.hpp"
 
 using namespace std;
 
@@ -23,6 +24,18 @@ int main(int argc, char** argv)
     // Parse the command line arguments (exit if needed)
     CommandLineParser parser;
     parser.Parse(argc, argv);
+
+    GDBMI mi;
+    auto breakpoints = mi.ParseBreakpoints(
+        "body=[bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr="
+        "\"0x0000000000401564\",func=\"main(int,char**)\",file=\"C:/Users/Eran/Documents/AmitTest/"
+        "AmitTest/"
+        "main.cpp\",fullname=\"C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp\",line=\"10\","
+        "thread-groups=[\"i1\"],times=\"0\",original-location=\"main.cpp:10\"},bkpt={number=\"2\",type="
+        "\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0x0000000000401564\",func=\"main(int,char**)"
+        "\",file=\"C:/Users/Eran/Documents/AmitTest/AmitTest/"
+        "main.cpp\",fullname=\"C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp\",line=\"12\","
+        "thread-groups=[\"i1\"],times=\"0\",original-location=\"main.cpp:12\"}]}");
 
     // Open the log file
     dap::Log::OpenStdout(dap::Log::Developer);
@@ -54,7 +67,7 @@ int main(int argc, char** argv)
             // Pass the message to gdb for processing
             gdb.ProcessNetworkMessage(message);
         });
-        
+
         gdb.RegisterGdbOutputCallback([&server](dap::ProtocolMessage::Ptr_t message) {
             // Pass the message to the network server for processing
             server.ProcessGdbMessage(message);

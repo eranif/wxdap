@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="GDBMI.cpp"/>
+    <File Name="GDBMI.hpp"/>
     <File Name="GdbHandler.cpp"/>
     <File Name="GdbHandler.hpp"/>
     <File Name="DebuggerHandler.cpp"/>

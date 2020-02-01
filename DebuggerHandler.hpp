@@ -46,6 +46,12 @@ public:
      * @throws dap::Exception
      */
     virtual void OnLaunchRequest(dap::ProtocolMessage::Ptr_t message) = 0;
+
+    /**
+     * @brief fronend requested to set breakpoints
+     * @throws dap::Exception
+     */
+    virtual void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message) = 0;
     
     /**
      * @brief process raw debugger output
