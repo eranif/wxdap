@@ -1,3 +1,4 @@
+#include "Exception.hpp"
 #include "JsonRPC.hpp"
 #include "SocketServer.hpp"
 #include "StringUtils.hpp"
@@ -88,7 +89,7 @@ void dap::JsonRPC::AppendBuffer(const string& buffer) { m_buffer.append(buffer);
 void dap::JsonRPC::Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const
 {
     if(!conn) {
-        throw SocketException("Invalid connection");
+        throw Exception("Invalid connection");
     }
     string network_buffer;
     string payload = msg.To().Format();
@@ -102,10 +103,10 @@ void dap::JsonRPC::Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const
 void dap::JsonRPC::Send(ProtocolMessage::Ptr_t msg, SocketBase::Ptr_t conn) const
 {
     if(!msg) {
-        throw SocketException("Unable to send empty message");
+        throw Exception("Unable to send empty message");
     }
     if(!conn) {
-        throw SocketException("Invalid connection");
+        throw Exception("Invalid connection");
     }
     Send(*msg.get(), conn);
 }

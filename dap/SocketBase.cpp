@@ -1,5 +1,5 @@
-#include "SocketBase.hpp"
 #include "Exception.hpp"
+#include "SocketBase.hpp"
 #include <cerrno>
 #include <cstdio>
 #include <memory>
@@ -56,10 +56,9 @@ int SocketBase::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long ti
         if(eWouldBlock == err) {
             return kTimeout;
         }
-
-        throw Excep("Read failed: " + error(err));
+        throw Exception("Read failed: " + error(err));
     } else if(0 == res) {
-        throw Excep("Read failed: " + error());
+        throw Exception("Read failed: " + error());
     }
 
     bytesRead = static_cast<size_t>(res);
@@ -72,7 +71,7 @@ int SocketBase::SelectRead(long seconds)
         return kSuccess;
     }
     if(m_socket == INVALID_SOCKET) {
-        throw Excep("Invalid socket!");
+        throw Exception("Invalid socket!");
     }
     struct timeval tv = { seconds, 0 };
 
@@ -86,7 +85,7 @@ int SocketBase::SelectRead(long seconds)
 
     } else if(rc < 0) {
         // an error occurred
-        throw Excep("SelectRead failed: " + error());
+        throw Exception("SelectRead failed: " + error());
 
     } else {
         // we got something to read
@@ -98,7 +97,7 @@ int SocketBase::SelectRead(long seconds)
 void SocketBase::Send(const string& msg)
 {
     if(m_socket == INVALID_SOCKET) {
-        throw Excep("Invalid socket!");
+        throw Exception("Invalid socket!");
     }
     if(msg.empty()) {
         return;
@@ -110,7 +109,7 @@ void SocketBase::Send(const string& msg)
             continue;
         int bytesSent = ::send(m_socket, (const char*)pdata, bytesLeft, 0);
         if(bytesSent <= 0)
-            throw Excep("Send error: " + error());
+            throw Exception("Send error: " + error());
         pdata += bytesSent;
         bytesLeft -= bytesSent;
     }
@@ -199,7 +198,7 @@ int SocketBase::SelectWriteMS(long milliSeconds)
     }
 
     if(m_socket == INVALID_SOCKET) {
-        throw Excep("Invalid socket!");
+        throw Exception("Invalid socket!");
     }
 
     struct timeval tv;
@@ -217,7 +216,7 @@ int SocketBase::SelectWriteMS(long milliSeconds)
 
     } else if(rc < 0) {
         // an error occurred
-        throw Excep("SelectWriteMS failed: " + error());
+        throw Exception("SelectWriteMS failed: " + error());
 
     } else {
         // we got something to read
@@ -232,7 +231,7 @@ int SocketBase::SelectWrite(long seconds)
     }
 
     if(m_socket == INVALID_SOCKET) {
-        throw Excep("Invalid socket!");
+        throw Exception("Invalid socket!");
     }
 
     struct timeval tv = { seconds, 0 };
@@ -248,7 +247,7 @@ int SocketBase::SelectWrite(long seconds)
 
     } else if(rc < 0) {
         // an error occurred
-        throw Excep("SelectRead failed: " + error());
+        throw Exception("SelectRead failed: " + error());
 
     } else {
         // we got something to read
@@ -263,7 +262,7 @@ int SocketBase::SelectReadMS(long milliSeconds)
     }
 
     if(m_socket == INVALID_SOCKET) {
-        throw Excep("Invalid socket!");
+        throw Exception("Invalid socket!");
     }
 
     int seconds = milliSeconds / 1000; // convert the number into seconds
@@ -280,7 +279,7 @@ int SocketBase::SelectReadMS(long milliSeconds)
 
     } else if(rc < 0) {
         // an error occurred
-        throw Excep("SelectRead failed: " + error());
+        throw Exception("SelectRead failed: " + error());
 
     } else {
         // we got something to read

@@ -1,3 +1,4 @@
+#include "dap/Exception.hpp"
 #include "dap/JsonRPC.hpp"
 #include "dap/SocketClient.hpp"
 #include <iostream>
@@ -43,8 +44,8 @@ int main(int argc, char** argv)
                     if(cli->Read(content)) {
                         inputQueue.push(content);
                     }
-                } catch(dap::SocketException& e) {
-                    cerr << "Connection error: " << e.what() << endl;
+                } catch(dap::Exception& e) {
+                    cerr << "Connection error: " << e.What() << endl;
                     terminated.store(true);
                     break;
                 }
@@ -130,8 +131,8 @@ int main(int argc, char** argv)
         }
         readerThread.join();
 
-    } catch(dap::SocketException& e) {
-        cerr << "Error: " << e.what() << endl;
+    } catch(dap::Exception& e) {
+        cerr << "Error: " << e.What() << endl;
     }
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "CommandLineParser.hpp"
 #include "Driver.hpp"
 #include "dap/JsonRPC.hpp"
+#include "dap/Exception.hpp"
 #include "dap/Log.hpp"
 #include "dap/Process.hpp"
 #include "dap/ServerProtocol.hpp"
@@ -70,8 +71,8 @@ int main(int argc, char** argv)
             // If so, convert it back gdb commands and send it over to gdb
             server.Check();
         }
-    } catch(dap::SocketException& e) {
-        LOG_ERROR() << "ERROR: " << e.what();
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "ERROR: " << e.What();
         return 1;
     }
     // We are done

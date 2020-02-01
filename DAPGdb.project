@@ -10,8 +10,6 @@
     <File Name="CommandLineParser.hpp"/>
     <File Name="CommandLineParser.cpp"/>
     <File Name="utils.hpp"/>
-    <File Name="Exception.cpp"/>
-    <File Name="Exception.hpp"/>
     <File Name="Driver.cpp"/>
     <File Name="Driver.hpp"/>
     <File Name="main.cpp"/>

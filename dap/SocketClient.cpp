@@ -1,4 +1,5 @@
 #include "ConnectionString.hpp"
+#include "Exception.hpp"
 #include "SocketClient.hpp"
 
 #ifndef _WIN32
@@ -50,9 +51,11 @@ bool SocketClient::ConnectRemote(const string& address, int port)
 bool SocketClient::Connect(const string& connectionString)
 {
     ConnectionString cs(connectionString);
-    if(!cs.IsOK()) { return false; }
+    if(!cs.IsOK()) {
+        return false;
+    }
     if(cs.GetProtocol() == ConnectionString::kUnixLocalSocket) {
-        throw SocketException("Unsupported protocol");
+        throw Exception("Unsupported protocol");
     } else {
         // TCP
         return ConnectRemote(cs.GetHost(), cs.GetPort());

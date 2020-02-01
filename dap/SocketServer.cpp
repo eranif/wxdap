@@ -1,4 +1,5 @@
 #include "ConnectionString.hpp"
+#include "Exception.hpp"
 #include "SocketServer.hpp"
 
 #ifndef _WIN32
@@ -22,7 +23,7 @@ int SocketServer::CreateServer(const string& address, int port)
 {
     // Create a socket
     if((m_socket = ::socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-        throw SocketException("Could not create socket: " + error());
+        throw Exception("Could not create socket: " + error());
     }
 
     // must set reuse-address
@@ -44,7 +45,7 @@ int SocketServer::CreateServer(const string& address, int port)
 
     // Bind
     if(::bind(m_socket, (struct sockaddr*)&server, sizeof(server)) != 0) {
-        throw SocketException("CreateServer: bind() error: " + error());
+        throw Exception("CreateServer: bind() error: " + error());
     }
 
     if(port == 0) {
@@ -55,12 +56,14 @@ int SocketServer::CreateServer(const string& address, int port)
         socklen_t name_len = sizeof(socket_name);
 #endif
         if(::getsockname(m_socket, (struct sockaddr*)&socket_name, &name_len) != 0) {
-            throw SocketException("CreateServer: getsockname() error: " + error());
+            throw Exception("CreateServer: getsockname() error: " + error());
         }
         port = ntohs(socket_name.sin_port);
     }
     // define the accept queue size
-    if(::listen(m_socket, 10) != 0) { throw SocketException("CreateServer: listen() error: " + error()); }
+    if(::listen(m_socket, 10) != 0) {
+        throw Exception("CreateServer: listen() error: " + error());
+    }
 
     // return the bound port number
     return port;
@@ -69,11 +72,13 @@ int SocketServer::CreateServer(const string& address, int port)
 int SocketServer::Start(const string& connectionString)
 {
     ConnectionString cs(connectionString);
-    if(!cs.IsOK()) { throw SocketException("Invalid connection string provided"); }
+    if(!cs.IsOK()) {
+        throw Exception("Invalid connection string provided");
+    }
     if(cs.GetProtocol() == ConnectionString::kTcp) {
         return CreateServer(cs.GetHost(), cs.GetPort());
     } else {
-        throw SocketException("Unsupported protocol");
+        throw Exception("Unsupported protocol");
     }
 }
 
@@ -84,9 +89,13 @@ SocketBase::Ptr_t SocketServer::WaitForNewConnection(long timeout)
 
 SocketBase* SocketServer::WaitForNewConnectionRaw(long timeout)
 {
-    if(SelectRead(timeout) == kTimeout) { return NULL; }
+    if(SelectRead(timeout) == kTimeout) {
+        return NULL;
+    }
     int fd = ::accept(m_socket, 0, 0);
-    if(fd < 0) { throw SocketException("accept error: " + error()); }
+    if(fd < 0) {
+        throw Exception("accept error: " + error());
+    }
     return new SocketBase(fd);
 }
 }; // namespace dap
