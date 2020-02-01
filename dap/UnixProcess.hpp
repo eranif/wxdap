@@ -76,10 +76,13 @@ public:
 
     // wait for process termination
     int Wait();
-
-    // Async calls with callbacks
+    
+    // Write to the process
     bool Write(const string& message) override;
-
+    
+    // Same as Write, but add LF at the end of the message
+    bool WriteLn(const string& message) override;
+    
     // stop the running process
     void Stop();
 

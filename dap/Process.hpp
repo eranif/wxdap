@@ -33,6 +33,7 @@ public:
     virtual ~Process() {}
 
     virtual bool Write(const string& str) = 0;
+    virtual bool WriteLn(const string& str) = 0;
     virtual bool IsAlive() const = 0;
     virtual void Cleanup();
     virtual void Terminate() = 0;

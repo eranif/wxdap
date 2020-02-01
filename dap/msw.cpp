@@ -72,11 +72,13 @@ public:
 protected:
     bool DoReadFromPipe(HANDLE pipe, string& buff);
     bool DoRead(string& ostrout, string& ostrerr);
+    bool DoWrite(const string& str, bool appendLf);
 
 public:
     ProcessMSW() {}
     virtual ~ProcessMSW() { Cleanup(); }
     bool Write(const string& str);
+    bool WriteLn(const string& str);
     bool IsAlive() const;
     void Cleanup();
     void Terminate();
@@ -203,13 +205,24 @@ bool ProcessMSW::DoReadFromPipe(HANDLE pipe, string& buff)
 
 bool ProcessMSW::Write(const string& buff)
 {
+    return DoWrite(buff, false);
+}
+
+bool ProcessMSW::WriteLn(const string& buff)
+{
+    return DoWrite(buff, true);
+}
+
+bool ProcessMSW::DoWrite(const string& buff, bool appendLf)
+{
     DWORD dwMode;
     DWORD dwTimeout;
 
     string tmpCmd = buff;
     StringUtils::Rtrim(tmpCmd);
-    tmpCmd += "\n";
-
+    if(appendLf) {
+        tmpCmd += "\n";
+    }
     // Make the pipe to non-blocking mode
     dwMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
     dwTimeout = 30000;

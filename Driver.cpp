@@ -35,37 +35,34 @@ void Driver::Check()
     auto output = m_backend->Read();
     if(!output.first.empty()) {
         LOG_DEBUG1() << "gdb (stdout):" << output.first;
-        // Process the raw buffer
-        m_stdout.append(output.first);
-        auto msg = ProcessGdbStdout();
-        if(msg && m_onGdbOutput) {
+        // Process ALL messages here
+        auto msg = m_backend->OnDebuggerStdout(output.first);
+        while(msg) {
             m_onGdbOutput(msg);
+            msg = m_backend->OnDebuggerStdout("");
         }
     }
     if(!output.second.empty()) {
         // Process the raw buffer
         LOG_DEBUG1() << "gdb (stderr):" << output.second;
-        m_stderr.append(output.second);
-        auto msg = ProcessGdbStderr();
-        if(msg && m_onGdbOutput) {
+        // Process ALL messages here
+        auto msg = m_backend->OnDebuggerStderr(output.first);
+        while(msg) {
             m_onGdbOutput(msg);
+            msg = m_backend->OnDebuggerStderr("");
         }
     }
 }
 
-dap::ProtocolMessage::Ptr_t Driver::ProcessGdbStdout()
+void Driver::OnLaunch(dap::ProtocolMessage::Ptr_t request)
 {
-    // Given a raw gdb output, convert it into
-    return nullptr;
+    try {
+        m_backend->OnLaunchRequest(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "Launch error:" << e.What();
+        ReportLaunchError(request->seq, e.What());
+    }
 }
-
-dap::ProtocolMessage::Ptr_t Driver::ProcessGdbStderr()
-{
-    // Given a raw gdb output, convert it into
-    return nullptr;
-}
-
-void Driver::OnLaunch(dap::ProtocolMessage::Ptr_t request) { m_backend->OnLaunchRequest(request); }
 
 void Driver::ReportLaunchError(int seq, const string& what)
 {

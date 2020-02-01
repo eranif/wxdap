@@ -22,10 +22,6 @@ class Driver
     friend class DebuggerHandler;
 
 protected:
-    dap::ProtocolMessage::Ptr_t ProcessGdbStdout();
-    dap::ProtocolMessage::Ptr_t ProcessGdbStderr();
-
-protected:
     void OnLaunch(dap::ProtocolMessage::Ptr_t request);
     void ReportLaunchError(int seq, const string& what);
 

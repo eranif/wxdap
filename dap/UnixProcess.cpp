@@ -164,4 +164,6 @@ void UnixProcess::Terminate()
     Wait();
 }
 
+bool UnixProcess::WriteLn(const string& message) { return Write(message + "\n"); }
+
 #endif // OSX & GTK

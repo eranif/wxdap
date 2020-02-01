@@ -34,6 +34,9 @@ public:
     /// Returns the empty string if ch is not found.
     static string AfterFirst(const string& str, char ch);
     
+    /// Check if string starts with a given prefix
+    static bool StartsWith(const string& str, const string& prefix);
+    
     /// Split a string
     static vector<string> Split(const string& str, char ch = '\n');
     
@@ -49,6 +52,12 @@ public:
     
     /// Convert file's path to UNIX slashes
     static string& ToUnixPath(string& path);
+    
+    /// Wrap string with quotes if needed
+    static string& WrapWithQuotes(string& str);
+    
+    /// Wrap string with quotes if needed
+    static string WrapWithQuotes(const string& str);
 };
 
 #endif // STRINGUTILS_H

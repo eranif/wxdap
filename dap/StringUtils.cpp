@@ -291,3 +291,44 @@ static string& ConvertSlashes(string& path, char source, char target)
 string& StringUtils::ToNativePath(string& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
 
 string& StringUtils::ToUnixPath(string& path) { return ConvertSlashes(path, '\\', '/'); }
+
+string& StringUtils::WrapWithQuotes(string& str)
+{
+    if(str.empty()) {
+        return str;
+    }
+    if(str.find(' ') != string::npos) {
+        return str;
+    }
+    str.insert(str.begin(), '"');
+    str.append(1, '"');
+    return str;
+}
+
+string StringUtils::WrapWithQuotes(const string& str)
+{
+    if(str.empty()) {
+        return str;
+    }
+    if(str.find(' ') != string::npos) {
+        return str;
+    }
+    string tmpstr = str;
+    tmpstr.insert(tmpstr.begin(), '"');
+    tmpstr.append(1, '"');
+    return tmpstr;
+}
+
+bool StringUtils::StartsWith(const string& str, const string& prefix)
+{
+    if(str.length() < prefix.length()) {
+        return false;
+    }
+
+    for(size_t i = 0; i < prefix.length(); ++i) {
+        if(str[i] != prefix[i]) {
+            return false;
+        }
+    }
+    return true;
+}
