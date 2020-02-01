@@ -72,7 +72,7 @@ void CommandLineParser::Parse(int argc, char** argv)
         case 'v':
             m_verbose = true;
             break;
-        case 'g':
+        case 'd':
             m_debuggerExec = optarg;
             break;
         case '?':
