@@ -7,16 +7,18 @@
 #include <sstream>
 #include <thread>
 
-Driver::Driver(const CommandLineParser& parser)
+Driver::Driver(const CommandLineParser& parser, DebuggerHandler::Ptr_t handler)
 {
-    stringstream ss;
-    ss << parser.GetGdb() << " -i=mi";
-    m_gdb = dap::ExecuteProcess(ss.str());
+    m_backend = handler;
+    if(!m_backend) {
+        throw dap::Exception("Unable to construct Driver. You must provide a backend");
+    }
+    m_backend->StartDebugger(parser.GetDebuggerExec(), ".");
 }
 
-Driver::~Driver() { DELETE_PTR(m_gdb); }
+Driver::~Driver() {}
 
-bool Driver::IsAlive() const { return m_gdb && m_gdb->IsAlive(); }
+bool Driver::IsAlive() const { return m_backend->IsAlive(); }
 
 void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
 {
@@ -30,7 +32,7 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
 
 void Driver::Check()
 {
-    auto output = m_gdb->Read();
+    auto output = m_backend->Read();
     if(!output.first.empty()) {
         LOG_DEBUG1() << "gdb (stdout):" << output.first;
         // Process the raw buffer
@@ -63,29 +65,7 @@ dap::ProtocolMessage::Ptr_t Driver::ProcessGdbStderr()
     return nullptr;
 }
 
-void Driver::OnLaunch(dap::ProtocolMessage::Ptr_t request)
-{
-    dap::LaunchRequest* req = request->As<dap::LaunchRequest>();
-    const dap::LaunchRequestArguments& args = req->arguments;
-    const string& wd = args.workingDirectory;
-    UNUSED(wd);
-    vector<string> processArgs = args.debuggee;
-    if(!m_gdb) {
-        LOG_ERROR() << "debugger process is not running!";
-        ReportLaunchError(req->seq, "debugger process is not running!");
-        exit(1);
-    }
-
-    // Load the program
-    if(processArgs.empty()) {
-        LOG_ERROR() << "No deubuggee specified";
-        ReportLaunchError(req->seq, "No deubuggee specified");
-        exit(2);
-    }
-    
-    // TODO :: send -file-exec-and-symbols command to gdb
-    // and wait for the response
-}
+void Driver::OnLaunch(dap::ProtocolMessage::Ptr_t request) { m_backend->OnLaunchRequest(request); }
 
 void Driver::ReportLaunchError(int seq, const string& what)
 {
@@ -97,3 +77,5 @@ void Driver::ReportLaunchError(int seq, const string& what)
         m_onGdbOutput(dap::ProtocolMessage::Ptr_t(response));
     }
 }
+
+void Driver::SetHandler(DebuggerHandler::Ptr_t handler) { m_backend = handler; }

@@ -73,7 +73,7 @@ void CommandLineParser::Parse(int argc, char** argv)
             m_verbose = true;
             break;
         case 'g':
-            m_gdb = optarg;
+            m_debuggerExec = optarg;
             break;
         case '?':
             // getopt_long already printed an error message

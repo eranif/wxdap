@@ -14,7 +14,7 @@ class CommandLineParser
     bool m_verbose = false;
     string m_host;
     int m_port = 35670;
-    string m_gdb;
+    string m_debuggerExec;
 
 public:
     CommandLineParser();
@@ -22,16 +22,16 @@ public:
 
     void Parse(int argc, char** argv);
     void PrintUsage(const char* exename, struct option long_options[]);
-    
-    void SetGdb(const string& gdb) { this->m_gdb = gdb; }
+
     void SetHost(const string& host) { this->m_host = host; }
     void SetPort(int port) { this->m_port = port; }
     void SetVerbose(bool verbose) { this->m_verbose = verbose; }
-    const string& GetGdb() const { return m_gdb; }
     const string& GetHost() const { return m_host; }
     int GetPort() const { return m_port; }
     bool IsVerbose() const { return m_verbose; }
-    
     string GetConnectionString() const;
+
+    void SetDebuggerExec(const string& debuggerExec) { this->m_debuggerExec = debuggerExec; }
+    const string& GetDebuggerExec() const { return m_debuggerExec; }
 };
 #endif // COMMANDLINEPARSER_HPP

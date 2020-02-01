@@ -2,6 +2,7 @@
 #define DRIVER_HPP
 
 #include "CommandLineParser.hpp"
+#include "DebuggerHandler.hpp"
 #include "dap/JsonRPC.hpp"
 #include "dap/SocketBase.hpp"
 #include "dap/dap.hpp"
@@ -13,11 +14,12 @@ using namespace std;
 /// Control interface to the underlying debugger
 class Driver
 {
-    dap::Process* m_gdb = nullptr;
     dap::Queue<dap::ProtocolMessage::Ptr_t> m_queue;
     string m_stdout;
     string m_stderr;
     function<void(dap::ProtocolMessage::Ptr_t)> m_onGdbOutput = nullptr;
+    DebuggerHandler::Ptr_t m_backend;
+    friend class DebuggerHandler;
 
 protected:
     dap::ProtocolMessage::Ptr_t ProcessGdbStdout();
@@ -26,10 +28,15 @@ protected:
 protected:
     void OnLaunch(dap::ProtocolMessage::Ptr_t request);
     void ReportLaunchError(int seq, const string& what);
-    
+
 public:
-    Driver(const CommandLineParser& parser);
+    Driver(const CommandLineParser& parser, DebuggerHandler::Ptr_t handler);
     ~Driver();
+
+    /**
+     * @brief set debugger backend
+     */
+    void SetHandler(DebuggerHandler::Ptr_t handler);
 
     /**
      * @brief register a callback for gdb output

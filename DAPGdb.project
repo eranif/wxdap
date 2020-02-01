@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="GdbHandler.cpp"/>
+    <File Name="GdbHandler.hpp"/>
     <File Name="DebuggerHandler.cpp"/>
     <File Name="DebuggerHandler.hpp"/>
     <File Name="Config.cpp"/>

@@ -14,6 +14,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include "GdbHandler.hpp"
 
 using namespace std;
 
@@ -39,8 +40,9 @@ int main(int argc, char** argv)
         dap::SocketBase::Ptr_t client = socketServer.WaitForNewConnection();
         LOG_INFO() << "Connection established successfully";
 
-        // Construct a GDB Driver
-        Driver gdb(parser);
+        // Construct a Driver with GDB handler
+        GdbHandler::Ptr_t backend(new GdbHandler());
+        Driver gdb(parser, backend);
 
         // We dont start the main loop until 'initialize' is completed
         // between gdbd and the client
