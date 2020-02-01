@@ -45,7 +45,7 @@ void CommandLineParser::Parse(int argc, char** argv)
         { "verbose", no_argument, 0, 'v' }, 
         { "host", required_argument, 0, 'h' },
         { "port", required_argument, 0, 'p' }, 
-        { "gdb", required_argument, 0, 'g' }, 
+        { "debugger", required_argument, 0, 'd' }, 
         { 0, 0, 0, 0 }
     };
     // clang-format on
@@ -54,7 +54,7 @@ void CommandLineParser::Parse(int argc, char** argv)
     while(1) {
         // getopt_long stores the option index here
         int option_index = 0;
-        c = getopt_long(argc, argv, ":vh:p:g:", long_options, &option_index);
+        c = getopt_long(argc, argv, ":vh:p:d:", long_options, &option_index);
 
         // Detect the end of the options.
         if(c == -1)
