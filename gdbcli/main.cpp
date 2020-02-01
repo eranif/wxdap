@@ -91,7 +91,7 @@ int main(int argc, char** argv)
         // We start with launch request which contains the executable to debug
         dap::LaunchRequest* launchRequest = new dap::LaunchRequest();
         launchRequest->seq = 0; // command sequence
-        launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest1.exe" };
+        launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" };
         commands.push_back(dap::ProtocolMessage::Ptr_t(launchRequest));
 
         // Add set breakpoint
