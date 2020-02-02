@@ -14,8 +14,9 @@ class GdbHandler : public DebuggerHandler
 
 protected:
     string NextSequence();
-    dap::ProtocolMessage::Ptr_t OnOutput(string& inbuffer);
-    dap::ProtocolMessage::Ptr_t SendOutputEvent(const string& buffer);
+    void OnOutput(string& inbuffer);
+    dap::ProtocolMessage::Ptr_t CreateOutputEvent(const string& buffer);
+    dap::ProtocolMessage::Ptr_t OnBreakpointUpdate(const string& buffer);
     static string ParseErrorMessage(const string& buffer);
     
 public:
@@ -25,14 +26,16 @@ public:
 public:
     /// The IDE initiated a launch request
     void OnLaunchRequest(dap::ProtocolMessage::Ptr_t message) override;
+    /// Configuration Done request has arrived
+    void OnConfigurationDoneRequest(dap::ProtocolMessage::Ptr_t message) override;
     /// Set breakpoints
     void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message) override;
     /// Load the debuggee process into gdb
     void StartDebugger(const string& debuggerExecutable, const string& wd) override;
     /// Process raw stdout string
-    dap::ProtocolMessage::Ptr_t OnDebuggerStdout(const string& message) override;
+    void OnDebuggerStdout(const string& message) override;
     /// Process raw stderr string
-    dap::ProtocolMessage::Ptr_t OnDebuggerStderr(const string& message) override;
+    void OnDebuggerStderr(const string& message) override;
 };
 
 #endif // GDBHANDLER_HPP

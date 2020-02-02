@@ -27,10 +27,11 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
     if(message->type == "request") {
         dap::Request* request = message->As<dap::Request>();
         if(request->command == "launch") {
-            // Handle launch command
             OnLaunch(message);
         } else if(request->command == "setBreakpoints") {
             OnSetBreakpoints(message);
+        } else if(request->command == "configurationDone") {
+            OnCofigurationDone(message);
         }
     }
 }
@@ -41,20 +42,22 @@ void Driver::Check()
     if(!output.first.empty()) {
         LOG_DEBUG1() << "gdb (stdout):" << output.first;
         // Process ALL messages here
-        auto msg = m_backend->OnDebuggerStdout(output.first);
+        m_backend->OnDebuggerStdout(output.first);
+        auto msg = m_backend->TakeNextMessage();
         while(msg) {
             m_onGdbOutput(msg);
-            msg = m_backend->OnDebuggerStdout("");
+            msg = m_backend->TakeNextMessage();
         }
     }
     if(!output.second.empty()) {
         // Process the raw buffer
         LOG_DEBUG1() << "gdb (stderr):" << output.second;
         // Process ALL messages here
-        auto msg = m_backend->OnDebuggerStderr(output.first);
+        m_backend->OnDebuggerStderr(output.first);
+        auto msg = m_backend->TakeNextMessage();
         while(msg) {
             m_onGdbOutput(msg);
-            msg = m_backend->OnDebuggerStderr("");
+            msg = m_backend->TakeNextMessage();
         }
     }
 }
@@ -79,6 +82,14 @@ void Driver::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t request)
     }
 }
 
-
 void Driver::SetHandler(DebuggerHandler::Ptr_t handler) { m_backend = handler; }
 
+void Driver::OnCofigurationDone(dap::ProtocolMessage::Ptr_t request)
+{
+    try {
+        m_backend->OnConfigurationDoneRequest(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "ConfigurationDone error:" << e.What();
+        ReportError<dap::ConfigurationDoneResponse>(request->seq, e.What());
+    }
+}

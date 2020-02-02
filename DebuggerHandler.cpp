@@ -11,3 +11,20 @@ pair<string, string> DebuggerHandler::Read() const
     }
     return m_process->Read();
 }
+
+dap::ProtocolMessage::Ptr_t DebuggerHandler::TakeNextMessage()
+{
+    if(m_outgoingQueue.empty()) {
+        return nullptr;
+    }
+    dap::ProtocolMessage::Ptr_t msg = m_outgoingQueue.front();
+    m_outgoingQueue.erase(m_outgoingQueue.begin());
+    return msg;
+}
+
+void DebuggerHandler::PushMessage(dap::ProtocolMessage::Ptr_t message)
+{
+    if(message) {
+        m_outgoingQueue.push_back(message);
+    }
+}

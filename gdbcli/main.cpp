@@ -88,13 +88,7 @@ int main(int argc, char** argv)
         /// Prepare list of commands
         vector<dap::ProtocolMessage::Ptr_t> commands;
 
-        // We start with launch request which contains the executable to debug
-        dap::LaunchRequest* launchRequest = new dap::LaunchRequest();
-        launchRequest->seq = 0; // command sequence
-        launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" };
-        commands.push_back(dap::ProtocolMessage::Ptr_t(launchRequest));
-
-        // Add set breakpoint
+        // Now that the initialize is done, we can call 'setBreakpoints' command
         dap::SetBreakpointsRequest* setBreakpoints = new dap::SetBreakpointsRequest();
         // Set breakpoint on main.cpp:10 and on main.cpp:12
         setBreakpoints->seq = 1; // command sequence
@@ -106,6 +100,17 @@ int main(int argc, char** argv)
 
         setBreakpoints->arguments.source.path = "main.cpp";
         commands.push_back(dap::ProtocolMessage::Ptr_t(setBreakpoints));
+    
+        // When we are done setting breakpoints, we need to call 'configurationDone' request
+        dap::ConfigurationDoneRequest* configDone = new dap::ConfigurationDoneRequest();
+        commands.push_back(dap::ProtocolMessage::Ptr_t(configDone));
+        
+        // We start with launch request which contains the executable to debug
+        dap::LaunchRequest* launchRequest = new dap::LaunchRequest();
+        launchRequest->seq = 0; // command sequence
+        launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" };
+        commands.push_back(dap::ProtocolMessage::Ptr_t(launchRequest));
+
 
         //-----------------------------------------------------
         // The main loop

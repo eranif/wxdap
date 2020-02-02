@@ -123,12 +123,11 @@ dap::Breakpoint GDBMI::DoParseBreakpoint(const string& block)
             bpt.line = atoi(value.c_str());
         } else if(key == "number") {
             bpt.id = atoi(value.c_str());
-        } /* else if(key == "func") {
-             bpt.func = value;
-         } else if(key == "type") {
-             bpt.type = value;
-         }*/
+        } else if(key == "pending") {
+            bpt.source.path = "<PENDING>";
+        }
     }
+    bpt.verified = (bpt.id != -1);
     return bpt;
 }
 
