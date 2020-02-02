@@ -292,12 +292,26 @@ string& StringUtils::ToNativePath(string& path) { return ConvertSlashes(path, SO
 
 string& StringUtils::ToUnixPath(string& path) { return ConvertSlashes(path, '\\', '/'); }
 
+string StringUtils::ToUnixPath(const string& path)
+{
+    string tmppath = path;
+    tmppath = ConvertSlashes(tmppath, '\\', '/');
+    return tmppath;
+}
+
+string StringUtils::ToNativePath(const string& path)
+{
+    string tmppath = path;
+    tmppath = ConvertSlashes(tmppath, SOURCE_SEP, PATH_SEP);
+    return tmppath;
+}
+
 string& StringUtils::WrapWithQuotes(string& str)
 {
     if(str.empty()) {
         return str;
     }
-    if(str.find(' ') != string::npos) {
+    if(str.find(' ') == string::npos) {
         return str;
     }
     str.insert(str.begin(), '"');
@@ -310,7 +324,7 @@ string StringUtils::WrapWithQuotes(const string& str)
     if(str.empty()) {
         return str;
     }
-    if(str.find(' ') != string::npos) {
+    if(str.find(' ') == string::npos) {
         return str;
     }
     string tmpstr = str;

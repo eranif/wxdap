@@ -1,3 +1,4 @@
+#include "GDBMI.hpp"
 #include "GdbHandler.hpp"
 #include "dap/Log.hpp"
 #include "dap/StringUtils.hpp"
@@ -34,11 +35,12 @@ void GdbHandler::OnLaunchRequest(dap::ProtocolMessage::Ptr_t message)
 
     string commandSequence = NextSequence();
     ss << commandSequence << "-file-exec-and-symbols " << debuggee_executable;
-    LOG_DEBUG() << ss.str();
+    LOG_INFO() << "Loading file into gdb:" << ss.str();
     m_process->WriteLn(ss.str());
     m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
                               // Process the output. Output is guranteed to be a complete reply from the debeugger
                               if(StringUtils::StartsWith(output, "^done")) {
+                                  LOG_INFO() << "File loaded successfully!";
                                   dap::LaunchResponse* response = new dap::LaunchResponse();
                                   response->success = true;
                                   response->request_seq = requestSeq;
@@ -61,40 +63,41 @@ void GdbHandler::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message)
     // Delete all breakpoints in the given source
     // and apply the new breakpoints
     dap::SetBreakpointsRequest* req = message->As<dap::SetBreakpointsRequest>();
-    const string& path = req->arguments.source.path;
-    
+    string path = StringUtils::ToUnixPath(req->arguments.source.path);
+
     // Delete all breakpoints for this line
-    
-//
-//    // Keep the args
-//    int requestSeq = req->seq;
-//    m_debugeeArgs = req->arguments.debuggee;
-//    stringstream ss;
-//    string debuggee_executable = m_debugeeArgs[0];
-//    StringUtils::ToUnixPath(debuggee_executable);
-//    StringUtils::WrapWithQuotes(debuggee_executable);
-//
-//    string commandSequence = NextSequence();
-//    ss << commandSequence << "-file-exec-and-symbols " << debuggee_executable;
-//    LOG_DEBUG() << ss.str();
-//    m_process->WriteLn(ss.str());
-//    m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
-//                              // Process the output. Output is guranteed to be a complete reply from the debeugger
-//                              if(StringUtils::StartsWith(output, "^done")) {
-//                                  dap::LaunchResponse* response = new dap::LaunchResponse();
-//                                  response->success = true;
-//                                  response->request_seq = requestSeq;
-//                                  return dap::ProtocolMessage::Ptr_t(response);
-//                              } else if(StringUtils::StartsWith(output, "^error")) {
-//                                  dap::LaunchResponse* response = new dap::LaunchResponse();
-//                                  response->success = false;
-//                                  response->message = GdbHandler::ParseErrorMessage(output);
-//                                  response->request_seq = requestSeq;
-//                                  LOG_ERROR() << "Sending error response:" << response->message;
-//                                  return dap::ProtocolMessage::Ptr_t(response);
-//                              }
-//                              return nullptr;
-//                          } });
+    int requestSeq = req->seq;
+    for(const auto& b : req->arguments.breakpoints) {
+        string commandSequence = NextSequence();
+        string command = commandSequence;
+        string where;
+        where << path << ":" << b.line;
+        StringUtils::WrapWithQuotes(where);
+
+        command << "-break-insert " << where;
+        LOG_INFO() << "Setting breakpoint:" << command;
+        m_process->WriteLn(command);
+        m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
+                                  if(StringUtils::StartsWith(output, "^done")) {
+                                      auto bpt = GDBMI::ParseBreakpoint(output);
+                                      dap::SetBreakpointsResponse* response = new dap::SetBreakpointsResponse();
+                                      response->breakpoints.push_back(bpt);
+                                      response->success = true;
+                                      response->request_seq = requestSeq;
+                                      LOG_INFO()
+                                          << "Successfully set breakpoint:" << bpt.source.path << ":" << bpt.line;
+                                      return dap::ProtocolMessage::Ptr_t(response);
+                                  } else if(StringUtils::StartsWith(output, "^error")) {
+                                      dap::SetBreakpointsResponse* response = new dap::SetBreakpointsResponse();
+                                      response->success = false;
+                                      response->message = GdbHandler::ParseErrorMessage(output);
+                                      response->request_seq = requestSeq;
+                                      LOG_ERROR() << "Sending error response:" << response->message;
+                                      return dap::ProtocolMessage::Ptr_t(response);
+                                  }
+                                  return nullptr;
+                              } });
+    }
 }
 
 void GdbHandler::StartDebugger(const string& debuggerExecutable, const string& wd)
@@ -103,6 +106,7 @@ void GdbHandler::StartDebugger(const string& debuggerExecutable, const string& w
     if(!m_process) {
         throw dap::Exception("Failed to start debugger process: " + debuggerExecutable);
     }
+    LOG_INFO() << "Started debugger:" << debuggerExecutable << "-i=mi";
 }
 
 string GdbHandler::NextSequence()

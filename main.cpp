@@ -38,7 +38,7 @@ int main(int argc, char** argv)
         "thread-groups=[\"i1\"],times=\"0\",original-location=\"main.cpp:12\"}]}");
 
     // Open the log file
-    dap::Log::OpenStdout(dap::Log::Developer);
+    dap::Log::OpenStdout(dap::Log::Info);
     LOG_INFO() << "Started";
 
     try {
