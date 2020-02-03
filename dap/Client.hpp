@@ -16,6 +16,11 @@ public:
      * @brief Wait until connection is established
      */
     void Connect(int timeoutSeconds);
+    
+    /**
+     * @brief initiate the handshake between the server and the client
+     */
+    void Initialize();
 };
 
 };     // namespace dap
