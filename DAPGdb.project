@@ -3,6 +3,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="CMakeLists.txt"/>
     <File Name="GDBMI.cpp"/>
     <File Name="GDBMI.hpp"/>
     <File Name="GdbHandler.cpp"/>

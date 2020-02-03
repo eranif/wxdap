@@ -3,6 +3,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="CMakeLists.txt"/>
     <File Name="main.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug">
