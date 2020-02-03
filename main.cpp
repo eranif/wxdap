@@ -54,8 +54,7 @@ int main(int argc, char** argv)
         LOG_INFO() << "Connection established successfully";
 
         // Construct a Driver with GDB handler
-        GdbHandler::Ptr_t backend(new GdbHandler());
-        Driver gdb(parser, backend);
+        Driver gdb(parser, GdbHandler::Ptr_t(new GdbHandler()));
 
         // We dont start the main loop until 'initialize' is completed
         // between gdbd and the client

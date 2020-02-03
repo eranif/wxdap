@@ -1,3 +1,4 @@
+#include "dap/Client.hpp"
 #include "dap/Exception.hpp"
 #include "dap/JsonRPC.hpp"
 #include "dap/SocketClient.hpp"
@@ -10,6 +11,9 @@ using namespace std;
 int main(int argc, char** argv)
 {
     try {
+        dap::Client client;
+        client.Connect(10);
+
         cout << "Starting client..." << endl;
         dap::Initialize();
         dap::SocketBase::Ptr_t cli(new dap::SocketClient());
@@ -100,17 +104,16 @@ int main(int argc, char** argv)
 
         setBreakpoints->arguments.source.path = "main.cpp";
         commands.push_back(dap::ProtocolMessage::Ptr_t(setBreakpoints));
-    
+
         // When we are done setting breakpoints, we need to call 'configurationDone' request
         dap::ConfigurationDoneRequest* configDone = new dap::ConfigurationDoneRequest();
         commands.push_back(dap::ProtocolMessage::Ptr_t(configDone));
-        
+
         // We start with launch request which contains the executable to debug
         dap::LaunchRequest* launchRequest = new dap::LaunchRequest();
         launchRequest->seq = 0; // command sequence
         launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" };
         commands.push_back(dap::ProtocolMessage::Ptr_t(launchRequest));
-
 
         //-----------------------------------------------------
         // The main loop

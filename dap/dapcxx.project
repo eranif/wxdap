@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="Client.cpp"/>
+    <File Name="Client.hpp"/>
     <File Name="Exception.cpp"/>
     <File Name="Exception.hpp"/>
     <File Name="linux.cpp"/>
