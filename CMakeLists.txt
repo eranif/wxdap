@@ -8,4 +8,5 @@ add_executable(dbgd ${SRCS})
 
 target_link_libraries(dbgd dapcxx)
 target_link_libraries(dbgd pthread)
+add_subdirectory(gdbcli)
 
