@@ -505,6 +505,12 @@ struct SourceBreakpoint : public Any {
      * An optional expression for conditional breakpoints.
      */
     string condition;
+    SourceBreakpoint() {}
+    SourceBreakpoint(int line, const string& cond)
+    {
+        this->line = line;
+        this->condition = cond;
+    }
     JSON_SERIALIZE();
 };
 

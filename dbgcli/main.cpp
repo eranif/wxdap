@@ -11,137 +11,29 @@ using namespace std;
 int main(int argc, char** argv)
 {
     try {
-        dap::Client client;
-        client.Connect(10);
-
         cout << "Starting client..." << endl;
-        dap::Initialize();
-        dap::SocketBase::Ptr_t cli(new dap::SocketClient());
-
-        // Wait until we connect
-        while(!cli->As<dap::SocketClient>()->Connect("tcp://127.0.0.1:12345"))
-            ;
-        cout << "Connection established successfully" << endl;
-
-        // Send initialize message
-        dap::InitializeRequest req;
-        dap::JsonRPC rpc;
-        req.arguments.clientID = "gdbcli";
-        rpc.Send(req, cli);
-
-        // Use a flag to indicate if we lost connection to the server
-        atomic_bool terminated;
-        terminated.store(false);
-
-        // Wait for the response
-        dap::Queue<string> inputQueue;
-        atomic_bool shutdown;
-
-        shutdown.store(false);
-
-        // Start a reader thread that will continously read from the socket
-        // and put the input buffer in queue
-        thread readerThread([&]() {
-            while(!shutdown.load()) {
-                try {
-                    string content;
-                    if(cli->Read(content)) {
-                        inputQueue.push(content);
-                    }
-                } catch(dap::Exception& e) {
-                    cerr << "Connection error: " << e.What() << endl;
-                    terminated.store(true);
-                    break;
-                }
-            }
-        });
-
-        // We are expecting 'initialized' request
-        enum eState { kWaitingInitResponse, kWaitingInitEvent, kExecute };
-        eState state = kWaitingInitResponse;
-
-        // This part is for performing the initialization part of the debugger
-        while(!terminated.load() && (state != kExecute)) {
-            string buffer = inputQueue.pop(chrono::milliseconds(1));
-            if(!buffer.empty()) {
-                // got something on the network
-                rpc.AppendBuffer(buffer);
-                dap::ProtocolMessage::Ptr_t msg = rpc.ProcessBuffer();
-                if(msg) {
-                    switch(state) {
-                    case kWaitingInitResponse:
-                        if(msg->type == "response" && msg->As<dap::Response>()->command == "initialize") {
-                            cout << "Received initialized response" << endl;
-                            state = kWaitingInitEvent;
-                        }
-                        break;
-                    case kWaitingInitEvent:
-                        if(msg->type == "event" && msg->As<dap::Event>()->event == "initialized") {
-                            cout << "Received initialized event" << endl;
-                            state = kExecute;
-                        }
-                        break;
-                    case kExecute:
-                        // handle anything else here
-                        break;
-                    }
-                }
-            }
+        dap::Client client;
+        if(!client.Connect(10)) {
+            cerr << "Error: failed to connect to server";
+            exit(1);
         }
-
-        /// Prepare list of commands
-        vector<dap::ProtocolMessage::Ptr_t> commands;
-
-        // Now that the initialize is done, we can call 'setBreakpoints' command
-        dap::SetBreakpointsRequest* setBreakpoints = new dap::SetBreakpointsRequest();
-        // Set breakpoint on main.cpp:10 and on main.cpp:12
-        setBreakpoints->seq = 1; // command sequence
-        dap::SourceBreakpoint source;
-        source.line = 10;
-        setBreakpoints->arguments.breakpoints.push_back(source);
-        source.line = 12;
-        setBreakpoints->arguments.breakpoints.push_back(source);
-
-        setBreakpoints->arguments.source.path = "main.cpp";
-        commands.push_back(dap::ProtocolMessage::Ptr_t(setBreakpoints));
-
-        // When we are done setting breakpoints, we need to call 'configurationDone' request
-        dap::ConfigurationDoneRequest* configDone = new dap::ConfigurationDoneRequest();
-        commands.push_back(dap::ProtocolMessage::Ptr_t(configDone));
-
-        // We start with launch request which contains the executable to debug
-        dap::LaunchRequest* launchRequest = new dap::LaunchRequest();
-        launchRequest->seq = 0; // command sequence
-        launchRequest->arguments.debuggee = { "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" };
-        commands.push_back(dap::ProtocolMessage::Ptr_t(launchRequest));
+        client.Initialize();
+        client.SetBreakpointsFile("main.cpp", { { 10, "" }, { 12, "" } });
+        client.ConfigurationDone();
+        client.Launch({ "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" });
 
         //-----------------------------------------------------
         // The main loop
         //-----------------------------------------------------
         // Now that the initialization is completed, run the main loop
-        while(!terminated.load()) {
-
-            // Send the commands
-            if(!commands.empty()) {
-                dap::ProtocolMessage::Ptr_t req = commands.front();
-                commands.erase(commands.begin());
-
-                // Send the request
-                rpc.Send(req, cli);
-                cout << "==> " << req->To().Format() << endl;
+        while(client.IsConnected()) {
+            auto msg = client.Check();
+            while(msg) {
+                cout << "<== " << msg->To().Format() << endl;
+                msg = client.Check();
             }
-
-            string buffer = inputQueue.pop(chrono::milliseconds(1));
-            if(!buffer.empty()) {
-                // got something on the network
-                rpc.AppendBuffer(buffer);
-                dap::ProtocolMessage::Ptr_t msg = rpc.ProcessBuffer();
-                if(msg) {
-                    cout << "<== " << msg->To().Format() << endl;
-                }
-            }
+            this_thread::sleep_for(chrono::milliseconds(1));
         }
-        readerThread.join();
 
     } catch(dap::Exception& e) {
         cerr << "Error: " << e.What() << endl;

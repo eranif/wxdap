@@ -1,5 +1,6 @@
 #include "Process.hpp"
 #include <iostream>
+#include "Log.hpp"
 
 void dap::Process::StartReaderThread()
 {
@@ -19,7 +20,7 @@ void dap::Process::StartReaderThread()
                     this_thread::sleep_for(chrono::milliseconds(10));
                 }
             }
-            cout << "Going down" << endl;
+            LOG_ERROR() << "Going down";
         },
         this, ref(m_inQueue), ref(m_shutdown));
 }

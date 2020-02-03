@@ -25,18 +25,6 @@ int main(int argc, char** argv)
     CommandLineParser parser;
     parser.Parse(argc, argv);
 
-    GDBMI mi;
-    auto breakpoints = mi.ParseBreakpoints(
-        "body=[bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr="
-        "\"0x0000000000401564\",func=\"main(int,char**)\",file=\"C:/Users/Eran/Documents/AmitTest/"
-        "AmitTest/"
-        "main.cpp\",fullname=\"C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp\",line=\"10\","
-        "thread-groups=[\"i1\"],times=\"0\",original-location=\"main.cpp:10\"},bkpt={number=\"2\",type="
-        "\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0x0000000000401564\",func=\"main(int,char**)"
-        "\",file=\"C:/Users/Eran/Documents/AmitTest/AmitTest/"
-        "main.cpp\",fullname=\"C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp\",line=\"12\","
-        "thread-groups=[\"i1\"],times=\"0\",original-location=\"main.cpp:12\"}]}");
-
     // Open the log file
     dap::Log::OpenStdout(dap::Log::Info);
     LOG_INFO() << "Started";
@@ -85,6 +73,7 @@ int main(int argc, char** argv)
             // If so, convert it back gdb commands and send it over to gdb
             server.Check();
         }
+        LOG_INFO() << "GDB exited";
     } catch(dap::Exception& e) {
         LOG_ERROR() << "ERROR: " << e.What();
         return 1;
