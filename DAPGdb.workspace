@@ -10,14 +10,14 @@
       <Project Name="DAPGdb" ConfigName="Debug"/>
       <Project Name="dapcxx" ConfigName="Debug"/>
       <Project Name="gdbd_tests" ConfigName="Debug"/>
-      <Project Name="gdbcli" ConfigName="Debug"/>
+      <Project Name="dbgcli" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="DAPGdb" ConfigName="Release"/>
       <Project Name="dapcxx" ConfigName="Release"/>
       <Project Name="gdbd_tests" ConfigName="Release"/>
-      <Project Name="gdbcli" ConfigName="Release"/>
+      <Project Name="dbgcli" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

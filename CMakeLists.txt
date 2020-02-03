@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(dbgd)
 add_subdirectory(dap)
-add_subdirectory(gdbcli)
+add_subdirectory(dbgcli)
 
 file(GLOB SRCS "*.cpp")
 include_directories(.)

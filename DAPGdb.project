@@ -24,7 +24,7 @@
   </Dependencies>
   <Dependencies Name="Debug">
     <Project Name="dapcxx"/>
-    <Project Name="gdbcli"/>
+    <Project Name="dbgcli"/>
   </Dependencies>
   <Settings Type="Executable">
     <GlobalSettings>
