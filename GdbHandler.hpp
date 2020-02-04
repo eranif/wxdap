@@ -3,6 +3,7 @@
 
 #include "DebuggerHandler.hpp"
 #include <unordered_map>
+#include "dap/Log.hpp"
 
 class GdbHandler : public DebuggerHandler
 {
@@ -18,7 +19,20 @@ protected:
     dap::ProtocolMessage::Ptr_t CreateOutputEvent(const string& buffer);
     dap::ProtocolMessage::Ptr_t OnBreakpointUpdate(const string& buffer);
     static string ParseErrorMessage(const string& buffer);
-    
+    static bool IsSuccess(const string& gdbOutput);
+    static bool IsRunning(const string& gdbOutput);
+    static bool IsError(const string& gdbOutput);
+    template <typename T>
+    static dap::ProtocolMessage::Ptr_t ResponseError(const string& gdbOutput, int requestSequence)
+    {
+        T* response = new T();
+        response->success = false;
+        response->message = ParseErrorMessage(gdbOutput);
+        response->request_seq = requestSequence;
+        LOG_ERROR() << "Sending error response:" << response->message;
+        return dap::ProtocolMessage::Ptr_t(response);
+    }
+
 public:
     GdbHandler();
     virtual ~GdbHandler();
