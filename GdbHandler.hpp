@@ -2,8 +2,8 @@
 #define GDBHANDLER_HPP
 
 #include "DebuggerHandler.hpp"
-#include <unordered_map>
 #include "dap/Log.hpp"
+#include <unordered_map>
 
 class GdbHandler : public DebuggerHandler
 {
@@ -32,6 +32,9 @@ protected:
         LOG_ERROR() << "Sending error response:" << response->message;
         return dap::ProtocolMessage::Ptr_t(response);
     }
+
+    void OnHandleStateChange(const string& buffer);
+    void OnEvent(const string& buffer);
 
 public:
     GdbHandler();

@@ -589,6 +589,30 @@ struct NextRequest : public Request {
 struct NextResponse : public EmptyAckResponse {
     RESPONSE_CLASS(NextResponse, "next");
 };
+
+/// A Stackframe contains the source location
+struct StackFrame : public Any {
+    /**
+     * An identifier for the stack frame. It must be unique across all threads. This id can be used to retrieve the
+     * scopes of the frame with the 'scopesRequest' or to restart the execution of a stackframe.
+     */
+    int number = -1;
+    /**
+     * The name of the stack frame, typically a method name.
+     */
+    string name;
+
+    /**
+     * The optional source of the frame.
+     */
+    Source source;
+    /**
+     * The line within the file of the frame. If source is null or doesn't exist, line is 0 and must be ignored.
+     */
+    int line = 0;
+    ANY_CLASS(StackFrame);
+    JSON_SERIALIZE();
+};
 }; // namespace dap
 
 #endif // PROTOCOLMESSAGE_HPP

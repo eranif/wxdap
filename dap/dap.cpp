@@ -364,6 +364,29 @@ void Source::From(const JSONItem& json)
 // ----------------------------------------
 // ----------------------------------------
 
+
+JSONItem StackFrame::To(const string& name) const
+{
+    CREATE_JSON();
+    json.add("name", this->name);
+    ADD_PROP(number);
+    ADD_PROP(line);
+    ADD_OBJ(source);
+    return json;
+}
+
+void StackFrame::From(const JSONItem& json)
+{
+    GET_PROP(name, String);
+    GET_PROP(number, Int);
+    GET_PROP(line, Int);
+    READ_OBJ(source);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSONItem Breakpoint::To(const string& name) const
 {
     CREATE_JSON();

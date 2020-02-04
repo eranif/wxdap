@@ -171,6 +171,30 @@ void GdbHandler::OnDebuggerStderr(const string& message)
     OnOutput(m_stderr);
 }
 
+void GdbHandler::OnHandleStateChange(const string& buffer)
+{
+    if(StringUtils::StartsWith(buffer, "*stopped")) {
+        // Report debugger stopped event
+        GDBMI::eStoppedReason reason = GDBMI::ParseStoppedReason(buffer);
+        if(reason == GDBMI::kBreakpointHit) {
+            LOG_INFO() << "Breakpoint hit";
+            // Send breakpoint hit event
+            dap::StoppedEvent* stopEvent = new dap::StoppedEvent();
+            stopEvent->reason = "breakpoint";
+            stopEvent->text = "Breakpoint hit";
+            PushMessage(dap::ProtocolMessage::Ptr_t(stopEvent));
+        }
+    }
+}
+
+void GdbHandler::OnEvent(const string& buffer)
+{
+    if(StringUtils::StartsWith(buffer, "=breakpoint-modified")) {
+        // Need to update about this breakpoint to the frontend
+        PushMessage(OnBreakpointUpdate(buffer));
+    }
+}
+
 void GdbHandler::OnOutput(string& inbuffer)
 {
     // MI is line based
@@ -185,22 +209,34 @@ void GdbHandler::OnOutput(string& inbuffer)
         LOG_DEBUG() << "Processing line input from GDB:" << buffer;
         switch(buffer[0]) {
         case '=':
-            if(StringUtils::StartsWith(buffer, "=breakpoint-modified")) {
-                // Need to update about this breakpoint to the frontend
-                PushMessage(OnBreakpointUpdate(buffer));
-                break;
-            } else {
-                // fall through
-            }
+            // notify-async-output contains supplementary information that the client should handle (e.g., a new
+            // breakpoint information). All notify output is prefixed by '='
+            OnEvent(buffer);
+            break;
         case '+':
+            // status-async-output contains on-going status information about the progress of a slow operation. It can
+            // be discarded. All status output is prefixed by '+'
+            break;
         case '*':
+            // exec-async-output contains asynchronous state change on the target (stopped, started, disappeared). All
+            // async output is prefixed by '*'
+            OnHandleStateChange(buffer);
+            break;
         case '@':
+            // target-stream-output is the output produced by the target program. All the target output is prefixed by
+            // '@'
+            LOG_DEBUG() << buffer;
+            PushMessage(CreateOutputEvent(buffer));
+            break;
         case '&':
+            // log-stream-output is output text coming from GDB's internals, for instance messages that should be
+            // displayed as part of an error log. All the log output is prefixed by '&'
+            // We discard this
+            break;
         case '~': {
             // console stream output
             LOG_DEBUG() << buffer;
             PushMessage(CreateOutputEvent(buffer));
-
         } break;
         default: {
             if(buffer.length() >= 6) {

@@ -52,15 +52,17 @@ vector<string> GDBMI::SplitToBlocksCurly(const string& buffer)
     return blocks;
 }
 
-vector<pair<string, string>> GDBMI::SplitToKeyValues(const string& buffer)
+unordered_map<string, string> GDBMI::SplitToKeyValues(const string& buffer)
 {
     string k, v;
-    vector<pair<string, string>> V;
+    unordered_map<string, string> M;
     enum eState { kInString, kReadingKey, kReadingValue };
     eState state = kReadingKey;
+    int depth = 0;
     for(char ch : buffer) {
         switch(state) {
         case kReadingKey:
+            // Can only be depth 0
             switch(ch) {
             case '=':
                 state = kReadingValue;
@@ -72,12 +74,26 @@ vector<pair<string, string>> GDBMI::SplitToKeyValues(const string& buffer)
             break;
         case kReadingValue:
             switch(ch) {
+            case '{':
+            case '[':
+                depth++;
+                break;
+            case '}':
+            case ']':
+                depth--;
+                break;
             case ',':
-                // We are done collecting this value
-                state = kReadingKey;
-                V.push_back({ k, v });
-                k.clear();
-                v.clear();
+                if(depth == 0) {
+                    // We are done collecting this value
+                    state = kReadingKey;
+                    if(!k.empty() && !v.empty()) {
+                        M.insert({ k, v });
+                    }
+                    k.clear();
+                    v.clear();
+                } else {
+                    v.append(1, ch);
+                }
                 break;
             case '"':
                 state = kInString;
@@ -100,32 +116,33 @@ vector<pair<string, string>> GDBMI::SplitToKeyValues(const string& buffer)
             break;
         }
     }
-    return V;
+    return M;
 }
 
 dap::Breakpoint GDBMI::DoParseBreakpoint(const string& block)
 {
     dap::Breakpoint bpt;
-    auto keyValues = SplitToKeyValues(block);
+    auto map = SplitToKeyValues(block);
 
     // we now have key=value
-    for(auto& pr : keyValues) {
-        const string& key = pr.first;
-        const string& value = pr.second;
-        if(key.empty() || value.empty()) {
-            continue;
-        }
-        if(key == "file") {
-            bpt.source.path = StringUtils::ToUnixPath(value);
-        } else if(key == "fullname") {
-            bpt.source.path = StringUtils::ToUnixPath(value);
-        } else if(key == "line") {
-            bpt.line = atoi(value.c_str());
-        } else if(key == "number") {
-            bpt.id = atoi(value.c_str());
-        } else if(key == "pending") {
-            bpt.source.path = "<PENDING>";
-        }
+    if(map.count("file")) {
+        bpt.source.path = StringUtils::ToUnixPath(map["file"]);
+    }
+
+    if(map.count("fullname")) {
+        bpt.source.path = StringUtils::ToUnixPath(map["fullname"]);
+    }
+
+    if(map.count("line")) {
+        bpt.line = atoi(map["line"].c_str());
+    }
+
+    if(map.count("number")) {
+        bpt.id = atoi(map["number"].c_str());
+    }
+
+    if(map.count("pending")) {
+        bpt.source.path = "<PENDING>";
     }
     bpt.verified = (bpt.id != -1);
     return bpt;
@@ -162,4 +179,52 @@ vector<dap::Breakpoint> GDBMI::ParseBreakpoints(const string& gdbOutput)
         bpts.emplace_back(bp);
     }
     return bpts;
+}
+
+dap::StackFrame GDBMI::ParseStackFrame(const string& gdbOutput)
+{
+    auto blocks = SplitToBlocksCurly(gdbOutput);
+    if(blocks.size() != 1) {
+        return {};
+    }
+    return DoParseStackFrame(blocks[0]);
+}
+
+dap::StackFrame GDBMI::DoParseStackFrame(const string& block)
+{
+    // Frame example:
+    //
+    // {level="0",addr="0x0000000000401558",func="bar",file="C:/Users/Eran/Documents/AmitTest/AmitTest/main.cpp",
+    // fullname="C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp",line="8"}
+
+    dap::StackFrame frame;
+    auto map = SplitToKeyValues(block);
+
+    if(map.count("file")) {
+        frame.source.path = StringUtils::ToUnixPath(map["file"]);
+    }
+    if(map.count("fullname")) {
+        frame.source.path = StringUtils::ToUnixPath(map["fullname"]);
+    }
+    if(map.count("line")) {
+        frame.line = atoi(map["line"].c_str());
+    }
+    if(map.count("level")) {
+        frame.number = atoi(map["level"].c_str());
+    }
+    return frame;
+}
+
+GDBMI::eStoppedReason GDBMI::ParseStoppedReason(const string& gdbOutput)
+{
+    //*stopped,reason="breakpoint-hit",disp="keep",bkptno="3",frame={addr="0x0000000000401558",func="bar",
+    // args=[],file="C:/Users/Eran/Documents/AmitTest/AmitTest/main.cpp",
+    // fullname="C:\\Users\\Eran\\Documents\\AmitTest\\AmitTest\\main.cpp",line="8"},thread-id="1",stopped-threads="all"
+    string buffer = StringUtils::AfterFirst(gdbOutput, ',');
+    auto map = SplitToKeyValues(buffer);
+    auto where = map.find("reason");
+    if(where->second == "breakpoint-hit") {
+        return kBreakpointHit;
+    }
+    return kUnknown;
 }
