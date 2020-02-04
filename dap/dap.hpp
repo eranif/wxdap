@@ -59,6 +59,7 @@ namespace dap
 {
 void Initialize();
 // base class representing anything
+
 struct Any {
     Any() {}
     virtual ~Any() {}
@@ -73,11 +74,20 @@ struct Any {
     }
 };
 
+struct Event;
+struct Request;
+struct Response;
+
 /// Base class of requests, responses, and events
 struct ProtocolMessage : public Any {
     int seq = -1;
     string type;
     typedef shared_ptr<ProtocolMessage> Ptr_t;
+
+    dap::Event* AsEvent() const { return As<dap::Event>(); }
+    dap::Request* AsRequest() const { return As<dap::Request>(); }
+    dap::Response* AsResponse() const { return As<dap::Response>(); }
+
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
 };
