@@ -7,3 +7,5 @@ include_directories(${CMAKE_SOURCE_DIR}dap)
 add_executable(dbgcli ${SRCS})
 target_link_libraries(dbgcli dapcxx)
 target_link_libraries(dbgcli pthread)
+target_link_libraries(dbgcli ${CMAKE_EXE_LINKER_FLAGS})
+

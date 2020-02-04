@@ -134,7 +134,7 @@ void dap::Client::Launch(const vector<string>& cmd)
 
 dap::ProtocolMessage::Ptr_t dap::Client::Check()
 {
-    string buffer = m_inputQueue.pop(chrono::milliseconds(0));
+    string buffer = m_inputQueue.pop(chrono::milliseconds(1));
     if(!buffer.empty()) {
         // got something on the network
         m_rpc.AppendBuffer(buffer);
