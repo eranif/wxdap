@@ -287,6 +287,7 @@ static string& ConvertSlashes(string& path, char source, char target)
     path = tmp;
     return path;
 }
+const string& std::to_string(const string& str) { return str; }
 
 string& StringUtils::ToNativePath(string& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
 

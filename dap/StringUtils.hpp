@@ -5,6 +5,13 @@
 #include <string>
 #include <vector>
 
+// for some obscure reason, to_string() does not accept string
+// we add one here
+namespace std
+{
+const string& to_string(const string& str);
+};
+
 using namespace std;
 #define UNUSED(x) ((void)x)
 
@@ -70,9 +77,7 @@ public:
 template <typename T>
 string& operator<<(string& str, const T& t)
 {
-    stringstream ss;
-    ss << str << t;
-    str = ss.str();
+    str.append(to_string(t));
     return str;
 }
 
