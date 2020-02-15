@@ -1,7 +1,7 @@
 #ifndef PROTOCOLMESSAGE_HPP
 #define PROTOCOLMESSAGE_HPP
 
-#include "json.hpp"
+#include "JSON.hpp"
 #include <functional>
 #include <memory>
 #include <string>
