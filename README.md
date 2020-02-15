@@ -1,2 +1,2 @@
-# gdbd
-gdb daemon using the DAP (Debug Adapter Protocol) protocol 
+# dbgd
+Server platofrm for implementing debuggers based on the DAP protocol
