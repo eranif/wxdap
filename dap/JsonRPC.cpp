@@ -47,13 +47,14 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
     string payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
     m_buffer.erase(0, headerSize + msglen);
 
-    JSON root(payload);
-    if(!root.isOk()) {
+    JSON json = JSON::Parse(payload);
+    if(!json.IsOK()) {
         return nullptr;
     }
-    JSONItem json = root.toElement();
-    string type = json.property("type").toString();
-    string command = (type == "event") ? json.property("event").toString() : json.property("command").toString();
+    JSONLocker locker(json);
+    
+    string type = json["type"].GetString();
+    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
 
     // Allocate
     ProtocolMessage::Ptr_t message = ObjGenerator::Get().New(type, command);
@@ -92,7 +93,7 @@ void dap::JsonRPC::Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const
         throw Exception("Invalid connection");
     }
     string network_buffer;
-    string payload = msg.To().Format();
+    string payload = msg.ToString();
     network_buffer = "Content-Length: ";
     network_buffer += to_string(payload.length());
     network_buffer += "\r\n\r\n";

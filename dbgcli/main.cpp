@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         while(client.IsConnected()) {
             auto msg = client.Check();
             while(msg) {
-                LOG_DEBUG() << "<== " << msg->To().Format();
+                LOG_DEBUG() << "<== " << msg->ToString();
                 // Stopped cause of breakpoint
                 if(msg->AsEvent() && msg->AsEvent()->event == "stopped") {
                     LOG_INFO() << "Stopped." << msg->As<dap::StoppedEvent>()->text;

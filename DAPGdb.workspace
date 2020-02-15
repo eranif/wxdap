@@ -6,7 +6,7 @@
   <Project Name="dbgcli" Path="dbgcli/dbgcli.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
-      <Environment/>
+      <Environment>PATH=C:\compilers\mingw64-9.2\bin;$PATH</Environment>
       <Project Name="DAPGdb" ConfigName="Debug"/>
       <Project Name="dapcxx" ConfigName="Debug"/>
       <Project Name="gdbd_tests" ConfigName="Debug"/>

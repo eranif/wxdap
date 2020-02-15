@@ -15,9 +15,9 @@
 /// https://microsoft.github.io/debug-adapter-protocol/specification
 using namespace std;
 
-#define JSON_SERIALIZE()                                 \
-    JSONItem To(const string& name = "") const override; \
-    void From(const JSONItem& json) override
+#define JSON_SERIALIZE()      \
+    JSON To() const override; \
+    void From(const JSON& json) override
 
 #define REQUEST_CLASS(Type, Command)                              \
     Type()                                                        \
@@ -64,8 +64,8 @@ struct Any {
     Any() {}
     virtual ~Any() {}
 
-    virtual JSONItem To(const string& name = "") const = 0;
-    virtual void From(const JSONItem& json) = 0;
+    virtual JSON To() const = 0;
+    virtual void From(const JSON& json) = 0;
 
     template <typename T>
     T* As() const
@@ -87,7 +87,8 @@ struct ProtocolMessage : public Any {
     dap::Event* AsEvent() const { return As<dap::Event>(); }
     dap::Request* AsRequest() const { return As<dap::Request>(); }
     dap::Response* AsResponse() const { return As<dap::Response>(); }
-
+    
+    string ToString() const;
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
 };
@@ -171,8 +172,8 @@ struct Response : public ProtocolMessage {
 /// <-
 struct CancelResponse : public Response {
     RESPONSE_CLASS(CancelResponse, "cancel");
-    JSONItem To(const string& name = "") const override { return Response::To(name); }
-    void From(const JSONItem& json) override { Response::From(json); }
+    JSON To() const override { return Response::To(); }
+    void From(const JSON& json) override { Response::From(json); }
 };
 
 /// This event indicates that the debug adapter is ready to accept configuration

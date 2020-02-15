@@ -24,8 +24,6 @@
 #define cJSON__h
 #include <memory>
 
-namespace dap
-{
 /* cJSON Types: */
 #define cJSON_False 0
 #define cJSON_True 1
@@ -122,5 +120,4 @@ extern void cJSON_ReplaceItemInObject(cJSON* object, const char* string, cJSON* 
 #define cJSON_AddNumberToObject(object, name, n) cJSON_AddItemToObject(object, name, cJSON_CreateNumber(n))
 #define cJSON_AddStringToObject(object, name, s) cJSON_AddItemToObject(object, name, cJSON_CreateString(s))
 
-}; // namespace dap
 #endif

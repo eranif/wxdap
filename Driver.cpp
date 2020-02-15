@@ -23,7 +23,7 @@ bool Driver::IsAlive() const { return m_backend->IsAlive(); }
 void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
 {
     // Handle DAP request message
-    LOG_DEBUG() << "<==" << message->To().Format();
+    LOG_DEBUG() << "<==" << message->To().ToString();
     if(message->type == "request") {
         dap::Request* request = message->As<dap::Request>();
         if(request->command == "launch") {

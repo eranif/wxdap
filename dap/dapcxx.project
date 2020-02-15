@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="JSON.hpp"/>
+    <File Name="JSON.cpp"/>
     <File Name="Client.cpp"/>
     <File Name="Client.hpp"/>
     <File Name="Exception.cpp"/>
@@ -30,8 +32,6 @@
     <File Name="Process.hpp"/>
     <File Name="Process.cpp"/>
     <File Name="msw.cpp"/>
-    <File Name="json.hpp"/>
-    <File Name="json.cpp"/>
     <File Name="dap.hpp"/>
     <File Name="dap.cpp"/>
     <File Name="cJSON.hpp"/>

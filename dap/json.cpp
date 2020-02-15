@@ -1,419 +1,249 @@
-#include "json.hpp"
-#include <string>
+/*
+  Copyright (c) 2020 Eran Ifrah
 
-namespace dap
-{
-JSON::JSON(const string& text)
-    : m_json(NULL)
-{
-    m_json = cJSON_Parse(text.c_str());
-}
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-JSON::JSON(cJSON* json)
-    : m_json(json)
-{
-}
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
 
-JSON::JSON(JSONItem item)
-    : m_json(item.release())
-{
-}
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
 
-JSON::JSON(int type)
-    : m_json(NULL)
-{
-    if(type == cJSON_Array)
-        m_json = cJSON_CreateArray();
-    else if(type == cJSON_NULL)
-        m_json = cJSON_CreateNull();
-    else
-        m_json = cJSON_CreateObject();
-}
-
-JSON::~JSON()
-{
-    if(m_json) {
-        cJSON_Delete(m_json);
-        m_json = NULL;
+#include "JSON.hpp"
+#define CHECK_VALID_THIS_RETURN_NULL() \
+    if(!m_cjson) {                     \
+        return JSON(nullptr);          \
     }
-}
 
-JSONItem JSON::toElement() const
-{
-    if(!m_json) { return JSONItem(NULL); }
-    return JSONItem(m_json);
-}
-
-string JSON::errorString() const { return _errorString; }
-
-JSONItem JSONItem::property(const string& name) const
-{
-    if(!m_json) { return JSONItem(NULL); }
-
-    cJSON* obj = cJSON_GetObjectItem(m_json, name.c_str());
-    if(!obj) { return JSONItem(NULL); }
-    return JSONItem(obj);
-}
-
-void JSON::clear()
-{
-    int type = cJSON_Object;
-    if(m_json) {
-        type = m_json->type;
-        cJSON_Delete(m_json);
-        m_json = NULL;
+#define CHECK_IS_CONTAINER()        \
+    CHECK_VALID_THIS_RETURN_NULL()  \
+    if(!IsArray() && !IsObject()) { \
+        return JSON(m_cjson);       \
     }
-    if(type == cJSON_Array)
-        m_json = cJSON_CreateArray();
-    else
-        m_json = cJSON_CreateObject();
+
+JSON::JSON(cJSON* ptr)
+    : m_cjson(ptr)
+{
 }
 
-cJSON* JSON::release()
-{
-    cJSON* p = m_json;
-    m_json = NULL;
-    return p;
-}
+JSON::~JSON() { m_cjson = nullptr; }
 
-///////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////
-JSONItem::JSONItem(cJSON* json)
-    : m_json(json)
+JSON JSON::operator[](const string& index) const
 {
-    if(m_json) {
-        if(m_json->string) { m_name = m_json->string; }
-        m_type = m_json->type;
+    if(m_cjson == nullptr) {
+        return JSON(nullptr);
     }
-}
 
-JSONItem::JSONItem(const string& name, double val)
-    : m_name(name)
-    , m_type(cJSON_Number)
-    , m_valueNumer(val)
-{
-}
-
-JSONItem::JSONItem(const string& name, const std::string& val)
-    : m_name(name)
-    , m_type(cJSON_String)
-{
-    m_valueString.reserve(val.length() + 1);
-    m_valueString.append(val);
-}
-
-JSONItem::JSONItem(const string& name, const char* pval, size_t len)
-    : m_name(name)
-    , m_type(cJSON_String)
-{
-    m_valueString.reserve(len + 1);
-    m_valueString.append(pval);
-}
-
-JSONItem::JSONItem(const string& name, bool val)
-    : m_name(name)
-    , m_type(val ? cJSON_True : cJSON_False)
-{
-}
-
-JSONItem JSONItem::arrayItem(int pos) const
-{
-    if(!m_json) { return JSONItem(NULL); }
-
-    if(m_json->type != cJSON_Array) return JSONItem(NULL);
-
-    int size = cJSON_GetArraySize(m_json);
-    if(pos >= size) return JSONItem(NULL);
-
-    return JSONItem(cJSON_GetArrayItem(m_json, pos));
-}
-
-bool JSONItem::isNull() const
-{
-    if(!m_json) { return false; }
-    return m_json->type == cJSON_NULL;
-}
-
-bool JSONItem::toBool(bool defaultValue) const
-{
-    if(!m_json) { return defaultValue; }
-
-    if(!isBool()) { return defaultValue; }
-
-    return m_json->type == cJSON_True;
-}
-
-vector<string> JSONItem::toStringArray(const vector<string>& defaultValue) const
-{
-    if(!m_json) { return defaultValue; }
-    if(m_json->type != cJSON_Array) { return defaultValue; }
-    vector<string> v;
-    int count = cJSON_GetArraySize(m_json);
-    for(int i = 0; i < count; ++i) {
-        cJSON* s = cJSON_GetArrayItem(m_json, i);
-        if(s->type == cJSON_String && s->valuestring) { v.push_back(s->valuestring); }
+    cJSON* child = m_cjson->child;
+    while(child) {
+        if(child->string && strcmp(child->string, index.c_str()) == 0) {
+            return JSON(child);
+        }
+        child = child->next;
     }
-    return v;
+    return JSON(nullptr);
 }
 
-string JSONItem::toString(const string& defaultValue) const
+JSON JSON::AddItem(const string& name, cJSON* item)
 {
-    if(!m_json) { return defaultValue; }
-    if(m_json->type != cJSON_String) { return defaultValue; }
-    return string(m_json->valuestring);
-}
-
-bool JSONItem::isBool() const
-{
-    if(!m_json) { return false; }
-
-    return m_json->type == cJSON_True || m_json->type == cJSON_False;
-}
-
-bool JSONItem::isString() const
-{
-    if(!m_json) { return false; }
-
-    return m_json->type == cJSON_String;
-}
-
-void JSONItem::append(const JSONItem& element)
-{
-    if(!m_json) { return; }
-
-    switch(element.getType()) {
-    case cJSON_False:
-        cJSON_AddFalseToObject(m_json, element.getName().c_str());
-        break;
-
-    case cJSON_True:
-        cJSON_AddTrueToObject(m_json, element.getName().c_str());
-        break;
-
-    case cJSON_NULL:
-        cJSON_AddNullToObject(m_json, element.getName().c_str());
-        break;
-
-    case cJSON_Number:
-        cJSON_AddNumberToObject(m_json, element.m_name.c_str(), element.m_valueNumer);
-        break;
-
-    case cJSON_String:
-        cJSON_AddStringToObject(m_json, element.m_name.c_str(), element.m_valueString.c_str());
-        break;
-
-    case cJSON_Array:
-    case cJSON_Object:
-        cJSON_AddItemToObject(m_json, element.m_name.c_str(), element.m_json);
-        break;
+    if(m_cjson == nullptr) {
+        cJSON_Delete(item);
+        return JSON(nullptr);
     }
-}
-
-void JSONItem::arrayAppend(const JSONItem& element)
-{
-    if(!m_json) { return; }
-
-    cJSON* p = NULL;
-    switch(element.getType()) {
-    case cJSON_False:
-        p = cJSON_CreateFalse();
-        break;
-
-    case cJSON_True:
-        p = cJSON_CreateTrue();
-        break;
-
-    case cJSON_NULL:
-        p = cJSON_CreateNull();
-        break;
-
-    case cJSON_Number:
-        p = cJSON_CreateNumber(element.m_valueNumer);
-        break;
-
-    case cJSON_String:
-        p = cJSON_CreateString(element.m_valueString.c_str());
-        break;
-    case cJSON_Array:
-    case cJSON_Object:
-        p = element.m_json;
-        break;
+    if(m_cjson->type != cJSON_Array && m_cjson->type != cJSON_Object) {
+        cJSON_Delete(item);
+        return JSON(nullptr);
     }
-    if(p) { cJSON_AddItemToArray(m_json, p); }
+    if(m_cjson->type == cJSON_Array) {
+        cJSON_AddItemToArray(m_cjson, item);
+    } else {
+        cJSON_AddItemToObject(m_cjson, name.c_str(), item);
+    }
+    return JSON(item);
 }
 
-JSONItem JSONItem::createArray(const string& name)
+string JSON::ToString() const
 {
-    JSONItem arr(cJSON_CreateArray());
-    arr.setName(name);
-    arr.setType(cJSON_Array);
+    if(m_cjson == nullptr) {
+        return "";
+    }
+    char* c = cJSON_Print(m_cjson);
+    string str(c);
+    free(c);
+    return str;
+}
+
+JSON JSON::CreateArray()
+{
+    JSON arr(cJSON_CreateArray());
     return arr;
 }
 
-JSONItem JSONItem::createObject(const string& name)
+JSON JSON::CreateObject()
 {
-    JSONItem obj(cJSON_CreateObject());
-    obj.setName(name);
-    obj.setType(cJSON_Object);
+    JSON obj(cJSON_CreateObject());
     return obj;
 }
 
-char* JSONItem::FormatRawString(bool formatted) const
+void JSON::Delete()
 {
-    if(!m_json) { return NULL; }
+    // Delete only when owned
+    if(m_cjson) {
+        cJSON_Delete(m_cjson);
+        m_cjson = nullptr;
+    }
+}
 
-    if(formatted) {
-        return cJSON_Print(m_json);
+JSON JSON::Add(const char* name, const string& value) { return Add(name, value.c_str()); }
 
+JSON JSON::Add(const char* name, const char* value)
+{
+    CHECK_IS_CONTAINER();
+    if(IsObject()) {
+        cJSON_AddItemToObject(m_cjson, name, cJSON_CreateString(value));
     } else {
-        return cJSON_PrintUnformatted(m_json);
+        // Array
+        cJSON_AddItemToArray(m_cjson, cJSON_CreateString(value));
+    }
+    return JSON(m_cjson);
+}
+
+JSON JSON::Add(const char* name, double value)
+{
+    CHECK_IS_CONTAINER();
+    if(IsObject()) {
+        cJSON_AddItemToObject(m_cjson, name, cJSON_CreateNumber(value));
+    } else {
+        // Array
+        cJSON_AddItemToArray(m_cjson, cJSON_CreateNumber(value));
+    }
+    return JSON(m_cjson);
+}
+
+JSON JSON::Add(const char* name, bool value)
+{
+    CHECK_IS_CONTAINER();
+    if(IsObject()) {
+        cJSON_AddItemToObject(m_cjson, name, cJSON_CreateBool(value ? 1 : 0));
+    } else {
+        // Array
+        cJSON_AddItemToArray(m_cjson, cJSON_CreateBool(value ? 1 : 0));
+    }
+    return JSON(m_cjson);
+}
+
+string JSON::GetString(const string& defaultVaule) const
+{
+    if(!m_cjson || m_cjson->type != cJSON_String) {
+        return defaultVaule;
+    }
+    return m_cjson->valuestring;
+}
+
+double JSON::GetNumber(double defaultVaule) const
+{
+    if(!m_cjson || m_cjson->type != cJSON_Number) {
+        return defaultVaule;
+    }
+    return m_cjson->valuedouble;
+}
+
+int JSON::GetInteger(int defaultVaule) const
+{
+    if(!m_cjson || m_cjson->type != cJSON_Number) {
+        return defaultVaule;
+    }
+    return m_cjson->valueint;
+}
+
+bool JSON::GetBool(bool defaultVaule) const
+{
+    if(!m_cjson || (m_cjson->type != cJSON_True && m_cjson != cJSON_False)) {
+        return defaultVaule;
+    }
+    return m_cjson->type == cJSON_True ? true : false;
+}
+
+JSON JSON::operator[](size_t index) const
+{
+    if(index >= GetCount()) {
+        return JSON(nullptr);
+    }
+    cJSON* child = m_cjson->child;
+    size_t where = 0;
+    while(where != index) {
+        child = child->next;
+        ++where;
+    }
+    return JSON(child);
+}
+
+size_t JSON::GetCount() const
+{
+    if(m_cjson == nullptr) {
+        return 0;
+    }
+    size_t count(0);
+    cJSON* child = m_cjson->child;
+    while(child) {
+        ++count;
+        child = child->next;
+    }
+    return count;
+}
+
+JSON JSON::AddObject(JSON obj, const char* name)
+{
+    if(!m_cjson) {
+        return obj;
+    }
+    cJSON_AddItemToObject(m_cjson, name, obj.m_cjson);
+    return obj;
+}
+
+JSON JSON::Add(const char* name, const vector<string>& value)
+{
+    auto a = AddArray(name);
+    for(const auto& s : value) {
+        a.Add(s);
+    }
+    return a;
+}
+
+vector<string> JSON::GetStringArray() const
+{
+    if(!m_cjson || m_cjson->type != cJSON_Array) {
+        return {};
+    }
+    vector<string> arr;
+    size_t count = GetCount();
+    arr.reserve(count);
+    for(size_t i = 0; i < count; ++i) {
+        arr.push_back((*this)[i].GetString());
+    }
+    return arr;
+}
+
+JSON JSON::Add(const char* name, JSON value)
+{
+    CHECK_IS_CONTAINER();
+    if(IsObject()) {
+        return AddObject(value, name);
+    } else {
+        cJSON_AddItemToArray(m_cjson, value.m_cjson);
+        return value;
     }
 }
 
-string JSONItem::Format(bool formatted) const
-{
-    if(!m_json) { return ""; }
-
-    char* p = formatted ? cJSON_Print(m_json) : cJSON_PrintUnformatted(m_json);
-    string s = p;
-    free(p);
-    return s;
-}
-
-int JSONItem::toInt(int defaultVal) const
-{
-    if(!m_json) { return defaultVal; }
-
-    if(m_json->type != cJSON_Number) { return defaultVal; }
-
-    return m_json->valueint;
-}
-
-size_t JSONItem::toSize_t(size_t defaultVal) const
-{
-    if(!m_json) { return defaultVal; }
-
-    if(m_json->type != cJSON_Number) { return defaultVal; }
-
-    return (size_t)m_json->valueint;
-}
-
-double JSONItem::toDouble(double defaultVal) const
-{
-    if(!m_json) { return defaultVal; }
-
-    if(m_json->type != cJSON_Number) { return defaultVal; }
-
-    return m_json->valuedouble;
-}
-
-int JSONItem::arraySize() const
-{
-    if(!m_json) { return 0; }
-
-    if(m_json->type != cJSON_Array) return 0;
-
-    return cJSON_GetArraySize(m_json);
-}
-
-JSONItem& JSONItem::add(const string& name, bool value)
-{
-    append(JSONItem(name, value));
-    return *this;
-}
-
-JSONItem& JSONItem::add(const string& name, const std::string& value)
-{
-    append(JSONItem(name, value));
-    return *this;
-}
-
-JSONItem& JSONItem::add(const string& name, long value)
-{
-    append(JSONItem(name, (double)value));
-    return *this;
-}
-
-void JSONItem::arrayAppend(const string& value) { arrayAppend(JSONItem("", value)); }
-
-bool JSONItem::hasProperty(const string& name) const
-{
-    if(!m_json) { return false; }
-    cJSON* obj = cJSON_GetObjectItem(m_json, name.c_str());
-    return obj != NULL;
-}
-
-JSONItem& JSONItem::add(const string& name, const JSONItem& element)
-{
-    if(!m_json) { return *this; }
-    cJSON_AddItemToObject(m_json, name.c_str(), element.m_json);
-    return *this;
-}
-
-void JSONItem::removeProperty(const string& name)
-{
-    // delete child property
-    if(!m_json) { return; }
-    cJSON_DeleteItemFromObject(m_json, name.c_str());
-}
-
-JSONItem& JSONItem::add(const string& name, size_t value) { return add(name, (int)value); }
-
-JSONItem JSONItem::firstChild()
-{
-    m_walker = NULL;
-    if(!m_json) { return JSONItem(NULL); }
-
-    if(!m_json->child) { return JSONItem(NULL); }
-
-    m_walker = m_json->child;
-    return JSONItem(m_walker);
-}
-
-JSONItem JSONItem::nextChild()
-{
-    if(!m_walker) { return JSONItem(NULL); }
-
-    JSONItem element(m_walker->next);
-    m_walker = m_walker->next;
-    return element;
-}
-
-JSONItem& JSONItem::add(const string& name, const char* value) { return add(name, string(value)); }
-
-bool JSONItem::isArray() const
-{
-    if(!m_json) { return false; }
-    return m_json->type == cJSON_Array;
-}
-
-bool JSONItem::isObject() const
-{
-    if(!m_json) { return false; }
-    return m_json->type == cJSON_Object;
-}
-
-bool JSONItem::isNumber() const
-{
-    if(!m_json) { return false; }
-    return m_json->type == cJSON_Number;
-}
-
-JSONItem JSONItem::detachProperty(const string& name)
-{
-    if(!m_json) { return JSONItem(NULL); }
-    cJSON* j = cJSON_DetachItemFromObject(m_json, name.c_str());
-    return JSONItem(j);
-}
-
-JSONItem& JSONItem::add(const string& name, const vector<string>& arr)
-{
-    auto a = createArray(name);
-    add(a);
-    for(const auto& s : arr) {
-        a.arrayAppend(s);
-    }
-    return *this;
-}
-
-}; // namespace dap
+JSON JSON::Parse(const string& source) { return JSON(cJSON_Parse(source.c_str())); }
