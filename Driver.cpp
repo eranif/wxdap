@@ -32,6 +32,8 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
             OnSetBreakpoints(message);
         } else if(request->command == "configurationDone") {
             OnCofigurationDone(message);
+        } else if(request->command == "threads") {
+            OnThreads(message);
         }
     }
 }
@@ -91,5 +93,15 @@ void Driver::OnCofigurationDone(dap::ProtocolMessage::Ptr_t request)
     } catch(dap::Exception& e) {
         LOG_ERROR() << "ConfigurationDone error:" << e.What();
         ReportError<dap::ConfigurationDoneResponse>(request->seq, e.What());
+    }
+}
+
+void Driver::OnThreads(dap::ProtocolMessage::Ptr_t request)
+{
+    try {
+        m_backend->OnThreads(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "OnThreads error:" << e.What();
+        ReportError<dap::ThreadsResponse>(request->seq, e.What());
     }
 }

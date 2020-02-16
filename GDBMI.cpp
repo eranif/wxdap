@@ -228,3 +228,64 @@ GDBMI::eStoppedReason GDBMI::ParseStoppedReason(const string& gdbOutput)
     }
     return kUnknown;
 }
+
+dap::Thread GDBMI::DoParseThread(const string& block)
+{
+    // id="2",target-id="Thread 0xb7e14b90 (LWP 21257)",
+    //   frame={level="0",addr="0xffffe410",func="__kernel_vsyscall",
+    //           args=[]},state="running"}
+    auto m = SplitToKeyValues(block);
+    dap::Thread thr;
+    if(m.count("id")) {
+        thr.id = stoi(m["id"]);
+    }
+
+    if(m.count("target-id")) {
+        thr.name = m["target-id"];
+    }
+
+    if(m.count("frame")) {
+        string& block = m["frame"];
+        if(!block.empty() && (*block.begin()) == '{') {
+            block.erase(0, 1);
+        }
+        m = SplitToKeyValues(block);
+        if(m.count("func")) {
+            thr.name << " " << m["func"];
+        }
+    }
+    return thr;
+}
+
+vector<dap::Thread> GDBMI::ParseThreads(const string& gdbOutput)
+{
+    //    ^done,threads=[
+    //{id="2",target-id="Thread 0xb7e14b90 (LWP 21257)",
+    //   frame={level="0",addr="0xffffe410",func="__kernel_vsyscall",
+    //           args=[]},state="running"},
+    //{id="1",target-id="Thread 0xb7e156b0 (LWP 21254)",
+    //   frame={level="0",addr="0x0804891f",func="foo",
+    //           args=[{name="i",value="10"}],
+    //           file="/tmp/a.c",fullname="/tmp/a.c",line="158",arch="i386:x86_64"},
+    //           state="running"}],
+    // current-thread-id="1"
+    size_t where = gdbOutput.find("threads=[");
+    if(where == string::npos) {
+        return {};
+    }
+
+    string buffer = gdbOutput.substr(where + strlen("threads=["));
+    auto blocks = SplitToBlocksCurly(buffer);
+    if(blocks.empty()) {
+        return {};
+    }
+
+    vector<dap::Thread> threads;
+    for(const auto& block : blocks) {
+        auto thr = DoParseThread(block);
+        if(thr.id != -1) {
+            threads.push_back(thr);
+        }
+    }
+    return threads;
+}

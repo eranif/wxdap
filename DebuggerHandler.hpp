@@ -44,6 +44,17 @@ public:
     ///----------------------------------------------------------------------
     /// Any backend should override the below pure virtual methods
     ///----------------------------------------------------------------------
+    /**
+     * @brief process raw debugger output
+     * @return message to be sent to the IDE (can be nullptr)
+     */
+    virtual void OnDebuggerStdout(const string& message) = 0;
+
+    /**
+     * @brief process raw debugger output
+     * @return message to be sent to the IDE (can be nullptr)
+     */
+    virtual void OnDebuggerStderr(const string& message) = 0;
 
     /**
      * @brief launch the debugger process
@@ -72,17 +83,10 @@ public:
     virtual void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message) = 0;
 
     /**
-     * @brief process raw debugger output
-     * @return message to be sent to the IDE (can be nullptr)
+     * @brief Process 'Threads' request
      */
-    virtual void OnDebuggerStdout(const string& message) = 0;
-
-    /**
-     * @brief process raw debugger output
-     * @return message to be sent to the IDE (can be nullptr)
-     */
-    virtual void OnDebuggerStderr(const string& message) = 0;
-
+    virtual void OnThreads(dap::ProtocolMessage::Ptr_t message) = 0;
+    
     ///----------------------------------------------------------------------
     /// Pure virtual methods end
     ///----------------------------------------------------------------------

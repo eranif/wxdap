@@ -3,8 +3,8 @@
 
 #include "dap/dap.hpp"
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 class GDBMI
@@ -32,6 +32,7 @@ protected:
     static unordered_map<string, string> SplitToKeyValues(const string& buffer);
     static dap::Breakpoint DoParseBreakpoint(const string& block);
     static dap::StackFrame DoParseStackFrame(const string& block);
+    static dap::Thread DoParseThread(const string& block);
 
 public:
     /**
@@ -52,6 +53,11 @@ public:
      * @brief return the "stopped" reason
      */
     static eStoppedReason ParseStoppedReason(const string& gdbOutput);
+
+    /**
+     * @brief parse the output of the command -thread-info and return list of threads
+     */
+    static vector<dap::Thread> ParseThreads(const string& gdbOutput);
 };
 
 #endif // GDBMI_HPP

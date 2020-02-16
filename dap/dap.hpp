@@ -87,7 +87,7 @@ struct ProtocolMessage : public Any {
     dap::Event* AsEvent() const { return As<dap::Event>(); }
     dap::Request* AsRequest() const { return As<dap::Request>(); }
     dap::Response* AsResponse() const { return As<dap::Response>(); }
-    
+
     string ToString() const;
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
@@ -112,7 +112,7 @@ public:
      * @return
      */
     ProtocolMessage::Ptr_t New(const string& type, const string& name);
-    
+
     /**
      * @brief create new ProtocolMessage from raw JSON object
      */
@@ -627,6 +627,34 @@ struct StackFrame : public Any {
      */
     int line = 0;
     ANY_CLASS(StackFrame);
+    JSON_SERIALIZE();
+};
+
+/// The request retrieves a list of all threads.
+struct ThreadsRequest : public Request {
+    REQUEST_CLASS(ThreadsRequest, "threads");
+    JSON_SERIALIZE();
+};
+
+/// A Thread
+struct Thread : public Any {
+    /**
+     * Unique identifier for the thread.
+     */
+    int id = -1;
+
+    /**
+     * A name of the thread.
+     */
+    string name;
+    ANY_CLASS(Thread);
+    JSON_SERIALIZE();
+};
+
+/// Response to ‘threads’ request.
+struct ThreadsResponse : public Response {
+    vector<Thread> threads;
+    RESPONSE_CLASS(ThreadsResponse, "threads");
     JSON_SERIALIZE();
 };
 }; // namespace dap

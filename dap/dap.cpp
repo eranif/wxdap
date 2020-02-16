@@ -37,6 +37,7 @@ void Initialize()
     REGISTER_CLASS(SetBreakpointsRequest);
     REGISTER_CLASS(ContinueRequest);
     REGISTER_CLASS(NextRequest);
+    REGISTER_CLASS(ThreadsRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -57,6 +58,8 @@ void Initialize()
     REGISTER_CLASS(SetBreakpointsResponse);
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
+    REGISTER_CLASS(ThreadsResponse);
+
     // Needed for windows socket library
     SocketBase::Initialize();
 }
@@ -110,6 +113,20 @@ ProtocolMessage::Ptr_t ObjGenerator::New(const string& name, const unordered_map
         return nullptr;
     }
     return iter->second();
+}
+
+ProtocolMessage::Ptr_t dap::ObjGenerator::FromJSON(JSON json)
+{
+    if(!json.IsOK()) {
+        return nullptr;
+    }
+    string type = json["type"].GetString();
+    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
+    ProtocolMessage::Ptr_t msg = New(type, command);
+    if(msg) {
+        msg->From(json);
+    }
+    return msg;
 }
 
 ///=====================================================================================================
@@ -657,6 +674,24 @@ void BreakpointLocation::From(const JSON& json)
 // ----------------------------------------
 // ----------------------------------------
 
+JSON Thread::To() const
+{
+    JSON json = JSON::CreateObject();
+    ADD_PROP(id);
+    ADD_PROP(name);
+    return json;
+}
+
+void Thread::From(const JSON& json)
+{
+    id = json["id"].GetInteger(id);
+    name = json["name"].GetString();
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSON BreakpointLocationsResponse::To() const
 {
     RESPONSE_TO();
@@ -811,6 +846,18 @@ void NextRequest::From(const JSON& json)
 // ----------------------------------------
 // ----------------------------------------
 
+JSON ThreadsRequest::To() const
+{
+    REQUEST_TO();
+    return json;
+}
+
+void ThreadsRequest::From(const JSON& json) { REQUEST_FROM(); }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSON ContinueResponse::To() const
 {
     RESPONSE_TO();
@@ -856,17 +903,33 @@ void SetBreakpointsResponse::From(const JSON& json)
     }
 }
 
-ProtocolMessage::Ptr_t dap::ObjGenerator::FromJSON(JSON json)
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON ThreadsResponse::To() const
 {
-    if(!json.IsOK()) {
-        return nullptr;
+    RESPONSE_TO();
+    ADD_BODY();
+    // create arr
+    ADD_ARRAY(body, "threads");
+    for(const auto& thr : threads) {
+        arr.Add(thr.To());
     }
-    string type = json["type"].GetString();
-    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
-    ProtocolMessage::Ptr_t msg = New(type, command);
-    if(msg) {
-        msg->From(json);
+    return json;
+}
+
+void ThreadsResponse::From(const JSON& json)
+{
+    RESPONSE_FROM();
+    READ_BODY();
+    JSON arr = body["threads"];
+    threads.clear();
+    int size = arr.GetCount();
+    for(int i = 0; i < size; ++i) {
+        Thread thr;
+        thr.From(arr[i]);
+        threads.push_back(thr);
     }
-    return msg;
 }
 }; // namespace dap

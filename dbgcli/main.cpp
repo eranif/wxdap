@@ -39,6 +39,9 @@ int main(int argc, char** argv)
                     // Stopped cause of breakpoint
                     if(msg->AsEvent() && msg->AsEvent()->event == "stopped") {
                         LOG_INFO() << "Stopped." << msg->As<dap::StoppedEvent>()->text;
+                        // Ask for call stack
+                        client.GetThreads();
+                        LOG_INFO() << "Fetching threads...";
                     }
                 }
             });

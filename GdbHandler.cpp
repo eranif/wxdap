@@ -138,6 +138,32 @@ void GdbHandler::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message)
                               } });
     }
 }
+void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
+{
+    dap::ThreadsRequest* req = message->As<dap::ThreadsRequest>();
+    int requestSeq = req->seq;
+    string threadsInfoCommand;
+    string commandSequence = NextSequence();
+    threadsInfoCommand << commandSequence << "-thread-info";
+    LOG_INFO() << "Listing threads";
+    m_process->WriteLn(threadsInfoCommand);
+    m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
+                              // Process the output. Output is guranteed to be a complete reply from the debeugger
+                              if(IsSuccess(output) || IsRunning(output)) {
+                                  // Time to report Launch response
+                                  dap::ThreadsResponse* response = new dap::ThreadsResponse();
+                                  response->success = true;
+                                  response->request_seq = requestSeq;
+                                  response->threads = GDBMI::ParseThreads(output);
+                                  LOG_INFO() << "Listing threads successfully";
+                                  return dap::ProtocolMessage::Ptr_t(response);
+                              } else if(IsError(output)) {
+                                  // error occured
+                                  return ResponseError<dap::ThreadsResponse>(output, requestSeq);
+                              }
+                              return nullptr;
+                          } });
+}
 
 void GdbHandler::StartDebugger(const string& debuggerExecutable, const string& wd)
 {

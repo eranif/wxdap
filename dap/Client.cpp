@@ -145,3 +145,10 @@ void dap::Client::Check(function<void(JSON)> callback)
         m_rpc.ProcessBuffer(callback);
     }
 }
+
+void dap::Client::GetThreads()
+{
+    ThreadsRequest* threadsRequest = new ThreadsRequest();
+    threadsRequest->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_socket);
+}

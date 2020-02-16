@@ -26,12 +26,12 @@ protected:
 public:
     Client();
     virtual ~Client();
-    
+
     /**
      * @brief Check if a new message arrived from the debugger server
      */
     void Check(function<void(JSON)> callback);
-    
+
     /**
      * @brief Wait until connection is established
      */
@@ -51,7 +51,7 @@ public:
      * @brief set multiple breakpoints in a source file
      */
     void SetBreakpointsFile(const string& file, const vector<dap::SourceBreakpoint>& lines);
-    
+
     /**
      * @brief tell the debugger that we are done and ready to start the main loop
      */
@@ -60,6 +60,11 @@ public:
      * @brief start the debuggee
      */
     void Launch(const vector<string>& cmd);
+
+    /**
+     * @brief ask for list of threads
+     */
+    void GetThreads();
 };
 
 };     // namespace dap

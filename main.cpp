@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     parser.Parse(argc, argv);
 
     // Open the log file
-    dap::Log::OpenStdout(dap::Log::Info);
+    dap::Log::OpenStdout(dap::Log::Dbg);
     LOG_INFO() << "Started";
 
     try {
