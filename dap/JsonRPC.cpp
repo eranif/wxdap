@@ -51,8 +51,6 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
     if(!json.IsOK()) {
         return nullptr;
     }
-    JSONLocker locker(json);
-    
     string type = json["type"].GetString();
     string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
 

@@ -13,7 +13,7 @@
 #define EVENT_FROM() Event::From(json)
 #define PROTOCOL_MSG_FROM() ProtocolMessage::From(json)
 #define READ_OBJ(obj) obj.From(json[#obj])
-#define ADD_OBJ(obj) json.AddObject(obj.To(), #obj)
+#define ADD_OBJ(obj) json.AddObject(#obj, obj.To())
 #define GET_PROP(prop, Type) prop = json[#prop].Get##Type()
 #define ADD_BODY() JSON body = json.AddObject("body")
 #define ADD_BODY_PROP(prop) body.Add(#prop, prop)
@@ -82,7 +82,6 @@ ProtocolMessage::Ptr_t ObjGenerator::New(const string& type, const string& name)
 string dap::ProtocolMessage::ToString() const
 {
     JSON json = To();
-    JSONLocker locker(json);
     return json.ToString();
 }
 
@@ -419,7 +418,7 @@ JSON BreakpointEvent::To() const
     JSON json = Event::To();
     JSON body = json.AddObject("body");
     body.Add("reason", reason);
-    body.AddObject(breakpoint.To(), "breakpoint");
+    body.AddObject("breakpoint", breakpoint.To());
     return json;
 }
 
@@ -492,7 +491,7 @@ void InitializeRequestArguments::From(const JSON& json)
 JSON InitializeRequest::To() const
 {
     JSON json = Request::To();
-    json.AddObject(arguments.To(), "arguments");
+    json.AddObject("arguments", arguments.To());
     return json;
 }
 
@@ -562,7 +561,7 @@ void LaunchRequestArguments::From(const JSON& json)
 JSON LaunchRequest::To() const
 {
     JSON json = Request::To();
-    json.AddObject(arguments.To(), "arguments");
+    json.AddObject("arguments", arguments.To());
     return json;
 }
 
@@ -599,7 +598,7 @@ void DisconnectRequest::From(const JSON& json)
 JSON BreakpointLocationsRequest::To() const
 {
     JSON json = Request::To();
-    json.AddObject(arguments.To(), "arguments");
+    json.AddObject("arguments", arguments.To());
     return json;
 }
 

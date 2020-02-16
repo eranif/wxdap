@@ -24,15 +24,17 @@
 #define JSON_HPP
 
 #include "cJSON.hpp"
+#include <atomic>
 #include <cstring>
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace std;
 
 struct JSON {
     cJSON* m_cjson = nullptr;
+    atomic_int* m_refCount = nullptr;
 
 private:
     JSON(cJSON* ptr);
@@ -41,10 +43,19 @@ private:
     bool IsArray() const { return m_cjson && m_cjson->type == cJSON_Array; }
     bool IsObject() const { return m_cjson && m_cjson->type == cJSON_Object; }
 
+    void DecRef();
+    void IncRef();
+    void Manage();
+    void UnManage();
+    void Delete();
+    bool IsManaged() const { return m_refCount != nullptr; }
+
 public:
     ~JSON();
 
-    void Delete();
+    JSON& operator=(const JSON& other);
+    JSON(const JSON& other);
+
     /**
      * @brief return the property name
      */
@@ -74,12 +85,12 @@ public:
      * call AddObject()
      */
     static JSON CreateObject();
-    
+
     /**
      * @brief create JSON from string buffer
      */
     static JSON Parse(const string& source);
-    
+
     /**
      * @brief object property access
      */
@@ -115,8 +126,8 @@ public:
      * @brief add object to this JSON.
      * @return the newly added object
      */
-    JSON AddObject(JSON obj, const string& name) { return AddObject(obj, name.c_str()); }
-    JSON AddObject(JSON obj, const char* name);
+    JSON AddObject(const string& name, const JSON& obj) { return AddObject(name.c_str(), obj); }
+    JSON AddObject(const char* name, const JSON& obj);
 
     /**
      * @brief return value as string
@@ -137,21 +148,21 @@ public:
      * @brief return value as boolean
      */
     bool GetBool(bool defaultVaule = false) const;
-    
+
     /**
      * @brief return string array
      */
     vector<string> GetStringArray() const;
-    
+
     /**
      * @brief return string representation for this object
      */
-    string ToString() const;
+    string ToString(bool pretty = true) const;
 
     // Add properties to container (can be object or array)
     JSON Add(const string& name, const string& value) { return Add(name.c_str(), value); }
     JSON Add(const string& name, const vector<string>& value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, JSON value) { return Add(name.c_str(), value); }
+    JSON Add(const string& name, const JSON& value) { return Add(name.c_str(), value); }
     JSON Add(const string& name, const char* value) { return Add(name.c_str(), value); }
     JSON Add(const string& name, double value) { return Add(name.c_str(), value); }
     JSON Add(const string& name, int value) { return Add(name.c_str(), (double)value); }
@@ -164,7 +175,7 @@ public:
     JSON Add(const char* name, bool value);
     JSON Add(const char* name, double value);
     JSON Add(const char* name, const vector<string>& value);
-    JSON Add(const char* name, JSON value);
+    JSON Add(const char* name, const JSON& value);
     JSON Add(const char* name, long value) { return Add(name, (double)value); }
     JSON Add(const char* name, size_t value) { return Add(name, (double)value); }
     JSON Add(const char* name, int value) { return Add(name, (double)value); }
@@ -178,15 +189,6 @@ public:
     JSON Add(int value) { return Add("", (double)value); }
     JSON Add(size_t value) { return Add("", (double)value); }
     JSON Add(bool value) { return Add("", value); }
-    JSON Add(JSON value) { return Add("", value); }
-};
-
-struct JSONLocker {
-    JSON& m_json;
-    JSONLocker(JSON& json)
-        : m_json(json)
-    {
-    }
-    ~JSONLocker() { m_json.Delete(); }
+    JSON Add(const JSON& value) { return Add("", value); }
 };
 #endif // JSON_HPP

@@ -21,13 +21,11 @@
 */
 
 #include "JSON.hpp"
-#define CHECK_VALID_THIS_RETURN_NULL() \
-    if(!m_cjson) {                     \
-        return JSON(nullptr);          \
-    }
 
 #define CHECK_IS_CONTAINER()        \
-    CHECK_VALID_THIS_RETURN_NULL()  \
+    if(!m_cjson) {                  \
+        return JSON(nullptr);       \
+    }                               \
     if(!IsArray() && !IsObject()) { \
         return JSON(m_cjson);       \
     }
@@ -37,7 +35,62 @@ JSON::JSON(cJSON* ptr)
 {
 }
 
-JSON::~JSON() { m_cjson = nullptr; }
+void JSON::DecRef()
+{
+    if(m_refCount) {
+        (*m_refCount)--;
+        if(m_refCount->load() == 0) {
+            // Releas the underlying pointer
+            Delete();
+            delete m_refCount;
+            m_refCount = nullptr;
+        }
+    }
+}
+
+void JSON::IncRef()
+{
+    if(m_refCount) {
+        (*m_refCount)++;
+    }
+}
+
+void JSON::Manage()
+{
+    if(!IsManaged()) {
+        m_refCount = new atomic_int;
+        m_refCount->store(1);
+    }
+}
+
+void JSON::UnManage()
+{
+    if(m_refCount) {
+        delete m_refCount;
+        m_refCount = nullptr;
+    }
+}
+
+JSON& JSON::operator=(const JSON& other)
+{
+    if(this == &other) {
+        return *this;
+    }
+    DecRef();
+    m_refCount = other.m_refCount;
+    m_cjson = other.m_cjson;
+    // Increase the ref count if needed
+    IncRef();
+    return *this;
+}
+
+JSON::JSON(const JSON& other) { *this = other; }
+
+JSON::~JSON()
+{
+    DecRef();
+    m_cjson = nullptr;
+}
 
 JSON JSON::operator[](const string& index) const
 {
@@ -73,12 +126,12 @@ JSON JSON::AddItem(const string& name, cJSON* item)
     return JSON(item);
 }
 
-string JSON::ToString() const
+string JSON::ToString(bool pretty) const
 {
     if(m_cjson == nullptr) {
         return "";
     }
-    char* c = cJSON_Print(m_cjson);
+    char* c = pretty ? cJSON_Print(m_cjson) : cJSON_PrintUnformatted(m_cjson);
     string str(c);
     free(c);
     return str;
@@ -87,12 +140,14 @@ string JSON::ToString() const
 JSON JSON::CreateArray()
 {
     JSON arr(cJSON_CreateArray());
+    arr.Manage();
     return arr;
 }
 
 JSON JSON::CreateObject()
 {
     JSON obj(cJSON_CreateObject());
+    obj.Manage();
     return obj;
 }
 
@@ -203,12 +258,16 @@ size_t JSON::GetCount() const
     return count;
 }
 
-JSON JSON::AddObject(JSON obj, const char* name)
+JSON JSON::AddObject(const char* name, const JSON& obj)
 {
     if(!m_cjson) {
         return obj;
     }
     cJSON_AddItemToObject(m_cjson, name, obj.m_cjson);
+    if(obj.IsManaged()) {
+        JSON& o = const_cast<JSON&>(obj);
+        o.UnManage(); // We take ownership
+    }
     return obj;
 }
 
@@ -235,12 +294,16 @@ vector<string> JSON::GetStringArray() const
     return arr;
 }
 
-JSON JSON::Add(const char* name, JSON value)
+JSON JSON::Add(const char* name, const JSON& value)
 {
     CHECK_IS_CONTAINER();
     if(IsObject()) {
-        return AddObject(value, name);
+        return AddObject(name, value);
     } else {
+        if(value.IsManaged()) {
+            JSON& o = const_cast<JSON&>(value);
+            o.UnManage(); // We take ownership
+        }
         cJSON_AddItemToArray(m_cjson, value.m_cjson);
         return value;
     }
