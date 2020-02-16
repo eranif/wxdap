@@ -52,7 +52,8 @@ private:
 
 public:
     ~JSON();
-
+    JSON() {}
+    
     JSON& operator=(const JSON& other);
     JSON(const JSON& other);
 

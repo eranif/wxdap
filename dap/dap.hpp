@@ -112,6 +112,11 @@ public:
      * @return
      */
     ProtocolMessage::Ptr_t New(const string& type, const string& name);
+    
+    /**
+     * @brief create new ProtocolMessage from raw JSON object
+     */
+    ProtocolMessage::Ptr_t FromJSON(JSON json);
 
     void RegisterResponse(const string& name, onNewObject func);
     void RegisterEvent(const string& name, onNewObject func);

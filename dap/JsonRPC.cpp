@@ -8,16 +8,17 @@ dap::JsonRPC::JsonRPC() {}
 
 dap::JsonRPC::~JsonRPC() {}
 
-dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
+JSON dap::JsonRPC::DoProcessBuffer()
 {
     if(m_buffer.empty()) {
-        return nullptr;
+        return JSON();
     }
+
     // Find the "Content-Length:" string
     unordered_map<string, string> headers;
     int headerSize = ReadHeaders(headers);
     if(headerSize == -1) {
-        return nullptr;
+        return JSON();
     }
     // We got the headers, check to see that we have the "Content-Length" one
     auto iter = headers.find("Content-Length");
@@ -26,41 +27,38 @@ dap::ProtocolMessage::Ptr_t dap::JsonRPC::ProcessBuffer()
         // we will simply stuck with it again later. So we remove it and return null
         m_buffer.erase(headerSize);
         cerr << "ERROR: Read complete header section. But no Content-Length header was found" << endl;
-        return nullptr;
+        return JSON();
     }
 
     string contentLength = iter->second;
     long msglen = std::atol(contentLength.c_str());
     if(msglen <= 0) {
         cerr << "ERROR: Invalid Content-Length header value: 0 or lower than 0" << endl;
-        return nullptr;
+        return JSON();
     }
 
     long buflen = m_buffer.length();
     if((headerSize + msglen) > buflen) {
         // not enough buffer
-        return nullptr;
+        return JSON();
     }
 
     // Read the payload into a separate buffer and remove the full message
     // from the m_buffer member
     string payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
     m_buffer.erase(0, headerSize + msglen);
+    return JSON::Parse(payload);
+}
 
-    JSON json = JSON::Parse(payload);
-    if(!json.IsOK()) {
-        return nullptr;
+void dap::JsonRPC::ProcessBuffer(function<void(const JSON& obj)> callback)
+{
+    JSON json = DoProcessBuffer();
+    while(json.IsOK()) {
+        if(json.IsOK()) {
+            callback(json);
+        }
+        json = DoProcessBuffer();
     }
-    string type = json["type"].GetString();
-    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
-
-    // Allocate
-    ProtocolMessage::Ptr_t message = ObjGenerator::Get().New(type, command);
-    if(!message) {
-        return nullptr;
-    }
-    message->From(json);
-    return message;
 }
 
 int dap::JsonRPC::ReadHeaders(unordered_map<string, string>& headers)

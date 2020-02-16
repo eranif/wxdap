@@ -20,7 +20,7 @@ int main(int argc, char** argv)
             exit(1);
         }
         LOG_INFO() << "Connected!";
-        
+
         client.Initialize();
         client.SetBreakpointsFile("main.cpp", { { 10, "" }, { 12, "" } });
         client.ConfigurationDone();
@@ -31,15 +31,17 @@ int main(int argc, char** argv)
         //-----------------------------------------------------
         // Now that the initialization is completed, run the main loop
         while(client.IsConnected()) {
-            auto msg = client.Check();
-            while(msg) {
-                LOG_DEBUG() << "<== " << msg->ToString();
-                // Stopped cause of breakpoint
-                if(msg->AsEvent() && msg->AsEvent()->event == "stopped") {
-                    LOG_INFO() << "Stopped." << msg->As<dap::StoppedEvent>()->text;
+            // our callback we get keep called as long there are messages to process
+            client.Check([&](JSON json) {
+                auto msg = dap::ObjGenerator::Get().FromJSON(json);
+                if(msg) {
+                    LOG_DEBUG() << "<== " << msg->ToString();
+                    // Stopped cause of breakpoint
+                    if(msg->AsEvent() && msg->AsEvent()->event == "stopped") {
+                        LOG_INFO() << "Stopped." << msg->As<dap::StoppedEvent>()->text;
+                    }
                 }
-                msg = client.Check();
-            }
+            });
             this_thread::sleep_for(chrono::milliseconds(1));
         }
 

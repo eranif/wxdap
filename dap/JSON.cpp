@@ -309,4 +309,9 @@ JSON JSON::Add(const char* name, const JSON& value)
     }
 }
 
-JSON JSON::Parse(const string& source) { return JSON(cJSON_Parse(source.c_str())); }
+JSON JSON::Parse(const string& source)
+{
+    JSON json(cJSON_Parse(source.c_str()));
+    json.Manage();
+    return json;
+}

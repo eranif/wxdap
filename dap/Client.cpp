@@ -73,26 +73,30 @@ void dap::Client::Initialize()
         if(!buffer.empty()) {
             // got something on the network
             m_rpc.AppendBuffer(buffer);
-            ProtocolMessage::Ptr_t msg = m_rpc.ProcessBuffer();
-            if(msg) {
-                switch(state) {
-                case kWaitingInitResponse:
-                    if(msg->type == "response" && msg->As<Response>()->command == "initialize") {
-                        cout << "Received initialized response" << endl;
-                        state = kWaitingInitEvent;
+            // ProcessBuffer is called for all compeleted JSON messages found in 'buffer'
+            m_rpc.ProcessBuffer([&](JSON json) {
+                // construct a message from the JSON
+                ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
+                if(msg) {
+                    switch(state) {
+                    case kWaitingInitResponse:
+                        if(msg->type == "response" && msg->As<Response>()->command == "initialize") {
+                            cout << "Received initialized response" << endl;
+                            state = kWaitingInitEvent;
+                        }
+                        break;
+                    case kWaitingInitEvent:
+                        if(msg->type == "event" && msg->As<Event>()->event == "initialized") {
+                            cout << "Received initialized event" << endl;
+                            state = kExecute;
+                        }
+                        break;
+                    case kExecute:
+                        // handle anything else here
+                        break;
                     }
-                    break;
-                case kWaitingInitEvent:
-                    if(msg->type == "event" && msg->As<Event>()->event == "initialized") {
-                        cout << "Received initialized event" << endl;
-                        state = kExecute;
-                    }
-                    break;
-                case kExecute:
-                    // handle anything else here
-                    break;
                 }
-            }
+            });
         }
     }
 
@@ -132,13 +136,12 @@ void dap::Client::Launch(const vector<string>& cmd)
     m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
 }
 
-dap::ProtocolMessage::Ptr_t dap::Client::Check()
+void dap::Client::Check(function<void(JSON)> callback)
 {
     string buffer = m_inputQueue.pop(chrono::milliseconds(1));
     if(!buffer.empty()) {
         // got something on the network
         m_rpc.AppendBuffer(buffer);
-        return m_rpc.ProcessBuffer();
+        m_rpc.ProcessBuffer(callback);
     }
-    return nullptr;
 }

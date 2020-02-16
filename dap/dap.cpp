@@ -856,4 +856,17 @@ void SetBreakpointsResponse::From(const JSON& json)
     }
 }
 
+ProtocolMessage::Ptr_t dap::ObjGenerator::FromJSON(JSON json)
+{
+    if(!json.IsOK()) {
+        return nullptr;
+    }
+    string type = json["type"].GetString();
+    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
+    ProtocolMessage::Ptr_t msg = New(type, command);
+    if(msg) {
+        msg->From(json);
+    }
+    return msg;
+}
 }; // namespace dap

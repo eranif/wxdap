@@ -17,6 +17,7 @@ protected:
 
 protected:
     int ReadHeaders(unordered_map<string, string>& headers);
+    JSON DoProcessBuffer();
 
 public:
     JsonRPC();
@@ -34,10 +35,11 @@ public:
     void AppendBuffer(const string& buffer);
 
     /**
-     * @brief attempt to constuct a message from the buffer read
-     * If successful, return the message and consume the buffer
+     * @brief Check if we have a complete JSON message in the internal buffer and invoke callback
+     * If successful, callback is called. Note that it will get called as long there are complete messages in the
+     * internal buffer
      */
-    ProtocolMessage::Ptr_t ProcessBuffer();
+    void ProcessBuffer(function<void(const JSON& obj)> callback);
 
     /**
      * @brief send protocol message over the network

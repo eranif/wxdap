@@ -30,7 +30,7 @@ public:
     /**
      * @brief Check if a new message arrived from the debugger server
      */
-    ProtocolMessage::Ptr_t Check();
+    void Check(function<void(JSON)> callback);
     
     /**
      * @brief Wait until connection is established

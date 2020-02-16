@@ -23,19 +23,21 @@ void dap::ServerProtocol::Initialize()
             m_rpc.AppendBuffer(network_buffer);
 
             // Try to construct a message and process it
-            dap::ProtocolMessage::Ptr_t request = m_rpc.ProcessBuffer();
-            if(request->type == "request" && request->As<dap::InitializeRequest>()) {
-                dap::InitializeResponse initResponse;
-                m_rpc.Send(initResponse, m_conn);
-                LOG_DEBUG() << "Sending InitializeRequest";
+            m_rpc.ProcessBuffer([&](JSON json) {
+                dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
+                if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
+                    dap::InitializeResponse initResponse;
+                    m_rpc.Send(initResponse, m_conn);
+                    LOG_DEBUG() << "Sending InitializeRequest";
 
-                // Send InitializedEvent
-                dap::InitializedEvent initEvent;
-                m_rpc.Send(initEvent, m_conn);
-                LOG_DEBUG() << "Sending InitializedEvent";
-                LOG_INFO() << "Initialization completed";
-                state = kDone;
-            }
+                    // Send InitializedEvent
+                    dap::InitializedEvent initEvent;
+                    m_rpc.Send(initEvent, m_conn);
+                    LOG_DEBUG() << "Sending InitializedEvent";
+                    LOG_INFO() << "Initialization completed";
+                    state = kDone;
+                };
+            });
         }
     }
 }
@@ -43,22 +45,19 @@ void dap::ServerProtocol::Initialize()
 void dap::ServerProtocol::Check()
 {
     if(m_onNetworkMessage) {
-        dap::ProtocolMessage::Ptr_t message = m_rpc.ProcessBuffer();
-        if(message) {
-            return m_onNetworkMessage(message);
-        } else {
-            // try to read something from the network and try again
-            string content;
-            if(m_conn->Read(content, 1) == SocketBase::kSuccess) {
-                m_rpc.AppendBuffer(content);
-                // Try again now that we have read something
-                message = m_rpc.ProcessBuffer();
-                if(message) {
-                    // Call the handler
-                    m_onNetworkMessage(message);
-                }
-            }
+        // First try to read something from the network
+        string content;
+        if(m_conn->Read(content, 1) == SocketBase::kSuccess) {
+            m_rpc.AppendBuffer(content);
         }
+
+        // Process it
+        m_rpc.ProcessBuffer([&](JSON json) {
+            dap::ProtocolMessage::Ptr_t message = ObjGenerator::Get().FromJSON(json);
+            if(message) {
+                return m_onNetworkMessage(message);
+            }
+        });
     }
 }
 
