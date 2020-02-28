@@ -82,12 +82,12 @@ int SocketServer::Start(const string& connectionString)
     }
 }
 
-SocketBase::Ptr_t SocketServer::WaitForNewConnection(long timeout)
+Socket::Ptr_t SocketServer::WaitForNewConnection(long timeout)
 {
-    return SocketBase::Ptr_t(WaitForNewConnectionRaw(timeout));
+    return Socket::Ptr_t(WaitForNewConnectionRaw(timeout));
 }
 
-SocketBase* SocketServer::WaitForNewConnectionRaw(long timeout)
+Socket* SocketServer::WaitForNewConnectionRaw(long timeout)
 {
     if(SelectRead(timeout) == kTimeout) {
         return NULL;
@@ -96,6 +96,6 @@ SocketBase* SocketServer::WaitForNewConnectionRaw(long timeout)
     if(fd < 0) {
         throw Exception("accept error: " + error());
     }
-    return new SocketBase(fd);
+    return new Socket(fd);
 }
 }; // namespace dap

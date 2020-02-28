@@ -1,5 +1,5 @@
 #include "Exception.hpp"
-#include "SocketBase.hpp"
+#include "Socket.hpp"
 #include <cerrno>
 #include <cstdio>
 #include <memory>
@@ -15,15 +15,15 @@
 #endif
 namespace dap
 {
-SocketBase::SocketBase(socket_t sockfd)
+Socket::Socket(socket_t sockfd)
     : m_socket(sockfd)
     , m_closeOnExit(true)
 {
 }
 
-SocketBase::~SocketBase() { DestroySocket(); }
+Socket::~Socket() { DestroySocket(); }
 
-void SocketBase::Initialize()
+void Socket::Initialize()
 {
 #ifdef _WIN32
     WSADATA wsa;
@@ -31,7 +31,7 @@ void SocketBase::Initialize()
 #endif
 }
 
-int SocketBase::Read(string& content, long timeout)
+int Socket::Read(string& content, long timeout)
 {
     char buffer[4096];
     size_t bytesRead = 0;
@@ -43,7 +43,7 @@ int SocketBase::Read(string& content, long timeout)
     return rc;
 }
 
-int SocketBase::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeout)
+int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeout)
 {
     if(SelectReadMS(timeout) == kTimeout) {
         return kTimeout;
@@ -65,7 +65,7 @@ int SocketBase::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long ti
     return kSuccess;
 }
 
-int SocketBase::SelectRead(long seconds)
+int Socket::SelectRead(long seconds)
 {
     if(seconds == -1) {
         return kSuccess;
@@ -94,7 +94,7 @@ int SocketBase::SelectRead(long seconds)
 }
 
 // Send API
-void SocketBase::Send(const string& msg)
+void Socket::Send(const string& msg)
 {
     if(m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
@@ -115,7 +115,7 @@ void SocketBase::Send(const string& msg)
     }
 }
 
-int SocketBase::GetLastError()
+int Socket::GetLastError()
 {
 #ifdef _WIN32
     return ::WSAGetLastError();
@@ -124,9 +124,9 @@ int SocketBase::GetLastError()
 #endif
 }
 
-std::string SocketBase::error() { return error(GetLastError()); }
+std::string Socket::error() { return error(GetLastError()); }
 
-std::string SocketBase::error(const int errorCode)
+std::string Socket::error(const int errorCode)
 {
     std::string err;
 #ifdef _WIN32
@@ -150,7 +150,7 @@ std::string SocketBase::error(const int errorCode)
     return err;
 }
 
-void SocketBase::DestroySocket()
+void Socket::DestroySocket()
 {
     if(IsCloseOnExit()) {
         if(m_socket != INVALID_SOCKET) {
@@ -166,14 +166,14 @@ void SocketBase::DestroySocket()
     m_socket = INVALID_SOCKET;
 }
 
-socket_t SocketBase::Release()
+socket_t Socket::Release()
 {
     int fd = m_socket;
     m_socket = INVALID_SOCKET;
     return fd;
 }
 
-void SocketBase::MakeSocketBlocking(bool blocking)
+void Socket::MakeSocketBlocking(bool blocking)
 {
 #ifndef _WIN32
     // set socket to non-blocking mode
@@ -191,7 +191,7 @@ void SocketBase::MakeSocketBlocking(bool blocking)
 #endif
 }
 
-int SocketBase::SelectWriteMS(long milliSeconds)
+int Socket::SelectWriteMS(long milliSeconds)
 {
     if(milliSeconds == -1) {
         return kSuccess;
@@ -224,7 +224,7 @@ int SocketBase::SelectWriteMS(long milliSeconds)
     }
 }
 
-int SocketBase::SelectWrite(long seconds)
+int Socket::SelectWrite(long seconds)
 {
     if(seconds == -1) {
         return kSuccess;
@@ -255,7 +255,7 @@ int SocketBase::SelectWrite(long seconds)
     }
 }
 
-int SocketBase::SelectReadMS(long milliSeconds)
+int Socket::SelectReadMS(long milliSeconds)
 {
     if(milliSeconds == -1) {
         return kSuccess;

@@ -7,7 +7,7 @@
 #include "dap/Log.hpp"
 #include "dap/Process.hpp"
 #include "dap/ServerProtocol.hpp"
-#include "dap/SocketBase.hpp"
+#include "dap/Socket.hpp"
 #include "dap/SocketServer.hpp"
 #include "dap/StringUtils.hpp"
 #include "dap/dap.hpp"
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
         socketServer.Start(parser.GetConnectionString());
         LOG_INFO() << "Waiting for a new connection";
 
-        dap::SocketBase::Ptr_t client = socketServer.WaitForNewConnection();
+        dap::Socket::Ptr_t client = socketServer.WaitForNewConnection();
         LOG_INFO() << "Connection established successfully";
 
         // Construct a Driver with GDB handler

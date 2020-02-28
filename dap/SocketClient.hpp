@@ -1,12 +1,12 @@
 #ifndef CLSOCKETCLIENT_H
 #define CLSOCKETCLIENT_H
 
-#include "SocketBase.hpp"
+#include "Socket.hpp"
 #include <string>
 using namespace std;
 namespace dap
 {
-class SocketClient : public SocketBase
+class SocketClient : public Socket
 {
     string m_path;
 

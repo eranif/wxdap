@@ -1,4 +1,4 @@
-#include "SocketBase.hpp"
+#include "Socket.hpp"
 #include "dap.hpp"
 
 #define CREATE_JSON() JSON json = JSON::CreateObject()
@@ -61,7 +61,7 @@ void Initialize()
     REGISTER_CLASS(ThreadsResponse);
 
     // Needed for windows socket library
-    SocketBase::Initialize();
+    Socket::Initialize();
 }
 ObjGenerator& ObjGenerator::Get()
 {

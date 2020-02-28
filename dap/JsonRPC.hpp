@@ -2,7 +2,7 @@
 #define JSONRPC_HPP
 
 #include "Queue.hpp"
-#include "SocketBase.hpp"
+#include "Socket.hpp"
 #include "dap.hpp"
 #include <atomic>
 #include <thread>
@@ -44,11 +44,11 @@ public:
     /**
      * @brief send protocol message over the network
      */
-    void Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const;
+    void Send(ProtocolMessage& msg, Socket::Ptr_t conn) const;
     /**
      * @brief send protocol message over the network
      */
-    void Send(ProtocolMessage::Ptr_t msg, SocketBase::Ptr_t conn) const;
+    void Send(ProtocolMessage::Ptr_t msg, Socket::Ptr_t conn) const;
 };
 };     // namespace dap
 #endif // JSONRPC_HPP

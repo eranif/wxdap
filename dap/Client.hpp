@@ -2,13 +2,13 @@
 #define CLIENT_HPP
 
 #include "JsonRPC.hpp"
-#include "SocketBase.hpp"
+#include "Socket.hpp"
 
 namespace dap
 {
 class Client
 {
-    SocketBase::Ptr_t m_socket = nullptr;
+    Socket::Ptr_t m_socket = nullptr;
     dap::JsonRPC m_rpc;
     Queue<string> m_inputQueue;
     atomic_bool m_shutdown;

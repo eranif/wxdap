@@ -83,7 +83,7 @@ void dap::JsonRPC::SetBuffer(const string& buffer) { m_buffer = buffer; }
 
 void dap::JsonRPC::AppendBuffer(const string& buffer) { m_buffer.append(buffer); }
 
-void dap::JsonRPC::Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const
+void dap::JsonRPC::Send(ProtocolMessage& msg, Socket::Ptr_t conn) const
 {
     if(!conn) {
         throw Exception("Invalid connection");
@@ -97,7 +97,7 @@ void dap::JsonRPC::Send(ProtocolMessage& msg, SocketBase::Ptr_t conn) const
     conn->Send(network_buffer);
 }
 
-void dap::JsonRPC::Send(ProtocolMessage::Ptr_t msg, SocketBase::Ptr_t conn) const
+void dap::JsonRPC::Send(ProtocolMessage::Ptr_t msg, Socket::Ptr_t conn) const
 {
     if(!msg) {
         throw Exception("Unable to send empty message");

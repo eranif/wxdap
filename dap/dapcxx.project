@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="Socket.hpp"/>
+    <File Name="Socket.cpp"/>
     <File Name="JSON.hpp"/>
     <File Name="JSON.cpp"/>
     <File Name="Client.cpp"/>
@@ -19,13 +21,11 @@
     <File Name="Queue.hpp"/>
     <File Name="JsonRPC.cpp"/>
     <File Name="JsonRPC.hpp"/>
-    <File Name="SocketBase.hpp"/>
     <File Name="SocketServer.hpp"/>
     <File Name="SocketClient.hpp"/>
     <File Name="ConnectionString.hpp"/>
     <File Name="SocketServer.cpp"/>
     <File Name="SocketClient.cpp"/>
-    <File Name="SocketBase.cpp"/>
     <File Name="ConnectionString.cpp"/>
     <File Name="StringUtils.hpp"/>
     <File Name="StringUtils.cpp"/>

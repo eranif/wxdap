@@ -4,7 +4,7 @@
 #include "CommandLineParser.hpp"
 #include "DebuggerHandler.hpp"
 #include "dap/JsonRPC.hpp"
-#include "dap/SocketBase.hpp"
+#include "dap/Socket.hpp"
 #include "dap/dap.hpp"
 #include <dap/Process.hpp>
 #include <string>

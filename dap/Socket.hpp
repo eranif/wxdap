@@ -23,14 +23,14 @@ typedef int socket_t;
 using namespace std;
 namespace dap
 {
-class SocketBase
+class Socket
 {
 protected:
     socket_t m_socket;
     bool m_closeOnExit;
 
 public:
-    typedef shared_ptr<SocketBase> Ptr_t;
+    typedef shared_ptr<Socket> Ptr_t;
 
     enum {
         kSuccess = 1,
@@ -54,8 +54,8 @@ public:
      */
     void MakeSocketBlocking(bool blocking);
 
-    SocketBase(socket_t sockfd = INVALID_SOCKET);
-    virtual ~SocketBase();
+    Socket(socket_t sockfd = INVALID_SOCKET);
+    virtual ~Socket();
 
     void SetCloseOnExit(bool closeOnExit) { this->m_closeOnExit = closeOnExit; }
     bool IsCloseOnExit() const { return m_closeOnExit; }
@@ -129,7 +129,7 @@ public:
     template <typename T>
     T* As() const
     {
-        return dynamic_cast<T*>(const_cast<SocketBase*>(this));
+        return dynamic_cast<T*>(const_cast<Socket*>(this));
     }
 
 protected:
