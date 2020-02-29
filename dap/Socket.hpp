@@ -102,14 +102,8 @@ public:
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int SelectReadMS(long milliSeconds = -1);
+    int SelectReadMS(long milliSeconds);
 
-    /**
-     * @brief select for write
-     * @return kSuccess or kTimeout
-     * @throws SocketException
-     */
-    int SelectWrite(long seconds = -1);
 
     /**
      * @brief select for write (milli seconds version)

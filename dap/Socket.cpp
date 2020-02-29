@@ -192,37 +192,6 @@ int Socket::SelectWriteMS(long milliSeconds)
     }
 }
 
-int Socket::SelectWrite(long seconds)
-{
-    if(seconds == -1) {
-        return kSuccess;
-    }
-
-    if(m_socket == INVALID_SOCKET) {
-        throw Exception("Invalid socket!");
-    }
-
-    struct timeval tv = { seconds, 0 };
-
-    fd_set write_set;
-    FD_ZERO(&write_set);
-    FD_SET(m_socket, &write_set);
-    errno = 0;
-    int rc = select(m_socket + 1, NULL, &write_set, NULL, &tv);
-    if(rc == 0) {
-        // timeout
-        return kTimeout;
-
-    } else if(rc < 0) {
-        // an error occurred
-        throw Exception("SelectRead failed: " + error());
-
-    } else {
-        // we got something to read
-        return kSuccess;
-    }
-}
-
 int Socket::SelectReadMS(long milliSeconds)
 {
     if(milliSeconds == -1) {

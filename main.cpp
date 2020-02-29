@@ -38,7 +38,10 @@ int main(int argc, char** argv)
         socketServer.Start(parser.GetConnectionString());
         LOG_INFO() << "Waiting for a new connection";
 
-        dap::Socket::Ptr_t client = socketServer.WaitForNewConnection();
+        dap::Socket::Ptr_t client = nullptr;
+        while(client == nullptr) {
+            client = socketServer.WaitForNewConnection(10);
+        }
         LOG_INFO() << "Connection established successfully";
 
         // Construct a Driver with GDB handler

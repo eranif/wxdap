@@ -27,11 +27,11 @@ public:
      * @throw clSocketException
      */
     int Start(const string& connectionString);
-    Socket::Ptr_t WaitForNewConnection(long timeout = -1);
+    Socket::Ptr_t WaitForNewConnection(long timeout);
     /**
      * @brief same as above, however, return a pointer to the connection that should be freed by the caller
      */
-    Socket* WaitForNewConnectionRaw(long timeout = -1);
+    Socket* WaitForNewConnectionRaw(long timeout);
 };
 };     // namespace dap
 #endif // CLSOCKETSERVER_H

@@ -707,9 +707,30 @@ struct Variable : public Any {
     string name;
     string value;
     string type;
+    /**
+     * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing
+     * variablesReference to the VariablesRequest.
+     */
     int variablesReference = 0;
     VariablePresentationHint presentationHint;
     ANY_CLASS(Variable);
+    JSON_SERIALIZE();
+};
+
+/// Arguments for 'scopes' request.
+struct ScopesArguments : public Any {
+    /**
+     * Retrieve the scopes for this stackframe.
+     */
+    int frameId = 0;
+    ANY_CLASS(ScopesArguments);
+    JSON_SERIALIZE();
+};
+
+/// The request returns the variable scopes for a given stackframe ID.
+struct ScopesRequest : public Request {
+    ScopesArguments arguments;
+    REQUEST_CLASS(ScopesRequest, "scopes");
     JSON_SERIALIZE();
 };
 }; // namespace dap

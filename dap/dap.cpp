@@ -38,7 +38,8 @@ void Initialize()
     REGISTER_CLASS(ContinueRequest);
     REGISTER_CLASS(NextRequest);
     REGISTER_CLASS(ThreadsRequest);
-
+    REGISTER_CLASS(ScopesRequest);
+    
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
     REGISTER_CLASS(ContinuedEvent);
@@ -975,5 +976,35 @@ void Variable::From(const JSON& json)
     type = json["type"].GetString();
     variablesReference = json["variablesReference"].GetInteger();
     presentationHint.From(json["presentationHint"]);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON ScopesArguments::To() const
+{
+    JSON json = JSON::CreateObject();
+    json.Add("frameId", frameId);
+    return json;
+}
+
+void ScopesArguments::From(const JSON& json) { frameId = json["frameId"].GetNumber(); }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON ScopesRequest::To() const
+{
+    auto json = Request::To();
+    json.Add("arguments", arguments.To());
+    return json;
+}
+
+void ScopesRequest::From(const JSON& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
 }
 }; // namespace dap
