@@ -157,6 +157,12 @@ void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
                               return nullptr;
                           } });
 }
+
+void GdbHandler::OnStackTrace(dap::ProtocolMessage::Ptr_t message)
+{
+    // TODO :: implement this
+}
+
 void GdbHandler::OnScopes(dap::ProtocolMessage::Ptr_t message)
 {
     LOG_INFO() << "Received ScopesRequest request";
@@ -313,3 +319,5 @@ bool GdbHandler::IsSuccess(const string& gdbOutput) { return StringUtils::Starts
 bool GdbHandler::IsError(const string& gdbOutput) { return StringUtils::StartsWith(gdbOutput, "^error"); }
 
 bool GdbHandler::IsRunning(const string& gdbOutput) { return StringUtils::StartsWith(gdbOutput, "^running"); }
+
+

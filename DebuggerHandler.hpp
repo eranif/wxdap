@@ -92,7 +92,7 @@ public:
     virtual void StartDebugger(const string& debuggerExecutable, const string& wd) = 0;
 
     /**
-     * @brief handle launch request set from the IDE -> debugger
+     * @brief handle launch request sent from the IDE -> debugger
      * @throws dap::Exception
      */
     virtual void OnLaunchRequest(dap::ProtocolMessage::Ptr_t message) = 0;
@@ -104,20 +104,25 @@ public:
     virtual void OnConfigurationDoneRequest(dap::ProtocolMessage::Ptr_t message) = 0;
 
     /**
-     * @brief frontend requested to set breakpoints
+     * @brief frontend requested to set breakpoints sent from the IDE -> debugger
      * @throws dap::Exception
      */
     virtual void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message) = 0;
 
     /**
-     * @brief Process 'Threads' request
+     * @brief Process 'Threads' request sent from the IDE -> debugger
      */
     virtual void OnThreads(dap::ProtocolMessage::Ptr_t message) = 0;
 
     /**
-     * @brief Process 'Scopes' request
+     * @brief Process 'Scopes' request sent from the IDE -> debugger
      */
     virtual void OnScopes(dap::ProtocolMessage::Ptr_t message) = 0;
+
+    /**
+     * @brief Process 'stackTrace' request sent from the IDE -> debugger
+     */
+    virtual void OnStackTrace(dap::ProtocolMessage::Ptr_t message) = 0;
 
     ///----------------------------------------------------------------------
     /// Pure virtual methods end

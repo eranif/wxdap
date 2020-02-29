@@ -36,6 +36,8 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
             OnThreads(message);
         } else if(request->command == "scopes") {
             OnScopes(message);
+        } else if(request->command == "stackTrace") {
+            OnStackTrace(message);
         }
     }
 }
@@ -111,5 +113,15 @@ void Driver::OnScopes(dap::ProtocolMessage::Ptr_t request)
     } catch(dap::Exception& e) {
         LOG_ERROR() << "OnScopes error:" << e.What();
         ReportError<dap::ScopesResponse>(request->seq, e.What());
+    }
+}
+
+void Driver::OnStackTrace(dap::ProtocolMessage::Ptr_t request)
+{
+    try {
+        m_backend->OnStackTrace(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "OnStackTrace error:" << e.What();
+        ReportError<dap::StackTraceResponse>(request->seq, e.What());
     }
 }
