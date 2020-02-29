@@ -39,6 +39,7 @@ void Initialize()
     REGISTER_CLASS(NextRequest);
     REGISTER_CLASS(ThreadsRequest);
     REGISTER_CLASS(ScopesRequest);
+    REGISTER_CLASS(StackTraceRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -61,6 +62,7 @@ void Initialize()
     REGISTER_CLASS(NextResponse);
     REGISTER_CLASS(ThreadsResponse);
     REGISTER_CLASS(ScopesResponse);
+    REGISTER_CLASS(StackTraceResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -1055,5 +1057,68 @@ void Scope::From(const JSON& json)
     variablesReference = json["variablesReference"].GetInteger();
     expensive = json["expensive"].GetBool();
 }
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
 
+JSON StackTraceArguments::To() const
+{
+    auto json = JSON::CreateObject();
+    json.Add("threadId", threadId);
+    json.Add("startFrame", startFrame);
+    json.Add("levels", levels);
+    return json;
+}
+
+void StackTraceArguments::From(const JSON& json)
+{
+    threadId = json["threadId"].GetInteger();
+    startFrame = json["startFrame"].GetInteger();
+    levels = json["levels"].GetInteger();
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON StackTraceRequest::To() const
+{
+    auto json = Request::To();
+    json.Add("arguments", arguments.To());
+    return json;
+}
+
+void StackTraceRequest::From(const JSON& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON StackTraceResponse::To() const
+{
+    auto json = Response::To();
+    auto arr = json.AddObject("body").AddArray("stackFrames");
+    for(const auto& sf : stackFrames) {
+        arr.Add(sf.To());
+    }
+    return json;
+}
+
+void StackTraceResponse::From(const JSON& json)
+{
+    Response::From(json);
+    auto arr = json["body"]["stackFrames"];
+    size_t count = arr.GetCount();
+    stackFrames.clear();
+    stackFrames.reserve(count);
+    for(size_t i = 0; i < count; ++i) {
+        StackFrame sf;
+        sf.From(arr[i]);
+        stackFrames.push_back(sf);
+    }
+}
 }; // namespace dap

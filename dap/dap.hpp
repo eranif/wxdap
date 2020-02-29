@@ -749,7 +749,7 @@ struct Scope : public Any {
         , variablesReference((int)ref)
     {
     }
-    
+
     ANY_CLASS(Scope);
     JSON_SERIALIZE();
 };
@@ -760,6 +760,36 @@ struct ScopesResponse : public Response {
     JSON_SERIALIZE();
 };
 
-}; // namespace dap
+/// Arguments for 'stackTrace' request.
+struct StackTraceArguments : public Any {
+    /**
+     * Retrieve the stacktrace for this thread.
+     */
+    int threadId = 0;
+    /**
+     * The index of the first frame to return; if omitted frames start at 0.
+     */
+    int startFrame = 0;
+    /**
+     * The maximum number of frames to return. If levels is not specified or 0, all frames are returned.
+     */
+    int levels = 0;
+    ANY_CLASS(StackTraceArguments);
+    JSON_SERIALIZE();
+};
 
+/// The request returns a stacktrace from the current execution state.
+struct StackTraceRequest : public Request {
+    StackTraceArguments arguments;
+    REQUEST_CLASS(StackTraceRequest, "stackTrace");
+    JSON_SERIALIZE();
+};
+
+/// Response to 'stackTrace' request.
+struct StackTraceResponse : public Response {
+    vector<StackFrame> stackFrames;
+    RESPONSE_CLASS(StackTraceResponse, "stackTrace");
+    JSON_SERIALIZE();
+};
+};     // namespace dap
 #endif // PROTOCOLMESSAGE_HPP
