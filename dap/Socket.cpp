@@ -19,6 +19,9 @@ Socket::Socket(socket_t sockfd)
     : m_socket(sockfd)
     , m_closeOnExit(true)
 {
+    if(m_socket != INVALID_SOCKET) {
+        MakeSocketBlocking(false);
+    }
 }
 
 Socket::~Socket() { DestroySocket(); }
@@ -31,28 +34,24 @@ void Socket::Initialize()
 #endif
 }
 
-int Socket::Read(string& content, long timeout)
+int Socket::Read(string& content)
 {
     char buffer[4096];
     size_t bytesRead = 0;
-    int rc = Read(buffer, sizeof(buffer) - 1, bytesRead, timeout);
+    int rc = Read(buffer, sizeof(buffer) - 1, bytesRead);
     if(rc == kSuccess) {
         buffer[bytesRead] = 0;
+        content.reserve(bytesRead + 1);
         content = buffer;
     }
     return rc;
 }
 
-int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeout)
+int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead)
 {
-    if(SelectReadMS(timeout) == kTimeout) {
-        return kTimeout;
-    }
-    memset(buffer, 0, bufferSize);
-    const int res = recv(m_socket, buffer, bufferSize, 0);
-
+    int res = recv(m_socket, buffer, bufferSize, 0);
     if(res < 0) {
-        const int err = GetLastError();
+        int err = GetLastError();
         if(eWouldBlock == err) {
             return kTimeout;
         }
@@ -63,34 +62,6 @@ int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead, long timeou
 
     bytesRead = static_cast<size_t>(res);
     return kSuccess;
-}
-
-int Socket::SelectRead(long seconds)
-{
-    if(seconds == -1) {
-        return kSuccess;
-    }
-    if(m_socket == INVALID_SOCKET) {
-        throw Exception("Invalid socket!");
-    }
-    struct timeval tv = { seconds, 0 };
-
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(m_socket, &readfds);
-    int rc = select(m_socket + 1, &readfds, NULL, NULL, &tv);
-    if(rc == 0) {
-        // timeout
-        return kTimeout;
-
-    } else if(rc < 0) {
-        // an error occurred
-        throw Exception("SelectRead failed: " + error());
-
-    } else {
-        // we got something to read
-        return kSuccess;
-    }
 }
 
 // Send API
@@ -201,10 +172,7 @@ int Socket::SelectWriteMS(long milliSeconds)
         throw Exception("Invalid socket!");
     }
 
-    struct timeval tv;
-    tv.tv_sec = milliSeconds / 1000;
-    tv.tv_usec = (milliSeconds % 1000) * 1000;
-
+    struct timeval tv = { milliSeconds / 1000, (milliSeconds % 1000) * 1000 };
     fd_set write_set;
     FD_ZERO(&write_set);
     FD_SET(m_socket, &write_set);

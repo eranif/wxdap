@@ -44,7 +44,9 @@ bool SocketClient::ConnectRemote(const string& address, int port)
 
     RESET_ERRNO();
     int rc = ::connect(m_socket, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    // restore socket to blocking mode
+    if(rc == 0) {
+        MakeSocketBlocking(false);
+    }
     return rc == 0;
 }
 

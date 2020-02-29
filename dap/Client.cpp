@@ -52,7 +52,7 @@ void dap::Client::Initialize()
         while(!m_shutdown.load()) {
             try {
                 string content;
-                if(m_socket->Read(content)) {
+                if(m_socket->SelectReadMS(10) == Socket::kSuccess && m_socket->Read(content) == Socket::kSuccess) {
                     m_inputQueue.push(content);
                 }
             } catch(Exception& e) {

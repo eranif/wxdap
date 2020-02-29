@@ -15,29 +15,29 @@ void dap::ServerProtocol::Initialize()
     eState state = kWaitingInitRequest;
     while(state != kDone) {
         string network_buffer;
-        if(m_conn->Read(network_buffer, 10) == dap::Socket::kSuccess) {
+        if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess) {
+            if(m_conn->Read(network_buffer) == dap::Socket::kSuccess) {
+                LOG_DEBUG1() << "Read: " << network_buffer;
+                // Append the buffer to what we already have
+                m_rpc.AppendBuffer(network_buffer);
 
-            LOG_DEBUG1() << "Read: " << network_buffer;
+                // Try to construct a message and process it
+                m_rpc.ProcessBuffer([&](JSON json) {
+                    dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
+                    if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
+                        dap::InitializeResponse initResponse;
+                        m_rpc.Send(initResponse, m_conn);
+                        LOG_DEBUG() << "Sending InitializeRequest";
 
-            // Append the buffer to what we already have
-            m_rpc.AppendBuffer(network_buffer);
-
-            // Try to construct a message and process it
-            m_rpc.ProcessBuffer([&](JSON json) {
-                dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
-                if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
-                    dap::InitializeResponse initResponse;
-                    m_rpc.Send(initResponse, m_conn);
-                    LOG_DEBUG() << "Sending InitializeRequest";
-
-                    // Send InitializedEvent
-                    dap::InitializedEvent initEvent;
-                    m_rpc.Send(initEvent, m_conn);
-                    LOG_DEBUG() << "Sending InitializedEvent";
-                    LOG_INFO() << "Initialization completed";
-                    state = kDone;
-                };
-            });
+                        // Send InitializedEvent
+                        dap::InitializedEvent initEvent;
+                        m_rpc.Send(initEvent, m_conn);
+                        LOG_DEBUG() << "Sending InitializedEvent";
+                        LOG_INFO() << "Initialization completed";
+                        state = kDone;
+                    };
+                });
+            }
         }
     }
 }
@@ -47,7 +47,7 @@ void dap::ServerProtocol::Check()
     if(m_onNetworkMessage) {
         // First try to read something from the network
         string content;
-        if(m_conn->Read(content, 1) == Socket::kSuccess) {
+        if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess && m_conn->Read(content) == Socket::kSuccess) {
             m_rpc.AppendBuffer(content);
         }
 

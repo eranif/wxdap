@@ -86,23 +86,15 @@ public:
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int Read(char* buffer, size_t bufferSize, size_t& bytesRead, long milliSeconds = -1);
+    int Read(char* buffer, size_t bufferSize, size_t& bytesRead);
+
     /**
      * @brief read string content from remote server
      * @param content [output]
-     * @param timeout milliseconds to wait
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int Read(string& content, long milliSeconds = -1);
-
-    /**
-     * @brief
-     * @param seconds
-     * @return kSuccess or kTimeout
-     * @throws SocketException
-     */
-    int SelectRead(long seconds = -1);
+    int Read(string& content);
 
     /**
      * @brief select for read. Same as above, but use milli seconds instead
