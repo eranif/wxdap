@@ -651,10 +651,65 @@ struct Thread : public Any {
     JSON_SERIALIZE();
 };
 
-/// Response to ‘threads’ request.
+/// Response to 'threads' request.
 struct ThreadsResponse : public Response {
     vector<Thread> threads;
     RESPONSE_CLASS(ThreadsResponse, "threads");
+    JSON_SERIALIZE();
+};
+
+/// Optional properties of a variable that can be used to determine how to render the variable in the UI.
+struct VariablePresentationHint : public Any {
+    /**
+     * The kind of variable. Before introducing additional values, try to use the listed values.
+     * Values:
+     * 'property': Indicates that the object is a property.
+     * 'method': Indicates that the object is a method.
+     * 'class': Indicates that the object is a class.
+     * 'data': Indicates that the object is data.
+     * 'event': Indicates that the object is an event.
+     * 'baseClass': Indicates that the object is a base class.
+     * 'innerClass': Indicates that the object is an inner class.
+     * 'interface': Indicates that the object is an interface.
+     * 'mostDerivedClass': Indicates that the object is the most derived class.
+     * 'virtual': Indicates that the object is virtual, that means it is a synthetic object introduced by the adapter
+     * for rendering purposes, e.g. an index range for large arrays. 'dataBreakpoint': Indicates that a data breakpoint
+     * is registered for the object. etc.
+     */
+    string kind;
+    /**
+     * Set of attributes represented as an array of strings. Before introducing additional values, try to use the listed
+     * values. Values: 'static': Indicates that the object is static. 'constant': Indicates that the object is a
+     * constant. 'readOnly': Indicates that the object is read only. 'rawString': Indicates that the object is a raw
+     * string. 'hasObjectId': Indicates that the object can have an Object ID created for it. 'canHaveObjectId':
+     * Indicates that the object has an Object ID associated with it. 'hasSideEffects': Indicates that the evaluation
+     * had side effects. etc.
+     */
+    vector<string> attributes;
+
+    /**
+     * Visibility of variable. Before introducing additional values, try to use the listed values.
+     * Values: 'public', 'private', 'protected', 'internal', 'final', etc.
+     */
+    string visibility;
+    ANY_CLASS(VariablePresentationHint);
+    JSON_SERIALIZE();
+};
+
+/// A Variable is a name/value pair.
+/// Optionally a variable can have a 'type' that is shown if space permits or when hovering over the variable's name.
+/// An optional 'kind' is used to render additional properties of the variable, e.g. different icons can be used to
+/// indicate that a variable is public or private. If the value is structured (has children), a handle is provided to
+/// retrieve the children with the VariablesRequest. If the number of named or indexed children is large, the numbers
+/// should be returned via the optional 'namedVariables' and 'indexedVariables' attributes. The client can use this
+/// optional information to present the children in a paged UI and fetch them in chunks.
+struct Variable : public Any {
+    string name;
+    string value;
+    string type;
+    int variablesReference = 0;
+    VariablePresentationHint presentationHint;
+    ANY_CLASS(Variable);
     JSON_SERIALIZE();
 };
 }; // namespace dap

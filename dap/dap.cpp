@@ -932,4 +932,48 @@ void ThreadsResponse::From(const JSON& json)
         threads.push_back(thr);
     }
 }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON VariablePresentationHint::To() const
+{
+    JSON json = JSON::CreateObject();
+    json.Add("kind", kind);
+    json.Add("visibility", visibility);
+    json.Add("attributes", attributes);
+    return json;
+}
+
+void VariablePresentationHint::From(const JSON& json)
+{
+    kind = json["kind"].GetString();
+    visibility = json["visibility"].GetString();
+    attributes = json["attributes"].GetStringArray();
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON Variable::To() const
+{
+    JSON json = JSON::CreateObject();
+    json.Add("name", name);
+    json.Add("value", value);
+    json.Add("type", type);
+    json.Add("variablesReference", variablesReference);
+    json.Add("presentationHint", presentationHint.To());
+    return json;
+}
+
+void Variable::From(const JSON& json)
+{
+    name = json["name"].GetString();
+    value = json["value"].GetString();
+    type = json["type"].GetString();
+    variablesReference = json["variablesReference"].GetInteger();
+    presentationHint.From(json["presentationHint"]);
+}
 }; // namespace dap
