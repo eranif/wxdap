@@ -164,8 +164,8 @@ void Socket::MakeSocketBlocking(bool blocking)
 
 int Socket::SelectWriteMS(long milliSeconds)
 {
-    if(milliSeconds == -1) {
-        return kSuccess;
+    if(milliSeconds < 0) {
+        throw Exception("Invalid timeout");
     }
 
     if(m_socket == INVALID_SOCKET) {
@@ -194,14 +194,13 @@ int Socket::SelectWriteMS(long milliSeconds)
 
 int Socket::SelectReadMS(long milliSeconds)
 {
-    if(milliSeconds == -1) {
-        return kSuccess;
+    if(milliSeconds < 0) {
+        throw Exception("Invalid timeout");
     }
 
     if(m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
     }
-
     int seconds = milliSeconds / 1000; // convert the number into seconds
     int ms = milliSeconds % 1000;      // the remainder is less than a second
     struct timeval tv = { seconds, ms * 1000 };

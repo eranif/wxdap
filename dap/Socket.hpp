@@ -104,13 +104,12 @@ public:
      */
     int SelectReadMS(long milliSeconds);
 
-
     /**
      * @brief select for write (milli seconds version)
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int SelectWriteMS(long milliSeconds = -1);
+    int SelectWriteMS(long milliSeconds);
 
     template <typename T>
     T* As() const

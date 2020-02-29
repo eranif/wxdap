@@ -55,6 +55,8 @@ public:
     void OnDebuggerStderr(const string& message) override;
     /// Process 'Threads' request
     void OnThreads(dap::ProtocolMessage::Ptr_t message) override;
+    /// Process 'Scopes' request
+    void OnScopes(dap::ProtocolMessage::Ptr_t message) override;
 };
 
 #endif // GDBHANDLER_HPP

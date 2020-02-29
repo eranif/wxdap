@@ -15,21 +15,48 @@ public:
 protected:
     dap::Process* m_process = nullptr;
     vector<dap::ProtocolMessage::Ptr_t> m_outgoingQueue;
+    size_t m_sequence = 0;
+
+    /**
+     * @brief create new response of type T
+     * @return
+     */
+    template <typename T>
+    T* NewResponse(int requestSequence, bool success = true)
+    {
+        T* response = new T();
+        response->seq = ++m_sequence;
+        response->request_seq = requestSequence;
+        response->success = success;
+        return response;
+    }
+
+    /**
+     * @brief create new event of type T
+     * @return
+     */
+    template <typename T>
+    T* NewEvent()
+    {
+        T* event = new T();
+        event->seq = ++m_sequence;
+        return event;
+    }
 
 public:
     DebuggerHandler();
     virtual ~DebuggerHandler();
-    
+
     /**
      * @brief Get next message from the queue
      */
     dap::ProtocolMessage::Ptr_t TakeNextMessage();
-    
+
     /**
      * @brief add message to the outgoing queue
      */
     void PushMessage(dap::ProtocolMessage::Ptr_t message);
-    
+
     /**
      * @brief is the debugger backend process alive?
      */
@@ -77,7 +104,7 @@ public:
     virtual void OnConfigurationDoneRequest(dap::ProtocolMessage::Ptr_t message) = 0;
 
     /**
-     * @brief fronend requested to set breakpoints
+     * @brief frontend requested to set breakpoints
      * @throws dap::Exception
      */
     virtual void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message) = 0;
@@ -86,7 +113,12 @@ public:
      * @brief Process 'Threads' request
      */
     virtual void OnThreads(dap::ProtocolMessage::Ptr_t message) = 0;
-    
+
+    /**
+     * @brief Process 'Scopes' request
+     */
+    virtual void OnScopes(dap::ProtocolMessage::Ptr_t message) = 0;
+
     ///----------------------------------------------------------------------
     /// Pure virtual methods end
     ///----------------------------------------------------------------------

@@ -77,10 +77,8 @@ void GdbHandler::OnLaunchRequest(dap::ProtocolMessage::Ptr_t message)
                               // Process the output. Output is guranteed to be a complete reply from the debeugger
                               if(IsSuccess(output) || IsRunning(output)) {
                                   // Time to report Launch response
-                                  dap::LaunchResponse* response = new dap::LaunchResponse();
-                                  response->success = true;
-                                  response->request_seq = requestSeq;
                                   LOG_INFO() << "Debuggee started successfully (running)";
+                                  dap::LaunchResponse* response = NewResponse<dap::LaunchResponse>(requestSeq, true);
                                   return dap::ProtocolMessage::Ptr_t(response);
                               } else if(IsError(output)) {
                                   // error occured
@@ -94,9 +92,7 @@ void GdbHandler::OnConfigurationDoneRequest(dap::ProtocolMessage::Ptr_t message)
 {
     LOG_INFO() << "Received configurationDone request";
     dap::ConfigurationDoneRequest* req = message->As<dap::ConfigurationDoneRequest>();
-    dap::ConfigurationDoneResponse* response = new dap::ConfigurationDoneResponse();
-    response->success = true;
-    response->request_seq = req->seq;
+    dap::ConfigurationDoneResponse* response = NewResponse<dap::ConfigurationDoneResponse>(req->seq, true);
     PushMessage(dap::ProtocolMessage::Ptr_t(response));
     LOG_INFO() << "Sending configurationDone response";
 }
@@ -124,10 +120,9 @@ void GdbHandler::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message)
         m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
                                   if(IsSuccess(output)) {
                                       auto bpt = GDBMI::ParseBreakpoint(output);
-                                      dap::SetBreakpointsResponse* response = new dap::SetBreakpointsResponse();
+                                      dap::SetBreakpointsResponse* response =
+                                          NewResponse<dap::SetBreakpointsResponse>(requestSeq, true);
                                       response->breakpoints.push_back(bpt);
-                                      response->success = true;
-                                      response->request_seq = requestSeq;
                                       LOG_INFO() << "Successfully set breakpoint #" << bpt.id << "->" << bpt.source.path
                                                  << ":" << bpt.line;
                                       return dap::ProtocolMessage::Ptr_t(response);
@@ -151,9 +146,7 @@ void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
                               // Process the output. Output is guranteed to be a complete reply from the debeugger
                               if(IsSuccess(output) || IsRunning(output)) {
                                   // Time to report Launch response
-                                  dap::ThreadsResponse* response = new dap::ThreadsResponse();
-                                  response->success = true;
-                                  response->request_seq = requestSeq;
+                                  dap::ThreadsResponse* response = NewResponse<dap::ThreadsResponse>(requestSeq, true);
                                   response->threads = GDBMI::ParseThreads(output);
                                   LOG_INFO() << "Listing threads successfully";
                                   return dap::ProtocolMessage::Ptr_t(response);
@@ -163,6 +156,18 @@ void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
                               }
                               return nullptr;
                           } });
+}
+void GdbHandler::OnScopes(dap::ProtocolMessage::Ptr_t message)
+{
+    LOG_INFO() << "Received ScopesRequest request";
+    dap::ScopesRequest* req = message->As<dap::ScopesRequest>();
+    dap::ScopesResponse* response = NewResponse<dap::ScopesResponse>(req->seq, true);
+    response->scopes.reserve(3);
+    response->scopes.push_back({ "Arguments", dap::eScopes::kArguments });
+    response->scopes.push_back({ "Locals", dap::eScopes::kLocals });
+    response->scopes.push_back({ "Registers", dap::eScopes::kRegisters });
+    PushMessage(dap::ProtocolMessage::Ptr_t(response));
+    LOG_INFO() << "Sending scope response";
 }
 
 void GdbHandler::StartDebugger(const string& debuggerExecutable, const string& wd)
@@ -205,7 +210,7 @@ void GdbHandler::OnHandleStateChange(const string& buffer)
         if(reason == GDBMI::kBreakpointHit) {
             LOG_INFO() << "Breakpoint hit";
             // Send breakpoint hit event
-            dap::StoppedEvent* stopEvent = new dap::StoppedEvent();
+            dap::StoppedEvent* stopEvent = NewEvent<dap::StoppedEvent>();
             stopEvent->reason = "breakpoint";
             stopEvent->text = "Breakpoint hit";
             PushMessage(dap::ProtocolMessage::Ptr_t(stopEvent));
@@ -284,7 +289,7 @@ void GdbHandler::OnOutput(string& inbuffer)
 
 dap::ProtocolMessage::Ptr_t GdbHandler::CreateOutputEvent(const string& buffer)
 {
-    dap::OutputEvent* outputEvent = new dap::OutputEvent();
+    dap::OutputEvent* outputEvent = NewEvent<dap::OutputEvent>();
     outputEvent->output = buffer;
     outputEvent->category = "console";
     return dap::ProtocolMessage::Ptr_t(outputEvent);
@@ -294,7 +299,7 @@ dap::ProtocolMessage::Ptr_t GdbHandler::OnBreakpointUpdate(const string& buffer)
 {
     auto bp = GDBMI::ParseBreakpoint(buffer);
     if(bp.verified) {
-        dap::BreakpointEvent* breakpointEvent = new dap::BreakpointEvent();
+        dap::BreakpointEvent* breakpointEvent = NewEvent<dap::BreakpointEvent>();
         breakpointEvent->breakpoint = bp;
         breakpointEvent->reason = "breakpoint modified";
         LOG_INFO() << "Breakpoint modified #" << bp.id << "->" << bp.source.path << ":" << bp.line;

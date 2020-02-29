@@ -26,6 +26,7 @@ protected:
     void OnSetBreakpoints(dap::ProtocolMessage::Ptr_t request);
     void OnCofigurationDone(dap::ProtocolMessage::Ptr_t request);
     void OnThreads(dap::ProtocolMessage::Ptr_t request);
+    void OnScopes(dap::ProtocolMessage::Ptr_t request);
     template <typename T>
     void ReportError(int seq, const string& what)
     {

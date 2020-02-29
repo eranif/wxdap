@@ -39,7 +39,7 @@ void Initialize()
     REGISTER_CLASS(NextRequest);
     REGISTER_CLASS(ThreadsRequest);
     REGISTER_CLASS(ScopesRequest);
-    
+
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
     REGISTER_CLASS(ContinuedEvent);
@@ -60,6 +60,7 @@ void Initialize()
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
     REGISTER_CLASS(ThreadsResponse);
+    REGISTER_CLASS(ScopesResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -1007,4 +1008,52 @@ void ScopesRequest::From(const JSON& json)
     Request::From(json);
     arguments.From(json["arguments"]);
 }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON ScopesResponse::To() const
+{
+    auto json = Response::To();
+    auto arr = json.AddObject("body").AddArray("scopes");
+    for(const auto& scope : scopes) {
+        arr.Add(scope.To());
+    }
+    return json;
+}
+
+void ScopesResponse::From(const JSON& json)
+{
+    Response::From(json);
+    auto arr = json["body"]["scopes"];
+    size_t count = arr.GetCount();
+    scopes.reserve(count);
+    for(size_t i = 0; i < count; ++i) {
+        Scope s;
+        s.From(arr[i]);
+        scopes.push_back(s);
+    }
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON Scope::To() const
+{
+    auto json = JSON::CreateObject();
+    json.Add("name", name);
+    json.Add("variablesReference", variablesReference);
+    json.Add("expensive", expensive);
+    return json;
+}
+
+void Scope::From(const JSON& json)
+{
+    name = json["name"].GetString();
+    variablesReference = json["variablesReference"].GetInteger();
+    expensive = json["expensive"].GetBool();
+}
+
 }; // namespace dap

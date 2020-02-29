@@ -65,6 +65,12 @@ public:
      * @brief ask for list of threads
      */
     void GetThreads();
+    
+    /**
+     * @brief return the variables for stack frame
+     * @param frameId
+     */
+    void GetScopes(int frameId);
 };
 
 };     // namespace dap

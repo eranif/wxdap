@@ -44,6 +44,8 @@ int main(int argc, char** argv)
                         LOG_INFO() << "Fetching threads...";
                     } else if(msg->AsResponse() && msg->AsResponse()->command == "threads") {
                         LOG_INFO() << "Fetching scopes...";
+                        // Return variables for stack frame 0
+                        client.GetScopes(0);
                     }
                 }
             });

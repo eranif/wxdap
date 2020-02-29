@@ -152,3 +152,11 @@ void dap::Client::GetThreads()
     threadsRequest->seq = GetNextSequence();
     m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_socket);
 }
+
+void dap::Client::GetScopes(int frameId)
+{
+    ScopesRequest* scopesRequest = new ScopesRequest();
+    scopesRequest->arguments.frameId = frameId;
+    scopesRequest->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_socket);
+}

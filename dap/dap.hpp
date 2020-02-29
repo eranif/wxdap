@@ -733,6 +733,33 @@ struct ScopesRequest : public Request {
     REQUEST_CLASS(ScopesRequest, "scopes");
     JSON_SERIALIZE();
 };
+
+enum class eScopes {
+    kArguments = 0,
+    kLocals = 1,
+    kRegisters = 2,
+};
+
+struct Scope : public Any {
+    string name;
+    int variablesReference = 0;
+    bool expensive = false;
+    Scope(const string& n, eScopes ref)
+        : name(n)
+        , variablesReference((int)ref)
+    {
+    }
+    
+    ANY_CLASS(Scope);
+    JSON_SERIALIZE();
+};
+
+struct ScopesResponse : public Response {
+    vector<Scope> scopes;
+    RESPONSE_CLASS(ScopesResponse, "scopes");
+    JSON_SERIALIZE();
+};
+
 }; // namespace dap
 
 #endif // PROTOCOLMESSAGE_HPP

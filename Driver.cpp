@@ -34,6 +34,8 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
             OnCofigurationDone(message);
         } else if(request->command == "threads") {
             OnThreads(message);
+        } else if(request->command == "scopes") {
+            OnScopes(message);
         }
     }
 }
@@ -45,22 +47,18 @@ void Driver::Check()
         LOG_DEBUG1() << "gdb (stdout):" << output.first;
         // Process ALL messages here
         m_backend->OnDebuggerStdout(output.first);
-        auto msg = m_backend->TakeNextMessage();
-        while(msg) {
-            m_onGdbOutput(msg);
-            msg = m_backend->TakeNextMessage();
-        }
     }
     if(!output.second.empty()) {
         // Process the raw buffer
         LOG_DEBUG1() << "gdb (stderr):" << output.second;
         // Process ALL messages here
         m_backend->OnDebuggerStderr(output.first);
-        auto msg = m_backend->TakeNextMessage();
-        while(msg) {
-            m_onGdbOutput(msg);
-            msg = m_backend->TakeNextMessage();
-        }
+    }
+
+    auto msg = m_backend->TakeNextMessage();
+    while(msg) {
+        m_onGdbOutput(msg);
+        msg = m_backend->TakeNextMessage();
     }
 }
 
@@ -103,5 +101,15 @@ void Driver::OnThreads(dap::ProtocolMessage::Ptr_t request)
     } catch(dap::Exception& e) {
         LOG_ERROR() << "OnThreads error:" << e.What();
         ReportError<dap::ThreadsResponse>(request->seq, e.What());
+    }
+}
+
+void Driver::OnScopes(dap::ProtocolMessage::Ptr_t request)
+{
+    try {
+        m_backend->OnScopes(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "OnScopes error:" << e.What();
+        ReportError<dap::ScopesResponse>(request->seq, e.What());
     }
 }

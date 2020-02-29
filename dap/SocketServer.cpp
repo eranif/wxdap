@@ -89,8 +89,11 @@ Socket::Ptr_t SocketServer::WaitForNewConnection(long timeout)
 
 Socket* SocketServer::WaitForNewConnectionRaw(long timeout)
 {
+    if(timeout < 0) {
+        return nullptr;
+    }
     if(SelectReadMS(timeout * 1000) == kTimeout) {
-        return NULL;
+        return nullptr;
     }
     int fd = ::accept(m_socket, 0, 0);
     if(fd < 0) {
