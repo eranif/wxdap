@@ -123,7 +123,11 @@ public:
      * @brief Process 'stackTrace' request sent from the IDE -> debugger
      */
     virtual void OnStackTrace(dap::ProtocolMessage::Ptr_t message) = 0;
-
+    /**
+     * @brief process 'Variables' request, IDE->Debugger
+     */
+    virtual void OnVariables(dap::ProtocolMessage::Ptr_t message) = 0;
+    
     ///----------------------------------------------------------------------
     /// Pure virtual methods end
     ///----------------------------------------------------------------------

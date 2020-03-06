@@ -74,6 +74,11 @@ struct Any {
     }
 };
 
+enum class eScopes {
+    kArguments = 0,
+    kLocals = 1,
+    kRegisters = 2,
+};
 struct Event;
 struct Request;
 struct Response;
@@ -711,7 +716,7 @@ struct Variable : public Any {
      * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing
      * variablesReference to the VariablesRequest.
      */
-    int variablesReference = 0;
+    eScopes variablesReference = eScopes::kArguments;
     VariablePresentationHint presentationHint;
     ANY_CLASS(Variable);
     JSON_SERIALIZE();
@@ -734,19 +739,15 @@ struct ScopesRequest : public Request {
     JSON_SERIALIZE();
 };
 
-enum class eScopes {
-    kArguments = 0,
-    kLocals = 1,
-    kRegisters = 2,
-};
+
 
 struct Scope : public Any {
     string name;
-    int variablesReference = 0;
+    eScopes variablesReference = eScopes::kArguments;
     bool expensive = false;
     Scope(const string& n, eScopes ref)
         : name(n)
-        , variablesReference((int)ref)
+        , variablesReference(ref)
     {
     }
 
@@ -789,6 +790,40 @@ struct StackTraceRequest : public Request {
 struct StackTraceResponse : public Response {
     vector<StackFrame> stackFrames;
     RESPONSE_CLASS(StackTraceResponse, "stackTrace");
+    JSON_SERIALIZE();
+};
+
+struct ValueFormat : public Any {
+    /**
+     * Display the value in hex.
+     */
+    bool hex = false;
+    ANY_CLASS(ValueFormat);
+    JSON_SERIALIZE();
+};
+
+struct VariablesArguments : public Any {
+    /**
+     * The Variable reference.
+     */
+    eScopes variablesReference = eScopes::kLocals;
+    ValueFormat format;
+    ANY_CLASS(VariablesArguments);
+    JSON_SERIALIZE();
+};
+
+struct VariablesRequest : public Request {
+    VariablesArguments arguments;
+    REQUEST_CLASS(VariablesRequest, "variables");
+    JSON_SERIALIZE();
+};
+
+struct VariablesResponse : public Response {
+    /**
+     * All (or a range) of variables for the given variable reference.
+     */
+    vector<Variable> variables;
+    RESPONSE_CLASS(VariablesResponse, "variables");
     JSON_SERIALIZE();
 };
 };     // namespace dap

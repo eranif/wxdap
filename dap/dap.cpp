@@ -967,7 +967,7 @@ JSON Variable::To() const
     json.Add("name", name);
     json.Add("value", value);
     json.Add("type", type);
-    json.Add("variablesReference", variablesReference);
+    json.Add("variablesReference", (int)variablesReference);
     json.Add("presentationHint", presentationHint.To());
     return json;
 }
@@ -977,7 +977,7 @@ void Variable::From(const JSON& json)
     name = json["name"].GetString();
     value = json["value"].GetString();
     type = json["type"].GetString();
-    variablesReference = json["variablesReference"].GetInteger();
+    variablesReference = (eScopes)json["variablesReference"].GetInteger();
     presentationHint.From(json["presentationHint"]);
 }
 
@@ -1046,7 +1046,7 @@ JSON Scope::To() const
 {
     auto json = JSON::CreateObject();
     json.Add("name", name);
-    json.Add("variablesReference", variablesReference);
+    json.Add("variablesReference", (int)variablesReference);
     json.Add("expensive", expensive);
     return json;
 }
@@ -1054,7 +1054,7 @@ JSON Scope::To() const
 void Scope::From(const JSON& json)
 {
     name = json["name"].GetString();
-    variablesReference = json["variablesReference"].GetInteger();
+    variablesReference = (eScopes)json["variablesReference"].GetInteger();
     expensive = json["expensive"].GetBool();
 }
 // ----------------------------------------
@@ -1075,6 +1075,37 @@ void StackTraceArguments::From(const JSON& json)
     threadId = json["threadId"].GetInteger();
     startFrame = json["startFrame"].GetInteger();
     levels = json["levels"].GetInteger();
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON ValueFormat::To() const
+{
+    auto json = JSON::CreateObject();
+    json.Add("hex", hex);
+    return json;
+}
+
+void ValueFormat::From(const JSON& json) { hex = json["hex"].GetBool(); }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON VariablesArguments::To() const
+{
+    auto json = JSON::CreateObject();
+    json.Add("variablesReference", (int)variablesReference);
+    json.Add("format", format.To());
+    return json;
+}
+
+void VariablesArguments::From(const JSON& json)
+{
+    variablesReference = (eScopes)json["variablesReference"].GetInteger();
+    format.From(json["format"]);
 }
 
 // ----------------------------------------
@@ -1119,6 +1150,50 @@ void StackTraceResponse::From(const JSON& json)
         StackFrame sf;
         sf.From(arr[i]);
         stackFrames.push_back(sf);
+    }
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON VariablesRequest::To() const
+{
+    auto json = Request::To();
+    json.Add("arguments", arguments.To());
+    return json;
+}
+
+void VariablesRequest::From(const JSON& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON VariablesResponse::To() const
+{
+    auto json = Response::To();
+    auto arr = json.AddObject("body").AddArray("variables");
+    for(const auto& v : variables) {
+        arr.Add(v.To());
+    }
+    return json;
+}
+
+void VariablesResponse::From(const JSON& json)
+{
+    Response::From(json);
+    auto arr = json["body"]["variables"];
+    size_t count = arr.GetCount();
+    variables.reserve(count);
+    for(size_t i = 0; i < count; ++i) {
+        Variable v;
+        v.From(arr[i]);
+        variables.push_back(v);
     }
 }
 }; // namespace dap

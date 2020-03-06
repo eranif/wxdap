@@ -59,6 +59,8 @@ public:
     void OnScopes(dap::ProtocolMessage::Ptr_t message) override;
     /// Process 'stackTrace' request
     void OnStackTrace(dap::ProtocolMessage::Ptr_t message) override;
+    /// process 'Variables' request, IDE->Debugger
+    void OnVariables(dap::ProtocolMessage::Ptr_t message) override;
 };
 
 #endif // GDBHANDLER_HPP

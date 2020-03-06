@@ -38,6 +38,8 @@ void Driver::ProcessNetworkMessage(dap::ProtocolMessage::Ptr_t message)
             OnScopes(message);
         } else if(request->command == "stackTrace") {
             OnStackTrace(message);
+        } else if(request->command == "variables") {
+            OnVariables(message);
         }
     }
 }
@@ -123,5 +125,15 @@ void Driver::OnStackTrace(dap::ProtocolMessage::Ptr_t request)
     } catch(dap::Exception& e) {
         LOG_ERROR() << "OnStackTrace error:" << e.What();
         ReportError<dap::StackTraceResponse>(request->seq, e.What());
+    }
+}
+
+void Driver::OnVariables(dap::ProtocolMessage::Ptr_t request)
+{
+    try {
+        m_backend->OnVariables(request);
+    } catch(dap::Exception& e) {
+        LOG_ERROR() << "OnVariables error:" << e.What();
+        ReportError<dap::VariablesResponse>(request->seq, e.What());
     }
 }

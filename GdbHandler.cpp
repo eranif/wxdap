@@ -133,6 +133,7 @@ void GdbHandler::OnSetBreakpoints(dap::ProtocolMessage::Ptr_t message)
                               } });
     }
 }
+
 void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
 {
     dap::ThreadsRequest* req = message->As<dap::ThreadsRequest>();
@@ -160,7 +161,25 @@ void GdbHandler::OnThreads(dap::ProtocolMessage::Ptr_t message)
 
 void GdbHandler::OnStackTrace(dap::ProtocolMessage::Ptr_t message)
 {
-    // TODO :: implement this
+    dap::ThreadsRequest* req = message->As<dap::ThreadsRequest>();
+    int requestSeq = req->seq;
+    string btCommand;
+    string commandSequence = NextSequence();
+    btCommand << commandSequence << "-stack-list-frames";
+    LOG_INFO() << "Fetching bactrace";
+    m_process->WriteLn(btCommand);
+    m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
+                              // Process the output. Output is guranteed to be a complete reply from the debeugger
+                              if(IsSuccess(output) || IsRunning(output)) {
+                                  // TODO :: implement this
+                                  LOG_INFO() << "Fetching bactrace successfully";
+                                  return nullptr;
+                              } else if(IsError(output)) {
+                                  // error occured
+                                  return ResponseError<dap::StackTraceResponse>(output, requestSeq);
+                              }
+                              return nullptr;
+                          } });
 }
 
 void GdbHandler::OnScopes(dap::ProtocolMessage::Ptr_t message)
@@ -174,6 +193,41 @@ void GdbHandler::OnScopes(dap::ProtocolMessage::Ptr_t message)
     response->scopes.push_back({ "Registers", dap::eScopes::kRegisters });
     PushMessage(dap::ProtocolMessage::Ptr_t(response));
     LOG_INFO() << "Sending scope response";
+}
+
+void GdbHandler::OnVariables(dap::ProtocolMessage::Ptr_t message)
+{
+    LOG_INFO() << "Received Variables request";
+    dap::VariablesRequest* req = message->As<dap::VariablesRequest>();
+    int requestSeq = req->seq;
+    string commandSequence = NextSequence();
+    string varCommand = commandSequence;
+    switch(req->arguments.variablesReference) {
+    case dap::eScopes::kArguments:
+        varCommand << "-stack-list-arguments --skip-unavailable 2";
+        break;
+    case dap::eScopes::kLocals:
+        varCommand << "-stack-list-locals --skip-unavailable 2";
+        break;
+    case dap::eScopes::kRegisters:
+        return;
+    }
+
+    varCommand << commandSequence << "-stack-list-frames";
+    LOG_INFO() << "Fetching variables..";
+    m_process->WriteLn(varCommand);
+    m_handlersMap.insert({ commandSequence, [=](const string& output) -> dap::ProtocolMessage::Ptr_t {
+                              // Process the output. Output is guranteed to be a complete reply from the debeugger
+                              if(IsSuccess(output) || IsRunning(output)) {
+                                  // TODO :: implement this
+                                  LOG_INFO() << "Fetched variables successfully";
+                                  return nullptr;
+                              } else if(IsError(output)) {
+                                  // error occured
+                                  return ResponseError<dap::VariablesResponse>(output, requestSeq);
+                              }
+                              return nullptr;
+                          } });
 }
 
 void GdbHandler::StartDebugger(const string& debuggerExecutable, const string& wd)
@@ -319,5 +373,3 @@ bool GdbHandler::IsSuccess(const string& gdbOutput) { return StringUtils::Starts
 bool GdbHandler::IsError(const string& gdbOutput) { return StringUtils::StartsWith(gdbOutput, "^error"); }
 
 bool GdbHandler::IsRunning(const string& gdbOutput) { return StringUtils::StartsWith(gdbOutput, "^running"); }
-
-
