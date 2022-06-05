@@ -13,10 +13,10 @@ namespace dap
 class JsonRPC
 {
 protected:
-    string m_buffer;
+    wxString m_buffer;
 
 protected:
-    int ReadHeaders(unordered_map<string, string>& headers);
+    int ReadHeaders(std::unordered_map<wxString, wxString>& headers);
     JSON DoProcessBuffer();
 
 public:
@@ -27,19 +27,19 @@ public:
      * @brief provide input buffer.
      * NOTE: this method is intended for testing purposes and should not be used
      */
-    void SetBuffer(const string& buffer);
+    void SetBuffer(const wxString& buffer);
 
     /**
      * @brief append content to the existing buffer
      */
-    void AppendBuffer(const string& buffer);
+    void AppendBuffer(const wxString& buffer);
 
     /**
      * @brief Check if we have a complete JSON message in the internal buffer and invoke callback
      * If successful, callback is called. Note that it will get called as long there are complete messages in the
      * internal buffer
      */
-    void ProcessBuffer(function<void(const JSON& obj)> callback);
+    void ProcessBuffer(std::function<void(const JSON& obj)> callback);
 
     /**
      * @brief send protocol message over the network

@@ -1,5 +1,5 @@
-#include "Exception.hpp"
 #include "JsonRPC.hpp"
+#include "Exception.hpp"
 #include "SocketServer.hpp"
 #include "StringUtils.hpp"
 #include <iostream>
@@ -15,7 +15,7 @@ JSON dap::JsonRPC::DoProcessBuffer()
     }
 
     // Find the "Content-Length:" string
-    unordered_map<string, string> headers;
+    unordered_map<wxString, wxString> headers;
     int headerSize = ReadHeaders(headers);
     if(headerSize == -1) {
         return JSON();
@@ -30,7 +30,7 @@ JSON dap::JsonRPC::DoProcessBuffer()
         return JSON();
     }
 
-    string contentLength = iter->second;
+    wxString contentLength = iter->second;
     long msglen = std::atol(contentLength.c_str());
     if(msglen <= 0) {
         cerr << "ERROR: Invalid Content-Length header value: 0 or lower than 0" << endl;
@@ -45,7 +45,7 @@ JSON dap::JsonRPC::DoProcessBuffer()
 
     // Read the payload into a separate buffer and remove the full message
     // from the m_buffer member
-    string payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
+    wxString payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
     m_buffer.erase(0, headerSize + msglen);
     return JSON::Parse(payload);
 }
@@ -61,35 +61,35 @@ void dap::JsonRPC::ProcessBuffer(function<void(const JSON& obj)> callback)
     }
 }
 
-int dap::JsonRPC::ReadHeaders(unordered_map<string, string>& headers)
+int dap::JsonRPC::ReadHeaders(unordered_map<wxString, wxString>& headers)
 {
     size_t where = m_buffer.find("\r\n\r\n");
-    if(where == string::npos) {
+    if(where == wxString::npos) {
         return -1;
     }
-    string headerSection = m_buffer.substr(0, where); // excluding the "\r\n\r\n"
-    vector<string> lines = StringUtils::Split(headerSection, '\n');
-    for(string& header : lines) {
+    wxString headerSection = m_buffer.substr(0, where); // excluding the "\r\n\r\n"
+    std::vector<wxString> lines = StringUtils::Split(headerSection, '\n');
+    for(wxString& header : lines) {
         StringUtils::Trim(header);
-        string name = StringUtils::BeforeFirst(header, ':');
-        string value = StringUtils::AfterFirst(header, ':');
+        wxString name = StringUtils::BeforeFirst(header, ':');
+        wxString value = StringUtils::AfterFirst(header, ':');
         headers.insert({ StringUtils::Trim(name), StringUtils::Trim(value) });
     }
     // return the headers section + the separator
     return (where + 4);
 }
 
-void dap::JsonRPC::SetBuffer(const string& buffer) { m_buffer = buffer; }
+void dap::JsonRPC::SetBuffer(const wxString& buffer) { m_buffer = buffer; }
 
-void dap::JsonRPC::AppendBuffer(const string& buffer) { m_buffer.append(buffer); }
+void dap::JsonRPC::AppendBuffer(const wxString& buffer) { m_buffer.append(buffer); }
 
 void dap::JsonRPC::Send(ProtocolMessage& msg, Socket::Ptr_t conn) const
 {
     if(!conn) {
         throw Exception("Invalid connection");
     }
-    string network_buffer;
-    string payload = msg.ToString();
+    wxString network_buffer;
+    wxString payload = msg.ToString();
     network_buffer = "Content-Length: ";
     network_buffer += to_string(payload.length());
     network_buffer += "\r\n\r\n";

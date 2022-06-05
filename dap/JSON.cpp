@@ -92,7 +92,7 @@ JSON::~JSON()
     m_cjson = nullptr;
 }
 
-JSON JSON::operator[](const std::string& index) const
+JSON JSON::operator[](const wxString& index) const
 {
     if(m_cjson == nullptr) {
         return JSON(nullptr);
@@ -108,7 +108,7 @@ JSON JSON::operator[](const std::string& index) const
     return JSON(nullptr);
 }
 
-JSON JSON::AddItem(const std::string& name, cJSON* item)
+JSON JSON::AddItem(const wxString& name, cJSON* item)
 {
     if(m_cjson == nullptr) {
         cJSON_Delete(item);
@@ -126,13 +126,13 @@ JSON JSON::AddItem(const std::string& name, cJSON* item)
     return JSON(item);
 }
 
-std::string JSON::ToString(bool pretty) const
+wxString JSON::ToString(bool pretty) const
 {
     if(m_cjson == nullptr) {
         return "";
     }
     char* c = pretty ? cJSON_Print(m_cjson) : cJSON_PrintUnformatted(m_cjson);
-    std::string str(c);
+    wxString str(c);
     free(c);
     return str;
 }
@@ -160,7 +160,7 @@ void JSON::Delete()
     }
 }
 
-JSON JSON::Add(const char* name, const std::string& value) { return Add(name, value.c_str()); }
+JSON JSON::Add(const char* name, const wxString& value) { return Add(name, value.mb_str(wxConvUTF8).data()); }
 
 JSON JSON::Add(const char* name, const char* value)
 {
@@ -198,7 +198,7 @@ JSON JSON::Add(const char* name, bool value)
     return JSON(m_cjson);
 }
 
-std::string JSON::GetString(const std::string& defaultVaule) const
+wxString JSON::GetString(const wxString& defaultVaule) const
 {
     if(!m_cjson || m_cjson->type != cJSON_String) {
         return defaultVaule;
@@ -271,7 +271,7 @@ JSON JSON::AddObject(const char* name, const JSON& obj)
     return obj;
 }
 
-JSON JSON::Add(const char* name, const std::vector<std::string>& value)
+JSON JSON::Add(const char* name, const std::vector<wxString>& value)
 {
     auto a = AddArray(name);
     for(const auto& s : value) {
@@ -280,12 +280,12 @@ JSON JSON::Add(const char* name, const std::vector<std::string>& value)
     return a;
 }
 
-std::vector<std::string> JSON::GetStringArray() const
+std::vector<wxString> JSON::GetStringArray() const
 {
     if(!m_cjson || m_cjson->type != cJSON_Array) {
         return {};
     }
-    std::vector<std::string> arr;
+    std::vector<wxString> arr;
     size_t count = GetCount();
     arr.reserve(count);
     for(size_t i = 0; i < count; ++i) {
@@ -309,7 +309,7 @@ JSON JSON::Add(const char* name, const JSON& value)
     }
 }
 
-JSON JSON::Parse(const std::string& source)
+JSON JSON::Parse(const wxString& source)
 {
     JSON json(cJSON_Parse(source.c_str()));
     json.Manage();

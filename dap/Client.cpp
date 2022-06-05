@@ -51,7 +51,7 @@ void dap::Client::Initialize()
     m_readerThread = new thread([this]() {
         while(!m_shutdown.load()) {
             try {
-                string content;
+                wxString content;
                 if(m_socket->SelectReadMS(10) == Socket::kSuccess && m_socket->Read(content) == Socket::kSuccess) {
                     m_inputQueue.push(content);
                 }
@@ -69,7 +69,7 @@ void dap::Client::Initialize()
 
     // This part is for performing the initialization part of the debugger
     while(!m_terminated.load() && (state != kExecute)) {
-        string buffer = m_inputQueue.pop(chrono::milliseconds(1));
+        wxString buffer = m_inputQueue.pop(chrono::milliseconds(1));
         if(!buffer.empty()) {
             // got something on the network
             m_rpc.AppendBuffer(buffer);
@@ -111,7 +111,7 @@ void dap::Client::Initialize()
 
 bool dap::Client::IsConnected() const { return m_readerThread && !m_terminated.load(); }
 
-void dap::Client::SetBreakpointsFile(const string& file, const vector<dap::SourceBreakpoint>& lines)
+void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
 {
     // Now that the initialize is done, we can call 'setBreakpoints' command
     SetBreakpointsRequest* setBreakpoints = new SetBreakpointsRequest();
@@ -128,7 +128,7 @@ void dap::Client::ConfigurationDone()
     m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_socket);
 }
 
-void dap::Client::Launch(const vector<string>& cmd)
+void dap::Client::Launch(const std::vector<wxString>& cmd)
 {
     LaunchRequest* launchRequest = new LaunchRequest();
     launchRequest->seq = GetNextSequence(); // command sequence
@@ -138,7 +138,7 @@ void dap::Client::Launch(const vector<string>& cmd)
 
 void dap::Client::Check(function<void(JSON)> callback)
 {
-    string buffer = m_inputQueue.pop(chrono::milliseconds(1));
+    wxString buffer = m_inputQueue.pop(chrono::milliseconds(1));
     if(!buffer.empty()) {
         // got something on the network
         m_rpc.AppendBuffer(buffer);

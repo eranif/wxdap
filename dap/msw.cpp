@@ -3,9 +3,9 @@
 #include "StringUtils.hpp"
 #include <chrono>
 #include <memory>
-#include <string>
 #include <thread>
 #include <windows.h>
+#include <wx/string.h>
 
 using namespace std;
 namespace dap
@@ -70,15 +70,15 @@ public:
     char m_buffer[65537];
 
 protected:
-    bool DoReadFromPipe(HANDLE pipe, string& buff);
-    bool DoRead(string& ostrout, string& ostrerr);
-    bool DoWrite(const string& str, bool appendLf);
+    bool DoReadFromPipe(HANDLE pipe, wxString& buff);
+    bool DoRead(wxString& ostrout, wxString& ostrerr);
+    bool DoWrite(const wxString& str, bool appendLf);
 
 public:
     ProcessMSW() {}
     virtual ~ProcessMSW() { Cleanup(); }
-    bool Write(const string& str);
-    bool WriteLn(const string& str);
+    bool Write(const wxString& str);
+    bool WriteLn(const wxString& str);
     bool IsAlive() const;
     void Cleanup();
     void Terminate();
@@ -100,7 +100,7 @@ void ProcessMSW::Cleanup()
     CLOSE_HANDLE(m_stderrRead);
 }
 
-bool ProcessMSW::DoRead(string& ostrout, string& ostrerr)
+bool ProcessMSW::DoRead(wxString& ostrout, wxString& ostrerr)
 {
     if(!IsAlive()) {
         return false;
@@ -111,7 +111,7 @@ bool ProcessMSW::DoRead(string& ostrout, string& ostrerr)
     return !ostrerr.empty() || !ostrout.empty();
 }
 
-Process* ExecuteProcess(const string& cmd, const string& workingDir)
+Process* ExecuteProcess(const wxString& cmd, const wxString& workingDir)
 {
     UNUSED(workingDir);
     // Set the bInheritHandle flag so pipe handles are inherited.
@@ -156,7 +156,7 @@ Process* ExecuteProcess(const string& cmd, const string& workingDir)
     startup_info.hStdError = prc->m_stderrWrite;
     startup_info.dwFlags |= STARTF_USESTDHANDLES;
     BOOL ret = CreateProcess(NULL,
-                             (char*)cmd.c_str(),  // shell line execution command
+                             cmd.wchar_str(),     // shell line execution command
                              NULL,                // process security attributes
                              NULL,                // primary thread security attributes
                              TRUE,                // handles are inherited
@@ -175,7 +175,7 @@ Process* ExecuteProcess(const string& cmd, const string& workingDir)
     return prc;
 }
 
-bool ProcessMSW::DoReadFromPipe(HANDLE pipe, string& buff)
+bool ProcessMSW::DoReadFromPipe(HANDLE pipe, wxString& buff)
 {
     DWORD dwRead;
     DWORD dwMode;
@@ -190,7 +190,7 @@ bool ProcessMSW::DoReadFromPipe(HANDLE pipe, string& buff)
     while(true) {
         BOOL bRes = ReadFile(pipe, m_buffer, sizeof(m_buffer) - 1, &dwRead, NULL);
         if(bRes) {
-            string tmpBuff;
+            wxString tmpBuff;
             // Success read
             m_buffer[dwRead / sizeof(char)] = 0;
             tmpBuff = m_buffer;
@@ -203,22 +203,16 @@ bool ProcessMSW::DoReadFromPipe(HANDLE pipe, string& buff)
     return read_something;
 }
 
-bool ProcessMSW::Write(const string& buff)
-{
-    return DoWrite(buff, false);
-}
+bool ProcessMSW::Write(const wxString& buff) { return DoWrite(buff, false); }
 
-bool ProcessMSW::WriteLn(const string& buff)
-{
-    return DoWrite(buff, true);
-}
+bool ProcessMSW::WriteLn(const wxString& buff) { return DoWrite(buff, true); }
 
-bool ProcessMSW::DoWrite(const string& buff, bool appendLf)
+bool ProcessMSW::DoWrite(const wxString& buff, bool appendLf)
 {
     DWORD dwMode;
     DWORD dwTimeout;
 
-    string tmpCmd = buff;
+    wxString tmpCmd = buff;
     StringUtils::Rtrim(tmpCmd);
     if(appendLf) {
         tmpCmd += "\n";

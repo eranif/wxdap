@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <wx/string.h>
 
 // manipulator function
 class Log;
@@ -17,15 +18,15 @@ public:
 
 protected:
     static int m_verbosity;
-    static std::string m_logfile;
+    static wxString m_logfile;
     static bool m_useStdout;
     int m_requestedLogLevel = Error;
     FILE* m_fp = nullptr;
     std::stringstream m_buffer;
 
 protected:
-    static const std::string& GetColour(int verbo);
-    static const std::string& GetColourEnd();
+    static const wxString& GetColour(int verbo);
+    static const wxString& GetColourEnd();
 
 public:
     Log(int requestedVerbo);
@@ -47,46 +48,46 @@ public:
     /**
      * @brief create log entry prefix
      */
-    static std::string Prefix(int verbosity);
+    static wxString Prefix(int verbosity);
 
-    void AddLogLine(const std::string& msg, int verbosity);
+    void AddLogLine(const wxString& msg, int verbosity);
     static void SetVerbosity(int level);
 
-    // Set the verbosity as std::string
-    static void SetVerbosity(const std::string& verbosity);
+    // Set the verbosity as wxString
+    static void SetVerbosity(const wxString& verbosity);
 
     /**
      * @brief open the log file
      */
-    static void OpenLog(const std::string& fullpath, int verbosity);
+    static void OpenLog(const wxString& fullpath, int verbosity);
     /**
      * @brief open stdout as the log stream
      */
     static void OpenStdout(int verbosity);
 
     // Various util methods
-    static std::string GetVerbosityAsString(int verbosity);
-    static int GetVerbosityAsNumber(const std::string& verbosity);
+    static wxString GetVerbosityAsString(int verbosity);
+    static int GetVerbosityAsNumber(const wxString& verbosity);
 
-    inline Log& Append(const std::vector<std::string>& arr, int level)
+    inline Log& Append(const std::vector<wxString>& arr, int level)
     {
         if(arr.empty()) {
             return *this;
         }
-        std::string str;
+        wxString str;
         str += "[";
         for(auto s : arr) {
             str += s;
             str += ", ";
         }
-        str.pop_back();
-        str.pop_back();
+        str.RemoveLast();
+        str.RemoveLast();
         str += "]";
         Append(str, GetRequestedLogLevel());
         return *this;
     }
 
-    inline Log& operator<<(const std::string& str)
+    inline Log& operator<<(const wxString& str)
     {
         if(GetRequestedLogLevel() > m_verbosity) {
             return *this;

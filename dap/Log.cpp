@@ -6,16 +6,16 @@
 namespace dap
 {
 int Log::m_verbosity = Log::Error;
-std::string Log::m_logfile;
+wxString Log::m_logfile;
 bool Log::m_useStdout = false;
 
-static const std::string GREEN = "\x1b[32m";
-static const std::string RED = "\x1b[31m";
-static const std::string YELLOW = "\x1b[93m";
-static const std::string CYAN = "\x1b[96m";
-static const std::string WHITE = "\x1b[37m";
-static const std::string COLOUR_END = "\x1b[0m";
-static const std::string EMPTY_STR = "";
+static const wxString GREEN = "\x1b[32m";
+static const wxString RED = "\x1b[31m";
+static const wxString YELLOW = "\x1b[93m";
+static const wxString CYAN = "\x1b[96m";
+static const wxString WHITE = "\x1b[37m";
+static const wxString COLOUR_END = "\x1b[0m";
+static const wxString EMPTY_STR = "";
 
 // Needed for Windows
 #ifdef _WIN32
@@ -73,13 +73,13 @@ Log::~Log()
     ResetConsole();
 }
 
-void Log::AddLogLine(const std::string& msg, int verbosity)
+void Log::AddLogLine(const wxString& msg, int verbosity)
 {
     if(msg.empty()) {
         return;
     }
     if((m_verbosity >= verbosity)) {
-        std::string formattedMsg = Prefix(verbosity);
+        wxString formattedMsg = Prefix(verbosity);
         m_buffer << formattedMsg << " " << msg;
         m_buffer << "\n";
     }
@@ -88,12 +88,12 @@ void Log::AddLogLine(const std::string& msg, int verbosity)
 void Log::SetVerbosity(int level)
 {
     if(level > Log::Warning) {
-        LOG_SYSTEM() << Log::GetVerbosityAsString(level) << std::string("");
+        LOG_SYSTEM() << Log::GetVerbosityAsString(level) << wxString("");
     }
     m_verbosity = level;
 }
 
-int Log::GetVerbosityAsNumber(const std::string& verbosity)
+int Log::GetVerbosityAsNumber(const wxString& verbosity)
 {
     if(verbosity == "Debug") {
         return Log::Dbg;
@@ -117,7 +117,7 @@ int Log::GetVerbosityAsNumber(const std::string& verbosity)
     }
 }
 
-std::string Log::GetVerbosityAsString(int verbosity)
+wxString Log::GetVerbosityAsString(int verbosity)
 {
     switch(verbosity) {
     case Log::Dbg:
@@ -140,9 +140,9 @@ std::string Log::GetVerbosityAsString(int verbosity)
     }
 }
 
-void Log::SetVerbosity(const std::string& verbosity) { SetVerbosity(GetVerbosityAsNumber(verbosity)); }
+void Log::SetVerbosity(const wxString& verbosity) { SetVerbosity(GetVerbosityAsNumber(verbosity)); }
 
-void Log::OpenLog(const std::string& fullpath, int verbosity)
+void Log::OpenLog(const wxString& fullpath, int verbosity)
 {
     m_logfile = fullpath;
     m_verbosity = verbosity;
@@ -158,7 +158,7 @@ void Log::OpenStdout(int verbosity)
 
 void Log::Flush()
 {
-    std::string buffer = m_buffer.str();
+    wxString buffer = m_buffer.str();
     if(buffer.empty()) {
         return;
     }
@@ -182,14 +182,14 @@ void Log::Flush()
     m_buffer = {};
 }
 
-std::string Log::Prefix(int verbosity)
+wxString Log::Prefix(int verbosity)
 {
     if(verbosity <= m_verbosity) {
         timeval tim;
         gettimeofday(&tim, NULL);
         auto start = std::chrono::system_clock::now();
         auto as_time_t = std::chrono::system_clock::to_time_t(start);
-        std::string timeString = ctime(&as_time_t);
+        wxString timeString = ctime(&as_time_t);
         StringUtils::Trim(timeString);
 
         std::stringstream prefix;
@@ -226,7 +226,7 @@ std::string Log::Prefix(int verbosity)
     }
 }
 
-const std::string& Log::GetColour(int verbo)
+const wxString& Log::GetColour(int verbo)
 {
     if(!m_useStdout) {
         return EMPTY_STR;
@@ -247,7 +247,7 @@ const std::string& Log::GetColour(int verbo)
     }
 }
 
-const std::string& Log::GetColourEnd()
+const wxString& Log::GetColourEnd()
 {
     if(!m_useStdout) {
         return EMPTY_STR;

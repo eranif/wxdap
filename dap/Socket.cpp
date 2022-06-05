@@ -1,5 +1,5 @@
-#include "Exception.hpp"
 #include "Socket.hpp"
+#include "Exception.hpp"
 #include <cerrno>
 #include <cstdio>
 #include <memory>
@@ -7,7 +7,6 @@
 
 #ifndef _WIN32
 #include <fcntl.h>
-#include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -34,7 +33,7 @@ void Socket::Initialize()
 #endif
 }
 
-int Socket::Read(string& content)
+int Socket::Read(wxString& content)
 {
     char buffer[4096];
     size_t bytesRead = 0;
@@ -65,7 +64,7 @@ int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead)
 }
 
 // Send API
-void Socket::Send(const string& msg)
+void Socket::Send(const wxString& msg)
 {
     if(m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
@@ -73,7 +72,9 @@ void Socket::Send(const string& msg)
     if(msg.empty()) {
         return;
     }
-    char* pdata = (char*)msg.c_str();
+
+    auto buffer = msg.mb_str(wxConvUTF8);
+    char* pdata = buffer.data();
     int bytesLeft = msg.length();
     while(bytesLeft) {
         if(SelectWriteMS(1000) == kTimeout)
@@ -95,11 +96,11 @@ int Socket::GetLastError()
 #endif
 }
 
-std::string Socket::error() { return error(GetLastError()); }
+wxString Socket::error() { return error(GetLastError()); }
 
-std::string Socket::error(const int errorCode)
+wxString Socket::error(const int errorCode)
 {
-    std::string err;
+    wxString err;
 #ifdef _WIN32
     // Get the error message, if any.
     if(errorCode == 0)
@@ -110,7 +111,7 @@ std::string Socket::error(const int errorCode)
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                        NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
-    std::string message(messageBuffer, size);
+    wxString message(messageBuffer, size);
 
     // Free the buffer.
     LocalFree(messageBuffer);

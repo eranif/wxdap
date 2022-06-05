@@ -1,5 +1,5 @@
-#include "Socket.hpp"
 #include "dap.hpp"
+#include "Socket.hpp"
 
 #define CREATE_JSON() JSON json = JSON::CreateObject()
 #define REQUEST_TO() JSON json = Request::To()
@@ -73,7 +73,7 @@ ObjGenerator& ObjGenerator::Get()
     return generator;
 }
 
-ProtocolMessage::Ptr_t ObjGenerator::New(const string& type, const string& name)
+ProtocolMessage::Ptr_t ObjGenerator::New(const wxString& type, const wxString& name)
 {
     if(type == "response") {
         return New(name, m_responses);
@@ -86,31 +86,31 @@ ProtocolMessage::Ptr_t ObjGenerator::New(const string& type, const string& name)
     }
 }
 
-string dap::ProtocolMessage::ToString() const
+wxString dap::ProtocolMessage::ToString() const
 {
     JSON json = To();
     return json.ToString();
 }
 
-void ObjGenerator::RegisterResponse(const string& name, onNewObject func)
+void ObjGenerator::RegisterResponse(const wxString& name, onNewObject func)
 {
     // register new response class
     m_responses.insert({ name, func });
 }
 
-void ObjGenerator::RegisterEvent(const string& name, onNewObject func)
+void ObjGenerator::RegisterEvent(const wxString& name, onNewObject func)
 {
     // register new event class
     m_events.insert({ name, func });
 }
 
-void ObjGenerator::RegisterRequest(const string& name, onNewObject func)
+void ObjGenerator::RegisterRequest(const wxString& name, onNewObject func)
 {
     // register new request class
     m_requests.insert({ name, func });
 }
 
-ProtocolMessage::Ptr_t ObjGenerator::New(const string& name, const unordered_map<string, onNewObject>& pool)
+ProtocolMessage::Ptr_t ObjGenerator::New(const wxString& name, const unordered_map<wxString, onNewObject>& pool)
 {
     const auto& iter = pool.find(name);
     if(iter == pool.end()) {
@@ -124,8 +124,8 @@ ProtocolMessage::Ptr_t dap::ObjGenerator::FromJSON(JSON json)
     if(!json.IsOK()) {
         return nullptr;
     }
-    string type = json["type"].GetString();
-    string command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
+    wxString type = json["type"].GetString();
+    wxString command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
     ProtocolMessage::Ptr_t msg = New(type, command);
     if(msg) {
         msg->From(json);

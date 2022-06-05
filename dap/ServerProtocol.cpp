@@ -1,5 +1,5 @@
-#include "Log.hpp"
 #include "ServerProtocol.hpp"
+#include "Log.hpp"
 
 dap::ServerProtocol::ServerProtocol(Socket::Ptr_t conn)
     : m_conn(conn)
@@ -14,7 +14,7 @@ void dap::ServerProtocol::Initialize()
     enum eState { kWaitingInitRequest, kDone };
     eState state = kWaitingInitRequest;
     while(state != kDone) {
-        string network_buffer;
+        wxString network_buffer;
         if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess) {
             if(m_conn->Read(network_buffer) == dap::Socket::kSuccess) {
                 LOG_DEBUG1() << "Read: " << network_buffer;
@@ -46,7 +46,7 @@ void dap::ServerProtocol::Check()
 {
     if(m_onNetworkMessage) {
         // First try to read something from the network
-        string content;
+        wxString content;
         if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess && m_conn->Read(content) == Socket::kSuccess) {
             m_rpc.AppendBuffer(content);
         }

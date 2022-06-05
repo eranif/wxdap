@@ -1,14 +1,14 @@
 #include "Process.hpp"
-#include <iostream>
 #include "Log.hpp"
+#include <iostream>
 
 void dap::Process::StartReaderThread()
 {
     m_shutdown.store(false);
-    m_readerThread = new thread(
-        [](dap::Process* process, Queue<pair<string, string>>& Q, atomic_bool& shutdown) {
-            string stdoutBuff;
-            string stderrBuff;
+    m_readerThread = new std::thread(
+        [](dap::Process* process, Queue<std::pair<wxString, wxString>>& Q, std::atomic_bool& shutdown) {
+            wxString stdoutBuff;
+            wxString stderrBuff;
             while(!shutdown.load()) {
                 stdoutBuff.clear();
                 stderrBuff.clear();
@@ -17,12 +17,12 @@ void dap::Process::StartReaderThread()
                 if(readSomething && readSuccess) {
                     Q.push({ stdoutBuff, stderrBuff });
                 } else {
-                    this_thread::sleep_for(chrono::milliseconds(10));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
             }
             LOG_ERROR() << "Going down";
         },
-        this, ref(m_inQueue), ref(m_shutdown));
+        this, std::ref(m_inQueue), std::ref(m_shutdown));
 }
 
 void dap::Process::Cleanup()
@@ -35,4 +35,4 @@ void dap::Process::Cleanup()
     m_readerThread = nullptr;
 }
 
-pair<string, string> dap::Process::Read() { return m_inQueue.pop(chrono::milliseconds(1)); }
+std::pair<wxString, wxString> dap::Process::Read() { return m_inQueue.pop(std::chrono::milliseconds(1)); }

@@ -21,7 +21,7 @@ public:
     /**
      * @brief register a callback for handling network messages
      */
-    void RegisterNetworkCallback(function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage)
+    void RegisterNetworkCallback(std::function<void(dap::ProtocolMessage::Ptr_t)> onNetworkMessage)
     {
         m_onNetworkMessage = onNetworkMessage;
     }

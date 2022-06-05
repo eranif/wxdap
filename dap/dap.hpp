@@ -4,9 +4,9 @@
 #include "JSON.hpp"
 #include <functional>
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <vector>
+#include <wx/string.h>
 
 /// C++ Implementation of Debug Adapter Protocol (DAP)
 /// The Debug Adapter Protocol defines the protocol used between an editor or
@@ -84,27 +84,27 @@ struct Response;
 /// Base class of requests, responses, and events
 struct ProtocolMessage : public Any {
     int seq = -1;
-    std::string type;
-    typedef shared_ptr<ProtocolMessage> Ptr_t;
+    wxString type;
+    typedef std::shared_ptr<ProtocolMessage> Ptr_t;
 
     dap::Event* AsEvent() const { return As<dap::Event>(); }
     dap::Request* AsRequest() const { return As<dap::Request>(); }
     dap::Response* AsResponse() const { return As<dap::Response>(); }
 
-    std::string ToString() const;
+    wxString ToString() const;
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
 };
 
 class ObjGenerator
 {
-    typedef function<ProtocolMessage::Ptr_t()> onNewObject;
-    unordered_map<std::string, onNewObject> m_responses;
-    unordered_map<std::string, onNewObject> m_events;
-    unordered_map<std::string, onNewObject> m_requests;
+    typedef std::function<ProtocolMessage::Ptr_t()> onNewObject;
+    std::unordered_map<wxString, onNewObject> m_responses;
+    std::unordered_map<wxString, onNewObject> m_events;
+    std::unordered_map<wxString, onNewObject> m_requests;
 
 protected:
-    ProtocolMessage::Ptr_t New(const std::string& name, const unordered_map<std::string, onNewObject>& pool);
+    ProtocolMessage::Ptr_t New(const wxString& name, const std::unordered_map<wxString, onNewObject>& pool);
 
 public:
     static ObjGenerator& Get();
@@ -114,22 +114,22 @@ public:
      * @param name the class name
      * @return
      */
-    ProtocolMessage::Ptr_t New(const std::string& type, const std::string& name);
+    ProtocolMessage::Ptr_t New(const wxString& type, const wxString& name);
 
     /**
      * @brief create new ProtocolMessage from raw JSON object
      */
     ProtocolMessage::Ptr_t FromJSON(JSON json);
 
-    void RegisterResponse(const std::string& name, onNewObject func);
-    void RegisterEvent(const std::string& name, onNewObject func);
-    void RegisterRequest(const std::string& name, onNewObject func);
+    void RegisterResponse(const wxString& name, onNewObject func);
+    void RegisterEvent(const wxString& name, onNewObject func);
+    void RegisterRequest(const wxString& name, onNewObject func);
 };
 
 /// A client or debug adapter initiated request
 /// ->
 struct Request : public ProtocolMessage {
-    std::string command;
+    wxString command;
 
     Request() { type = "request"; }
     virtual ~Request() = 0; // force to abstract class
@@ -149,7 +149,7 @@ struct CancelRequest : public Request {
 /// A debug adapter initiated event
 ///
 struct Event : public ProtocolMessage {
-    std::string event;
+    wxString event;
     Event() { type = "event"; }
     virtual ~Event() = 0; // force to abstract class
     JSON_SERIALIZE();
@@ -160,7 +160,7 @@ struct Event : public ProtocolMessage {
 struct Response : public ProtocolMessage {
     int request_seq = -1;
     bool success = true;
-    std::string command;
+    wxString command;
 
     /**
      * Contains the raw error in short form if 'success' is false.
@@ -168,7 +168,7 @@ struct Response : public ProtocolMessage {
      * the UI. Some predefined values exist. Values: 'cancelled': request was
      * cancelled. etc.
      */
-    std::string message;
+    wxString message;
 
     Response() { type = "response"; }
     virtual ~Response() = 0; // force to abstract class
@@ -198,17 +198,17 @@ struct InitializedEvent : public Event {
 struct StoppedEvent : public Event {
     /**
      * The reason for the event.
-     * For backward compatibility this std::string is shown in the UI if the
+     * For backward compatibility this wxString is shown in the UI if the
      * 'description' attribute is missing (but it must not be translated).
      * Values: 'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto',
      * 'function breakpoint', 'data breakpoint', etc.
      */
-    std::string reason;
+    wxString reason;
     /**
      * Additional information. E.g. if reason is 'exception', text contains the
-     * exception name. This std::string is shown in the UI.
+     * exception name. This wxString is shown in the UI.
      */
-    std::string text;
+    wxString text;
     EVENT_CLASS(StoppedEvent, "stopped");
     JSON_SERIALIZE();
 };
@@ -248,7 +248,7 @@ struct TerminatedEvent : public Event {
 
 /// The event indicates that a thread has started or exited.
 struct ThreadEvent : public Event {
-    std::string reason;
+    wxString reason;
     int threadId = 0;
     EVENT_CLASS(ThreadEvent, "thread");
     JSON_SERIALIZE();
@@ -261,8 +261,8 @@ struct OutputEvent : public Event {
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
      */
-    std::string category;
-    std::string output;
+    wxString category;
+    wxString output;
 
     EVENT_CLASS(OutputEvent, "output");
     JSON_SERIALIZE();
@@ -277,13 +277,13 @@ struct Source : public Any {
      * adapter has a name. When sending a source to the debug adapter this name
      * is optional.
      */
-    std::string name;
+    wxString name;
     /**
      * The path of the source to be shown in the UI. It is only used to locate
      * and load the content of the source if no sourceReference is specified (or
      * its value is 0).
      */
-    std::string path;
+    wxString path;
     ANY_CLASS(Source);
     JSON_SERIALIZE();
 };
@@ -293,7 +293,7 @@ struct Source : public Any {
 struct Breakpoint : public Any {
     int id = -1;
     bool verified = false;
-    std::string message;
+    wxString message;
     Source source;
     int line = -1;
     int column = -1;
@@ -310,7 +310,7 @@ struct BreakpointEvent : public Event {
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
      */
-    std::string reason;
+    wxString reason;
     /**
      * The 'id' attribute is used to find the target breakpoint and the other
      * attributes are used as the new values.
@@ -327,7 +327,7 @@ struct ProcessEvent : public Event {
      * The logical name of the process. This is usually the full path to
      * process's executable file. Example: /home/example/myproj/program.exe
      */
-    std::string name;
+    wxString name;
     /**
      * The system process id of the debugged process. This property will be
      * missing for non-system processes.
@@ -345,7 +345,7 @@ struct ProcessEvent : public Event {
      * 'attachForSuspendedLaunch': A project launcher component has launched a
      * new process in a suspended state and then asked the debugger to attach.
      */
-    std::string startMethod;
+    wxString startMethod;
     int pointerSize = PTR_SIZE;
     EVENT_CLASS(ProcessEvent, "process");
     JSON_SERIALIZE();
@@ -355,27 +355,27 @@ struct InitializeRequestArguments : public Any {
     /**
      * The ID of the (frontend) client using this adapter.
      */
-    std::string clientID;
+    wxString clientID;
     /**
      * The human readable name of the (frontend) client using this adapter.
      */
-    std::string clientName;
+    wxString clientName;
     /**
      * The ID of the debug adapter.
      */
-    std::string adapterID;
+    wxString adapterID;
     /**
      * The ISO-639 locale of the (frontend) client using this adapter, e.g.
      * en-US or de-CH.
      */
-    std::string locale = "en-US";
+    wxString locale = "en-US";
     bool linesStartAt1 = true;
     bool columnsStartAt1 = true;
     /**
      * Determines in what format paths are specified. The default is 'path',
      * which is the native format. Values: 'path', 'uri', etc.
      */
-    std::string pathFormat = "path";
+    wxString pathFormat = "path";
     ANY_CLASS(InitializeRequestArguments);
     JSON_SERIALIZE();
 };
@@ -435,11 +435,11 @@ struct LaunchRequestArguments : public Any {
      * the program launch. debuggee[0] should contain the executable
      * the other items in the std::vector are passed to the debuggee
      */
-    std::vector<std::string> debuggee;
+    std::vector<wxString> debuggee;
     /*
      * start the debugger from this directory
      */
-    std::string workingDirectory = ".";
+    wxString workingDirectory = ".";
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();
 };
@@ -523,9 +523,9 @@ struct SourceBreakpoint : public Any {
     /**
      * An optional expression for conditional breakpoints.
      */
-    std::string condition;
+    wxString condition;
     SourceBreakpoint() {}
-    SourceBreakpoint(int line, const std::string& cond)
+    SourceBreakpoint(int line, const wxString& cond)
     {
         this->line = line;
         this->condition = cond;
@@ -619,7 +619,7 @@ struct StackFrame : public Any {
     /**
      * The name of the stack frame, typically a method name.
      */
-    std::string name;
+    wxString name;
 
     /**
      * The optional source of the frame.
@@ -649,7 +649,7 @@ struct Thread : public Any {
     /**
      * A name of the thread.
      */
-    std::string name;
+    wxString name;
     ANY_CLASS(Thread);
     JSON_SERIALIZE();
 };
@@ -679,22 +679,22 @@ struct VariablePresentationHint : public Any {
      * for rendering purposes, e.g. an index range for large arrays. 'dataBreakpoint': Indicates that a data breakpoint
      * is registered for the object. etc.
      */
-    std::string kind;
+    wxString kind;
     /**
      * Set of attributes represented as an array of strings. Before introducing additional values, try to use the listed
      * values. Values: 'static': Indicates that the object is static. 'constant': Indicates that the object is a
      * constant. 'readOnly': Indicates that the object is read only. 'rawString': Indicates that the object is a raw
-     * std::string. 'hasObjectId': Indicates that the object can have an Object ID created for it. 'canHaveObjectId':
+     * wxString. 'hasObjectId': Indicates that the object can have an Object ID created for it. 'canHaveObjectId':
      * Indicates that the object has an Object ID associated with it. 'hasSideEffects': Indicates that the evaluation
      * had side effects. etc.
      */
-    std::vector<std::string> attributes;
+    std::vector<wxString> attributes;
 
     /**
      * Visibility of variable. Before introducing additional values, try to use the listed values.
      * Values: 'public', 'private', 'protected', 'internal', 'final', etc.
      */
-    std::string visibility;
+    wxString visibility;
     ANY_CLASS(VariablePresentationHint);
     JSON_SERIALIZE();
 };
@@ -707,9 +707,9 @@ struct VariablePresentationHint : public Any {
 /// should be returned via the optional 'namedVariables' and 'indexedVariables' attributes. The client can use this
 /// optional information to present the children in a paged UI and fetch them in chunks.
 struct Variable : public Any {
-    std::string name;
-    std::string value;
-    std::string type;
+    wxString name;
+    wxString value;
+    wxString type;
     /**
      * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing
      * variablesReference to the VariablesRequest.
@@ -738,10 +738,10 @@ struct ScopesRequest : public Request {
 };
 
 struct Scope : public Any {
-    std::string name;
+    wxString name;
     eScopes variablesReference = eScopes::kArguments;
     bool expensive = false;
-    Scope(const std::string& n, eScopes ref)
+    Scope(const wxString& n, eScopes ref)
         : name(n)
         , variablesReference(ref)
     {

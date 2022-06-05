@@ -4,13 +4,15 @@
 #include "JsonRPC.hpp"
 #include "Socket.hpp"
 
+#include <wx/string.h>
+
 namespace dap
 {
 class Client
 {
     Socket::Ptr_t m_socket = nullptr;
     dap::JsonRPC m_rpc;
-    Queue<string> m_inputQueue;
+    Queue<wxString> m_inputQueue;
     atomic_bool m_shutdown;
     atomic_bool m_terminated;
     thread* m_readerThread = nullptr;
@@ -50,7 +52,7 @@ public:
     /**
      * @brief set multiple breakpoints in a source file
      */
-    void SetBreakpointsFile(const string& file, const vector<dap::SourceBreakpoint>& lines);
+    void SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines);
 
     /**
      * @brief tell the debugger that we are done and ready to start the main loop
@@ -59,13 +61,13 @@ public:
     /**
      * @brief start the debuggee
      */
-    void Launch(const vector<string>& cmd);
+    void Launch(const std::vector<wxString>& cmd);
 
     /**
      * @brief ask for list of threads
      */
     void GetThreads();
-    
+
     /**
      * @brief return the variables for stack frame
      * @param frameId

@@ -1,19 +1,19 @@
 #ifndef EXCEPTION_HPP
 #define EXCEPTION_HPP
 
-#include <string>
+#include <wx/string.h>
 
 namespace dap
 {
 class Exception
 {
-    std::string m_what;
+    wxString m_what;
 
 public:
-    Exception(const std::string& what);
+    Exception(const wxString& what);
     virtual ~Exception();
 
-    const std::string& What() const;
+    const wxString& What() const;
 };
 
 };     // namespace dap

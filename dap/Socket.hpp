@@ -2,8 +2,8 @@
 #define CLSOCKETBASE_H
 
 #include <memory>
-#include <string>
 #include <sys/param.h>
+#include <wx/string.h>
 #if defined(__WXOSX__) || defined(BSD)
 #include <sys/errno.h>
 #endif
@@ -44,8 +44,8 @@ public:
 #endif
 
     static int GetLastError();
-    static string error();
-    static string error(const int errorCode);
+    static wxString error();
+    static wxString error(const int errorCode);
 
 public:
     /**
@@ -78,7 +78,7 @@ public:
      * @brief send message. This function blocks until the entire buffer is sent
      * @throws SocketException
      */
-    void Send(const string& msg);
+    void Send(const wxString& msg);
 
     /**
      * @brief
@@ -89,12 +89,12 @@ public:
     int Read(char* buffer, size_t bufferSize, size_t& bytesRead);
 
     /**
-     * @brief read string content from remote server
+     * @brief read wxString content from remote server
      * @param content [output]
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int Read(string& content);
+    int Read(wxString& content);
 
     /**
      * @brief select for read. Same as above, but use milli seconds instead
