@@ -5,7 +5,6 @@
 #include "dap/SocketClient.hpp"
 #include <iostream>
 #include <stdio.h>
-#include <string>
 #include <thread>
 
 using namespace std;
@@ -21,6 +20,7 @@ int main(int argc, char** argv)
         }
         LOG_INFO() << "Connected!";
 
+        // This part is done in mode **sync**
         client.Initialize();
         client.SetBreakpointsFile("main.cpp", { { 10, "" }, { 12, "" } });
         client.ConfigurationDone();
@@ -29,6 +29,9 @@ int main(int argc, char** argv)
         //-----------------------------------------------------
         // The main loop
         //-----------------------------------------------------
+
+        // TODO:: move the client code to use wxEvents
+
         // Now that the initialization is completed, run the main loop
         while(client.IsConnected()) {
             // our callback we get keep called as long there are messages to process
