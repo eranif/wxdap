@@ -1,7 +1,7 @@
 {
  "workspace_type": "File System Workspace",
  "selected_config": "Debug",
- "name": "DAPGdb-Linux",
+ "name": "wxdap-linux",
  "configs": [{
    "name": "Debug",
    "flags": 1,
