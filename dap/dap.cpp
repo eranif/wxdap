@@ -930,6 +930,7 @@ void ThreadsResponse::From(const JSON& json)
     JSON arr = body["threads"];
     threads.clear();
     int size = arr.GetCount();
+    threads.reserve(size);
     for(int i = 0; i < size; ++i) {
         Thread thr;
         thr.From(arr[i]);

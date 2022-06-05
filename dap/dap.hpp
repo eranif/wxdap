@@ -13,8 +13,6 @@
 /// IDE and a debugger or runtime The implementation is based on the
 /// specifications described here:
 /// https://microsoft.github.io/debug-adapter-protocol/specification
-using namespace std;
-
 #define JSON_SERIALIZE()      \
     JSON To() const override; \
     void From(const JSON& json) override
@@ -86,14 +84,14 @@ struct Response;
 /// Base class of requests, responses, and events
 struct ProtocolMessage : public Any {
     int seq = -1;
-    string type;
+    std::string type;
     typedef shared_ptr<ProtocolMessage> Ptr_t;
 
     dap::Event* AsEvent() const { return As<dap::Event>(); }
     dap::Request* AsRequest() const { return As<dap::Request>(); }
     dap::Response* AsResponse() const { return As<dap::Response>(); }
 
-    string ToString() const;
+    std::string ToString() const;
     ANY_CLASS(ProtocolMessage);
     JSON_SERIALIZE();
 };
@@ -101,12 +99,12 @@ struct ProtocolMessage : public Any {
 class ObjGenerator
 {
     typedef function<ProtocolMessage::Ptr_t()> onNewObject;
-    unordered_map<string, onNewObject> m_responses;
-    unordered_map<string, onNewObject> m_events;
-    unordered_map<string, onNewObject> m_requests;
+    unordered_map<std::string, onNewObject> m_responses;
+    unordered_map<std::string, onNewObject> m_events;
+    unordered_map<std::string, onNewObject> m_requests;
 
 protected:
-    ProtocolMessage::Ptr_t New(const string& name, const unordered_map<string, onNewObject>& pool);
+    ProtocolMessage::Ptr_t New(const std::string& name, const unordered_map<std::string, onNewObject>& pool);
 
 public:
     static ObjGenerator& Get();
@@ -116,22 +114,22 @@ public:
      * @param name the class name
      * @return
      */
-    ProtocolMessage::Ptr_t New(const string& type, const string& name);
+    ProtocolMessage::Ptr_t New(const std::string& type, const std::string& name);
 
     /**
      * @brief create new ProtocolMessage from raw JSON object
      */
     ProtocolMessage::Ptr_t FromJSON(JSON json);
 
-    void RegisterResponse(const string& name, onNewObject func);
-    void RegisterEvent(const string& name, onNewObject func);
-    void RegisterRequest(const string& name, onNewObject func);
+    void RegisterResponse(const std::string& name, onNewObject func);
+    void RegisterEvent(const std::string& name, onNewObject func);
+    void RegisterRequest(const std::string& name, onNewObject func);
 };
 
 /// A client or debug adapter initiated request
 /// ->
 struct Request : public ProtocolMessage {
-    string command;
+    std::string command;
 
     Request() { type = "request"; }
     virtual ~Request() = 0; // force to abstract class
@@ -151,7 +149,7 @@ struct CancelRequest : public Request {
 /// A debug adapter initiated event
 ///
 struct Event : public ProtocolMessage {
-    string event;
+    std::string event;
     Event() { type = "event"; }
     virtual ~Event() = 0; // force to abstract class
     JSON_SERIALIZE();
@@ -162,7 +160,7 @@ struct Event : public ProtocolMessage {
 struct Response : public ProtocolMessage {
     int request_seq = -1;
     bool success = true;
-    string command;
+    std::string command;
 
     /**
      * Contains the raw error in short form if 'success' is false.
@@ -170,7 +168,7 @@ struct Response : public ProtocolMessage {
      * the UI. Some predefined values exist. Values: 'cancelled': request was
      * cancelled. etc.
      */
-    string message;
+    std::string message;
 
     Response() { type = "response"; }
     virtual ~Response() = 0; // force to abstract class
@@ -200,17 +198,17 @@ struct InitializedEvent : public Event {
 struct StoppedEvent : public Event {
     /**
      * The reason for the event.
-     * For backward compatibility this string is shown in the UI if the
+     * For backward compatibility this std::string is shown in the UI if the
      * 'description' attribute is missing (but it must not be translated).
      * Values: 'step', 'breakpoint', 'exception', 'pause', 'entry', 'goto',
      * 'function breakpoint', 'data breakpoint', etc.
      */
-    string reason;
+    std::string reason;
     /**
      * Additional information. E.g. if reason is 'exception', text contains the
-     * exception name. This string is shown in the UI.
+     * exception name. This std::string is shown in the UI.
      */
-    string text;
+    std::string text;
     EVENT_CLASS(StoppedEvent, "stopped");
     JSON_SERIALIZE();
 };
@@ -250,7 +248,7 @@ struct TerminatedEvent : public Event {
 
 /// The event indicates that a thread has started or exited.
 struct ThreadEvent : public Event {
-    string reason;
+    std::string reason;
     int threadId = 0;
     EVENT_CLASS(ThreadEvent, "thread");
     JSON_SERIALIZE();
@@ -263,8 +261,8 @@ struct OutputEvent : public Event {
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
      */
-    string category;
-    string output;
+    std::string category;
+    std::string output;
 
     EVENT_CLASS(OutputEvent, "output");
     JSON_SERIALIZE();
@@ -279,13 +277,13 @@ struct Source : public Any {
      * adapter has a name. When sending a source to the debug adapter this name
      * is optional.
      */
-    string name;
+    std::string name;
     /**
      * The path of the source to be shown in the UI. It is only used to locate
      * and load the content of the source if no sourceReference is specified (or
      * its value is 0).
      */
-    string path;
+    std::string path;
     ANY_CLASS(Source);
     JSON_SERIALIZE();
 };
@@ -295,7 +293,7 @@ struct Source : public Any {
 struct Breakpoint : public Any {
     int id = -1;
     bool verified = false;
-    string message;
+    std::string message;
     Source source;
     int line = -1;
     int column = -1;
@@ -312,7 +310,7 @@ struct BreakpointEvent : public Event {
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
      */
-    string reason;
+    std::string reason;
     /**
      * The 'id' attribute is used to find the target breakpoint and the other
      * attributes are used as the new values.
@@ -329,7 +327,7 @@ struct ProcessEvent : public Event {
      * The logical name of the process. This is usually the full path to
      * process's executable file. Example: /home/example/myproj/program.exe
      */
-    string name;
+    std::string name;
     /**
      * The system process id of the debugged process. This property will be
      * missing for non-system processes.
@@ -347,7 +345,7 @@ struct ProcessEvent : public Event {
      * 'attachForSuspendedLaunch': A project launcher component has launched a
      * new process in a suspended state and then asked the debugger to attach.
      */
-    string startMethod;
+    std::string startMethod;
     int pointerSize = PTR_SIZE;
     EVENT_CLASS(ProcessEvent, "process");
     JSON_SERIALIZE();
@@ -357,27 +355,27 @@ struct InitializeRequestArguments : public Any {
     /**
      * The ID of the (frontend) client using this adapter.
      */
-    string clientID;
+    std::string clientID;
     /**
      * The human readable name of the (frontend) client using this adapter.
      */
-    string clientName;
+    std::string clientName;
     /**
      * The ID of the debug adapter.
      */
-    string adapterID;
+    std::string adapterID;
     /**
      * The ISO-639 locale of the (frontend) client using this adapter, e.g.
      * en-US or de-CH.
      */
-    string locale = "en-US";
+    std::string locale = "en-US";
     bool linesStartAt1 = true;
     bool columnsStartAt1 = true;
     /**
      * Determines in what format paths are specified. The default is 'path',
      * which is the native format. Values: 'path', 'uri', etc.
      */
-    string pathFormat = "path";
+    std::string pathFormat = "path";
     ANY_CLASS(InitializeRequestArguments);
     JSON_SERIALIZE();
 };
@@ -435,13 +433,13 @@ struct LaunchRequestArguments : public Any {
     bool noDebug = false;
     /**
      * the program launch. debuggee[0] should contain the executable
-     * the other items in the vector are passed to the debuggee
+     * the other items in the std::vector are passed to the debuggee
      */
-    vector<string> debuggee;
+    std::vector<std::string> debuggee;
     /*
      * start the debugger from this directory
      */
-    string workingDirectory = ".";
+    std::string workingDirectory = ".";
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();
 };
@@ -506,7 +504,7 @@ struct BreakpointLocation : public Any {
 /// Response to 'breakpointLocations' request.
 /// Contains possible locations for source breakpoints.
 struct BreakpointLocationsResponse : public Response {
-    vector<BreakpointLocation> breakpoints;
+    std::vector<BreakpointLocation> breakpoints;
     RESPONSE_CLASS(BreakpointLocationsResponse, "breakpointLocations");
     JSON_SERIALIZE();
 };
@@ -525,9 +523,9 @@ struct SourceBreakpoint : public Any {
     /**
      * An optional expression for conditional breakpoints.
      */
-    string condition;
+    std::string condition;
     SourceBreakpoint() {}
-    SourceBreakpoint(int line, const string& cond)
+    SourceBreakpoint(int line, const std::string& cond)
     {
         this->line = line;
         this->condition = cond;
@@ -538,7 +536,7 @@ struct SourceBreakpoint : public Any {
 /// Properties of a breakpoint or logpoint passed to the setBreakpoints request.
 struct SetBreakpointsArguments : public Any {
     Source source;
-    vector<SourceBreakpoint> breakpoints;
+    std::vector<SourceBreakpoint> breakpoints;
     JSON_SERIALIZE();
 };
 
@@ -558,7 +556,7 @@ struct SetBreakpointsRequest : public Request {
 /// The breakpoints returned are in the same order as the elements of the 'breakpoints'
 ///(or the deprecated 'lines') array in the arguments
 struct SetBreakpointsResponse : public Response {
-    vector<Breakpoint> breakpoints;
+    std::vector<Breakpoint> breakpoints;
     RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
     JSON_SERIALIZE();
 };
@@ -621,7 +619,7 @@ struct StackFrame : public Any {
     /**
      * The name of the stack frame, typically a method name.
      */
-    string name;
+    std::string name;
 
     /**
      * The optional source of the frame.
@@ -651,14 +649,14 @@ struct Thread : public Any {
     /**
      * A name of the thread.
      */
-    string name;
+    std::string name;
     ANY_CLASS(Thread);
     JSON_SERIALIZE();
 };
 
 /// Response to 'threads' request.
 struct ThreadsResponse : public Response {
-    vector<Thread> threads;
+    std::vector<Thread> threads;
     RESPONSE_CLASS(ThreadsResponse, "threads");
     JSON_SERIALIZE();
 };
@@ -681,22 +679,22 @@ struct VariablePresentationHint : public Any {
      * for rendering purposes, e.g. an index range for large arrays. 'dataBreakpoint': Indicates that a data breakpoint
      * is registered for the object. etc.
      */
-    string kind;
+    std::string kind;
     /**
      * Set of attributes represented as an array of strings. Before introducing additional values, try to use the listed
      * values. Values: 'static': Indicates that the object is static. 'constant': Indicates that the object is a
      * constant. 'readOnly': Indicates that the object is read only. 'rawString': Indicates that the object is a raw
-     * string. 'hasObjectId': Indicates that the object can have an Object ID created for it. 'canHaveObjectId':
+     * std::string. 'hasObjectId': Indicates that the object can have an Object ID created for it. 'canHaveObjectId':
      * Indicates that the object has an Object ID associated with it. 'hasSideEffects': Indicates that the evaluation
      * had side effects. etc.
      */
-    vector<string> attributes;
+    std::vector<std::string> attributes;
 
     /**
      * Visibility of variable. Before introducing additional values, try to use the listed values.
      * Values: 'public', 'private', 'protected', 'internal', 'final', etc.
      */
-    string visibility;
+    std::string visibility;
     ANY_CLASS(VariablePresentationHint);
     JSON_SERIALIZE();
 };
@@ -709,9 +707,9 @@ struct VariablePresentationHint : public Any {
 /// should be returned via the optional 'namedVariables' and 'indexedVariables' attributes. The client can use this
 /// optional information to present the children in a paged UI and fetch them in chunks.
 struct Variable : public Any {
-    string name;
-    string value;
-    string type;
+    std::string name;
+    std::string value;
+    std::string type;
     /**
      * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing
      * variablesReference to the VariablesRequest.
@@ -739,13 +737,11 @@ struct ScopesRequest : public Request {
     JSON_SERIALIZE();
 };
 
-
-
 struct Scope : public Any {
-    string name;
+    std::string name;
     eScopes variablesReference = eScopes::kArguments;
     bool expensive = false;
-    Scope(const string& n, eScopes ref)
+    Scope(const std::string& n, eScopes ref)
         : name(n)
         , variablesReference(ref)
     {
@@ -756,7 +752,7 @@ struct Scope : public Any {
 };
 
 struct ScopesResponse : public Response {
-    vector<Scope> scopes;
+    std::vector<Scope> scopes;
     RESPONSE_CLASS(ScopesResponse, "scopes");
     JSON_SERIALIZE();
 };
@@ -788,7 +784,7 @@ struct StackTraceRequest : public Request {
 
 /// Response to 'stackTrace' request.
 struct StackTraceResponse : public Response {
-    vector<StackFrame> stackFrames;
+    std::vector<StackFrame> stackFrames;
     RESPONSE_CLASS(StackTraceResponse, "stackTrace");
     JSON_SERIALIZE();
 };
@@ -822,7 +818,7 @@ struct VariablesResponse : public Response {
     /**
      * All (or a range) of variables for the given variable reference.
      */
-    vector<Variable> variables;
+    std::vector<Variable> variables;
     RESPONSE_CLASS(VariablesResponse, "variables");
     JSON_SERIALIZE();
 };

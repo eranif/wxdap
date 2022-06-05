@@ -3,18 +3,17 @@
 
 #include <string>
 
-using namespace std;
-
 namespace dap
 {
 class Exception
 {
-    string m_what;
+    std::string m_what;
+
 public:
-    Exception(const string& what);
+    Exception(const std::string& what);
     virtual ~Exception();
-    
-    const string& What() const;
+
+    const std::string& What() const;
 };
 
 };     // namespace dap

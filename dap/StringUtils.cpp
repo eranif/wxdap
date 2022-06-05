@@ -4,76 +4,76 @@
 #include <locale>
 #include <sstream>
 
-wstring& StringUtils::Rtrim(wstring& str)
+std::wstring& StringUtils::Rtrim(std::wstring& str)
 {
     str.erase(str.find_last_not_of(L" \n\r\t") + 1);
     return str;
 }
 
-string& StringUtils::Rtrim(string& str)
+std::string& StringUtils::Rtrim(std::string& str)
 {
     str.erase(str.find_last_not_of(" \n\r\t") + 1);
     return str;
 }
 
-wstring& StringUtils::Ltrim(wstring& str)
+std::wstring& StringUtils::Ltrim(std::wstring& str)
 {
     str.erase(0, str.find_first_not_of(L" \n\r\t"));
     return str;
 }
 
-string& StringUtils::Ltrim(string& str)
+std::string& StringUtils::Ltrim(std::string& str)
 {
     str.erase(0, str.find_first_not_of(" \n\r\t"));
     return str;
 }
 
-wstring& StringUtils::Trim(wstring& str)
+std::wstring& StringUtils::Trim(std::wstring& str)
 {
     str.erase(0, str.find_first_not_of(L" \n\r\t"));
     str.erase(str.find_last_not_of(L" \n\r\t") + 1);
     return str;
 }
 
-string& StringUtils::Trim(string& str)
+std::string& StringUtils::Trim(std::string& str)
 {
     str.erase(0, str.find_first_not_of(" \n\r\t"));
     str.erase(str.find_last_not_of(" \n\r\t") + 1);
     return str;
 }
 
-string StringUtils::BeforeFirst(const string& str, char ch)
+std::string StringUtils::BeforeFirst(const std::string& str, char ch)
 {
     size_t where = str.find(ch);
-    if(where == string::npos) {
+    if(where == std::string::npos) {
         return str;
     }
     return str.substr(0, where);
 }
 
-string StringUtils::AfterFirst(const string& str, char ch)
+std::string StringUtils::AfterFirst(const std::string& str, char ch)
 {
     size_t where = str.find(ch);
-    if(where == string::npos) {
+    if(where == std::string::npos) {
         return "";
     }
     return str.substr(where + 1);
 }
 
-vector<string> StringUtils::Split(const string& str, char ch)
+std::vector<std::string> StringUtils::Split(const std::string& str, char ch)
 {
-    vector<string> v;
-    istringstream iss(str);
-    string token;
+    std::vector<std::string> v;
+    std::istringstream iss(str);
+    std::string token;
     while(getline(iss, token, ch)) {
         v.push_back(token);
     }
     return v;
 }
 
-string StringUtils::ToUpper(const string& str)
+std::string StringUtils::ToUpper(const std::string& str)
 {
-    string upper;
+    std::string upper;
     for(auto ch : str) {
         upper.append(1, toupper(ch));
     }
@@ -88,7 +88,7 @@ string StringUtils::ToUpper(const string& str)
     {                                  \
         if(!curstr.str().empty()) {    \
             A.push_back(curstr.str()); \
-            curstr = stringstream();   \
+            curstr = {};               \
         }                              \
     }
 
@@ -104,12 +104,12 @@ string StringUtils::ToUpper(const string& str)
         prev_state = ARGV_STATE_NORMAL; \
     }
 
-char** StringUtils::BuildArgv(const string& str, int& argc)
+char** StringUtils::BuildArgv(const std::string& str, int& argc)
 {
-    vector<string> A;
+    std::vector<std::string> A;
     int state = ARGV_STATE_NORMAL;
     int prev_state = ARGV_STATE_NORMAL;
-    stringstream curstr;
+    std::stringstream curstr;
     for(char ch : str) {
         switch(state) {
         case ARGV_STATE_NORMAL: {
@@ -241,17 +241,17 @@ void StringUtils::FreeArgv(char** argv, int argc)
     delete[] argv;
 }
 
-vector<string> StringUtils::BuildArgv(const string& str)
+std::vector<std::string> StringUtils::BuildArgv(const std::string& str)
 {
     int argc = 0;
     char** argv = BuildArgv(str, argc);
-    vector<string> arrArgv;
+    std::vector<std::string> arrArgv;
     for(int i = 0; i < argc; ++i) {
         arrArgv.push_back(argv[i]);
     }
     FreeArgv(argv, argc);
 
-    for(string& s : arrArgv) {
+    for(std::string& s : arrArgv) {
         if((s.length() > 1) && (s[0] == '"') && (s.back() == '"')) {
             s.pop_back();
             s.erase(0, 1);
@@ -268,10 +268,10 @@ vector<string> StringUtils::BuildArgv(const string& str)
 #define SOURCE_SEP '\\'
 #endif
 
-static string& ConvertSlashes(string& path, char source, char target)
+static std::string& ConvertSlashes(std::string& path, char source, char target)
 {
     char last_char = 0;
-    string tmp;
+    std::string tmp;
     tmp.reserve(path.length());
     for(char& ch : path) {
         if(ch == source) {
@@ -287,32 +287,32 @@ static string& ConvertSlashes(string& path, char source, char target)
     path = tmp;
     return path;
 }
-const string& std::to_string(const string& str) { return str; }
+const std::string& std::to_string(const std::string& str) { return str; }
 
-string& StringUtils::ToNativePath(string& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
+std::string& StringUtils::ToNativePath(std::string& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
 
-string& StringUtils::ToUnixPath(string& path) { return ConvertSlashes(path, '\\', '/'); }
+std::string& StringUtils::ToUnixPath(std::string& path) { return ConvertSlashes(path, '\\', '/'); }
 
-string StringUtils::ToUnixPath(const string& path)
+std::string StringUtils::ToUnixPath(const std::string& path)
 {
-    string tmppath = path;
+    std::string tmppath = path;
     tmppath = ConvertSlashes(tmppath, '\\', '/');
     return tmppath;
 }
 
-string StringUtils::ToNativePath(const string& path)
+std::string StringUtils::ToNativePath(const std::string& path)
 {
-    string tmppath = path;
+    std::string tmppath = path;
     tmppath = ConvertSlashes(tmppath, SOURCE_SEP, PATH_SEP);
     return tmppath;
 }
 
-string& StringUtils::WrapWithQuotes(string& str)
+std::string& StringUtils::WrapWithQuotes(std::string& str)
 {
     if(str.empty()) {
         return str;
     }
-    if(str.find(' ') == string::npos) {
+    if(str.find(' ') == std::string::npos) {
         return str;
     }
     str.insert(str.begin(), '"');
@@ -320,21 +320,21 @@ string& StringUtils::WrapWithQuotes(string& str)
     return str;
 }
 
-string StringUtils::WrapWithQuotes(const string& str)
+std::string StringUtils::WrapWithQuotes(const std::string& str)
 {
     if(str.empty()) {
         return str;
     }
-    if(str.find(' ') == string::npos) {
+    if(str.find(' ') == std::string::npos) {
         return str;
     }
-    string tmpstr = str;
+    std::string tmpstr = str;
     tmpstr.insert(tmpstr.begin(), '"');
     tmpstr.append(1, '"');
     return tmpstr;
 }
 
-bool StringUtils::StartsWith(const string& str, const string& prefix)
+bool StringUtils::StartsWith(const std::string& str, const std::string& prefix)
 {
     if(str.length() < prefix.length()) {
         return false;

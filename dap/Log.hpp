@@ -7,7 +7,6 @@
 
 // manipulator function
 class Log;
-using namespace std;
 namespace dap
 {
 typedef Log& (*LogFunction)(Log&);
@@ -18,15 +17,15 @@ public:
 
 protected:
     static int m_verbosity;
-    static string m_logfile;
+    static std::string m_logfile;
     static bool m_useStdout;
     int m_requestedLogLevel = Error;
     FILE* m_fp = nullptr;
-    stringstream m_buffer;
+    std::stringstream m_buffer;
 
 protected:
-    static const string& GetColour(int verbo);
-    static const string& GetColourEnd();
+    static const std::string& GetColour(int verbo);
+    static const std::string& GetColourEnd();
 
 public:
     Log(int requestedVerbo);
@@ -35,7 +34,7 @@ public:
     /**
      * @brief return the internal stream buffer
      */
-    stringstream& GetStream() { return m_buffer; }
+    std::stringstream& GetStream() { return m_buffer; }
 
     Log& SetRequestedLogLevel(int level)
     {
@@ -48,33 +47,33 @@ public:
     /**
      * @brief create log entry prefix
      */
-    static string Prefix(int verbosity);
+    static std::string Prefix(int verbosity);
 
-    void AddLogLine(const string& msg, int verbosity);
+    void AddLogLine(const std::string& msg, int verbosity);
     static void SetVerbosity(int level);
 
-    // Set the verbosity as string
-    static void SetVerbosity(const string& verbosity);
+    // Set the verbosity as std::string
+    static void SetVerbosity(const std::string& verbosity);
 
     /**
      * @brief open the log file
      */
-    static void OpenLog(const string& fullpath, int verbosity);
+    static void OpenLog(const std::string& fullpath, int verbosity);
     /**
      * @brief open stdout as the log stream
      */
     static void OpenStdout(int verbosity);
 
     // Various util methods
-    static string GetVerbosityAsString(int verbosity);
-    static int GetVerbosityAsNumber(const string& verbosity);
+    static std::string GetVerbosityAsString(int verbosity);
+    static int GetVerbosityAsNumber(const std::string& verbosity);
 
-    inline Log& Append(const vector<string>& arr, int level)
+    inline Log& Append(const std::vector<std::string>& arr, int level)
     {
         if(arr.empty()) {
             return *this;
         }
-        string str;
+        std::string str;
         str += "[";
         for(auto s : arr) {
             str += s;
@@ -87,7 +86,7 @@ public:
         return *this;
     }
 
-    inline Log& operator<<(const string& str)
+    inline Log& operator<<(const std::string& str)
     {
         if(GetRequestedLogLevel() > m_verbosity) {
             return *this;
@@ -121,7 +120,7 @@ public:
     void Flush();
 };
 
-inline stringstream& clEndl(Log& d)
+inline std::stringstream& clEndl(Log& d)
 {
     d.Flush();
     return d.GetStream();

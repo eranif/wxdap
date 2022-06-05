@@ -5,29 +5,28 @@
 #include <mutex>
 #include <vector>
 
-using namespace std;
 namespace dap
 {
 template <typename T>
 class Queue
 {
-    vector<T> Q;
-    mutex mutex_lock;
-    condition_variable cv;
+    std::vector<T> Q;
+    std::mutex mutex_lock;
+    std::condition_variable cv;
 
 public:
     bool empty() const { return Q.empty(); }
 
     void push(T o)
     {
-        unique_lock<mutex> locker(mutex_lock);
+        std::unique_lock<std::mutex> locker(mutex_lock);
         Q.emplace_back(o);
         cv.notify_all();
     }
 
-    T pop(const chrono::milliseconds& ms)
+    T pop(const std::chrono::milliseconds& ms)
     {
-        unique_lock<mutex> locker(mutex_lock);
+        std::unique_lock<std::mutex> locker(mutex_lock);
         if(cv.wait_for(locker, ms, [this]() { return !Q.empty(); })) {
             if(Q.empty()) {
                 // spuriously wakeup?

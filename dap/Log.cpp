@@ -6,16 +6,16 @@
 namespace dap
 {
 int Log::m_verbosity = Log::Error;
-string Log::m_logfile;
+std::string Log::m_logfile;
 bool Log::m_useStdout = false;
 
-static const string GREEN = "\x1b[32m";
-static const string RED = "\x1b[31m";
-static const string YELLOW = "\x1b[93m";
-static const string CYAN = "\x1b[96m";
-static const string WHITE = "\x1b[37m";
-static const string COLOUR_END = "\x1b[0m";
-static const string EMPTY_STR = "";
+static const std::string GREEN = "\x1b[32m";
+static const std::string RED = "\x1b[31m";
+static const std::string YELLOW = "\x1b[93m";
+static const std::string CYAN = "\x1b[96m";
+static const std::string WHITE = "\x1b[37m";
+static const std::string COLOUR_END = "\x1b[0m";
+static const std::string EMPTY_STR = "";
 
 // Needed for Windows
 #ifdef _WIN32
@@ -73,13 +73,13 @@ Log::~Log()
     ResetConsole();
 }
 
-void Log::AddLogLine(const string& msg, int verbosity)
+void Log::AddLogLine(const std::string& msg, int verbosity)
 {
     if(msg.empty()) {
         return;
     }
     if((m_verbosity >= verbosity)) {
-        string formattedMsg = Prefix(verbosity);
+        std::string formattedMsg = Prefix(verbosity);
         m_buffer << formattedMsg << " " << msg;
         m_buffer << "\n";
     }
@@ -88,12 +88,12 @@ void Log::AddLogLine(const string& msg, int verbosity)
 void Log::SetVerbosity(int level)
 {
     if(level > Log::Warning) {
-        LOG_SYSTEM() << Log::GetVerbosityAsString(level) << string("");
+        LOG_SYSTEM() << Log::GetVerbosityAsString(level) << std::string("");
     }
     m_verbosity = level;
 }
 
-int Log::GetVerbosityAsNumber(const string& verbosity)
+int Log::GetVerbosityAsNumber(const std::string& verbosity)
 {
     if(verbosity == "Debug") {
         return Log::Dbg;
@@ -117,7 +117,7 @@ int Log::GetVerbosityAsNumber(const string& verbosity)
     }
 }
 
-string Log::GetVerbosityAsString(int verbosity)
+std::string Log::GetVerbosityAsString(int verbosity)
 {
     switch(verbosity) {
     case Log::Dbg:
@@ -140,9 +140,9 @@ string Log::GetVerbosityAsString(int verbosity)
     }
 }
 
-void Log::SetVerbosity(const string& verbosity) { SetVerbosity(GetVerbosityAsNumber(verbosity)); }
+void Log::SetVerbosity(const std::string& verbosity) { SetVerbosity(GetVerbosityAsNumber(verbosity)); }
 
-void Log::OpenLog(const string& fullpath, int verbosity)
+void Log::OpenLog(const std::string& fullpath, int verbosity)
 {
     m_logfile = fullpath;
     m_verbosity = verbosity;
@@ -158,7 +158,7 @@ void Log::OpenStdout(int verbosity)
 
 void Log::Flush()
 {
-    string buffer = m_buffer.str();
+    std::string buffer = m_buffer.str();
     if(buffer.empty()) {
         return;
     }
@@ -179,43 +179,43 @@ void Log::Flush()
         }
         m_fp = nullptr;
     }
-    m_buffer = stringstream();
+    m_buffer = {};
 }
 
-string Log::Prefix(int verbosity)
+std::string Log::Prefix(int verbosity)
 {
     if(verbosity <= m_verbosity) {
         timeval tim;
         gettimeofday(&tim, NULL);
-        auto start = chrono::system_clock::now();
-        auto as_time_t = chrono::system_clock::to_time_t(start);
-        string timeString = ctime(&as_time_t);
+        auto start = std::chrono::system_clock::now();
+        auto as_time_t = std::chrono::system_clock::to_time_t(start);
+        std::string timeString = ctime(&as_time_t);
         StringUtils::Trim(timeString);
 
-        stringstream prefix;
+        std::stringstream prefix;
         switch(verbosity) {
         case Info:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ INF ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ INFO ]" << GetColourEnd();
             break;
 
         case System:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ SYS ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ SYSTEM ]" << GetColourEnd();
             break;
 
         case Error:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ ERR ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ ERROR ]" << GetColourEnd();
             break;
 
         case Warning:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ WRN ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ WARNING ]" << GetColourEnd();
             break;
 
         case Dbg:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ DBG ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ DEBUG ]" << GetColourEnd();
             break;
 
         case Developer:
-            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ DVL ]" << GetColourEnd();
+            prefix << "[" << timeString << "] " << GetColour(verbosity) << " [ TRACE ]" << GetColourEnd();
             break;
         }
 
@@ -226,7 +226,7 @@ string Log::Prefix(int verbosity)
     }
 }
 
-const string& Log::GetColour(int verbo)
+const std::string& Log::GetColour(int verbo)
 {
     if(!m_useStdout) {
         return EMPTY_STR;
@@ -247,7 +247,7 @@ const string& Log::GetColour(int verbo)
     }
 }
 
-const string& Log::GetColourEnd()
+const std::string& Log::GetColourEnd()
 {
     if(!m_useStdout) {
         return EMPTY_STR;

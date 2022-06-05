@@ -5,77 +5,76 @@
 #include <string>
 #include <vector>
 
-// for some obscure reason, to_string() does not accept string
+// for some obscure reason, to_string() does not accept std::string
 // we add one here
 namespace std
 {
-const string& to_string(const string& str);
+const std::string& to_string(const std::string& str);
 };
 
-using namespace std;
 #define UNUSED(x) ((void)x)
 
 class StringUtils
 {
 protected:
-    static char** BuildArgv(const string& str, int& argc);
+    static char** BuildArgv(const std::string& str, int& argc);
     static void FreeArgv(char** argv, int argc);
 
 public:
     /// Right trim
-    static wstring& Rtrim(wstring& str);
-    static string& Rtrim(string& str);
+    static std::wstring& Rtrim(std::wstring& str);
+    static std::string& Rtrim(std::string& str);
 
     /// Left trim
-    static wstring& Ltrim(wstring& str);
-    static string& Ltrim(string& str);
+    static std::wstring& Ltrim(std::wstring& str);
+    static std::string& Ltrim(std::string& str);
 
     /// Both left + right trim
-    static wstring& Trim(wstring& str);
-    static string& Trim(string& str);
+    static std::wstring& Trim(std::wstring& str);
+    static std::string& Trim(std::string& str);
 
     /// Gets all characters before the first occurrence of ch.
-    /// Returns the whole string if ch is not found.
-    static string BeforeFirst(const string& str, char ch);
+    /// Returns the whole std::string if ch is not found.
+    static std::string BeforeFirst(const std::string& str, char ch);
 
     /// Gets all the characters after the first occurrence of ch.
-    /// Returns the empty string if ch is not found.
-    static string AfterFirst(const string& str, char ch);
+    /// Returns the empty std::string if ch is not found.
+    static std::string AfterFirst(const std::string& str, char ch);
 
-    /// Check if string starts with a given prefix
-    static bool StartsWith(const string& str, const string& prefix);
+    /// Check if std::string starts with a given prefix
+    static bool StartsWith(const std::string& str, const std::string& prefix);
 
-    /// Split a string
-    static vector<string> Split(const string& str, char ch = '\n');
+    /// Split a std::string
+    static std::vector<std::string> Split(const std::string& str, char ch = '\n');
 
-    /// Convert to string to uppercase
-    static string ToUpper(const string& str);
+    /// Convert to std::string to uppercase
+    static std::string ToUpper(const std::string& str);
 
     /// Split command line into array
-    static vector<string> BuildArgv(const string& str);
+    static std::vector<std::string> BuildArgv(const std::string& str);
 
     /// Convert file's path to native path
     /// this function also removes double \\ or //
-    static string& ToNativePath(string& path);
+    static std::string& ToNativePath(std::string& path);
 
     /// Const version
-    static string ToNativePath(const string& path);
+    static std::string ToNativePath(const std::string& path);
 
     /// Convert file's path to UNIX slashes
-    static string& ToUnixPath(string& path);
+    static std::string& ToUnixPath(std::string& path);
 
     /// Const version
-    static string ToUnixPath(const string& path);
+    static std::string ToUnixPath(const std::string& path);
 
-    /// Wrap string with quotes if needed
-    static string& WrapWithQuotes(string& str);
+    /// Wrap std::string with quotes if needed
+    static std::string& WrapWithQuotes(std::string& str);
 
-    /// Wrap string with quotes if needed
-    static string WrapWithQuotes(const string& str);
+    /// Wrap std::string with quotes if needed
+    static std::string WrapWithQuotes(const std::string& str);
 };
 
 template <typename T>
-string& operator<<(string& str, const T& t)
+std::string& operator<<(std::string& str, const T& t)
 {
     str.append(to_string(t));
     return str;

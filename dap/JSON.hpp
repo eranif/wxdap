@@ -30,15 +30,13 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 struct JSON {
     cJSON* m_cjson = nullptr;
-    atomic_int* m_refCount = nullptr;
+    std::atomic_int* m_refCount = nullptr;
 
 private:
     JSON(cJSON* ptr);
-    JSON AddItem(const string& name, cJSON* item);
+    JSON AddItem(const std::string& name, cJSON* item);
 
     bool IsArray() const { return m_cjson && m_cjson->type == cJSON_Array; }
     bool IsObject() const { return m_cjson && m_cjson->type == cJSON_Object; }
@@ -53,19 +51,19 @@ private:
 public:
     ~JSON();
     JSON() {}
-    
+
     JSON& operator=(const JSON& other);
     JSON(const JSON& other);
 
     /**
      * @brief return the property name
      */
-    string GetName() const
+    std::string GetName() const
     {
         if(m_cjson == nullptr || !m_cjson->string) {
             return "";
         }
-        return string(m_cjson->string);
+        return std::string(m_cjson->string);
     }
 
     /**
@@ -88,14 +86,14 @@ public:
     static JSON CreateObject();
 
     /**
-     * @brief create JSON from string buffer
+     * @brief create JSON from std::string buffer
      */
-    static JSON Parse(const string& source);
+    static JSON Parse(const std::string& source);
 
     /**
      * @brief object property access
      */
-    JSON operator[](const string& index) const;
+    JSON operator[](const std::string& index) const;
 
     /**
      * @brief index access
@@ -113,7 +111,7 @@ public:
      * the name is ignored
      * @return the newly added array. Check for IsOK()
      */
-    JSON AddArray(const string& name = "") { return AddItem(name, cJSON_CreateArray()); }
+    JSON AddArray(const std::string& name = "") { return AddItem(name, cJSON_CreateArray()); }
 
     /**
      * @brief create and add object to this JSON.
@@ -121,19 +119,19 @@ public:
      * the name is ignored
      * @return the newly added object. Check for IsOK()
      */
-    JSON AddObject(const string& name = "") { return AddItem(name, cJSON_CreateObject()); }
+    JSON AddObject(const std::string& name = "") { return AddItem(name, cJSON_CreateObject()); }
 
     /**
      * @brief add object to this JSON.
      * @return the newly added object
      */
-    JSON AddObject(const string& name, const JSON& obj) { return AddObject(name.c_str(), obj); }
+    JSON AddObject(const std::string& name, const JSON& obj) { return AddObject(name.c_str(), obj); }
     JSON AddObject(const char* name, const JSON& obj);
 
     /**
-     * @brief return value as string
+     * @brief return value as std::string
      */
-    string GetString(const string& defaultVaule = "") const;
+    std::string GetString(const std::string& defaultVaule = "") const;
 
     /**
      * @brief return value as number
@@ -151,31 +149,31 @@ public:
     bool GetBool(bool defaultVaule = false) const;
 
     /**
-     * @brief return string array
+     * @brief return std::string array
      */
-    vector<string> GetStringArray() const;
+    std::vector<std::string> GetStringArray() const;
 
     /**
-     * @brief return string representation for this object
+     * @brief return std::string representation for this object
      */
-    string ToString(bool pretty = true) const;
+    std::string ToString(bool pretty = true) const;
 
     // Add properties to container (can be object or array)
-    JSON Add(const string& name, const string& value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, const vector<string>& value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, const JSON& value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, const char* value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, double value) { return Add(name.c_str(), value); }
-    JSON Add(const string& name, int value) { return Add(name.c_str(), (double)value); }
-    JSON Add(const string& name, long value) { return Add(name.c_str(), (double)value); }
-    JSON Add(const string& name, size_t value) { return Add(name.c_str(), (double)value); }
-    JSON Add(const string& name, bool value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, const std::string& value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, const std::vector<std::string>& value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, const JSON& value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, const char* value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, double value) { return Add(name.c_str(), value); }
+    JSON Add(const std::string& name, int value) { return Add(name.c_str(), (double)value); }
+    JSON Add(const std::string& name, long value) { return Add(name.c_str(), (double)value); }
+    JSON Add(const std::string& name, size_t value) { return Add(name.c_str(), (double)value); }
+    JSON Add(const std::string& name, bool value) { return Add(name.c_str(), value); }
 
-    JSON Add(const char* name, const string& value);
+    JSON Add(const char* name, const std::string& value);
     JSON Add(const char* name, const char* value);
     JSON Add(const char* name, bool value);
     JSON Add(const char* name, double value);
-    JSON Add(const char* name, const vector<string>& value);
+    JSON Add(const char* name, const std::vector<std::string>& value);
     JSON Add(const char* name, const JSON& value);
     JSON Add(const char* name, long value) { return Add(name, (double)value); }
     JSON Add(const char* name, size_t value) { return Add(name, (double)value); }
@@ -183,7 +181,7 @@ public:
 
     // Same as the above but without providing 'name'
     // useful for array
-    JSON Add(const string& value) { return Add("", value); }
+    JSON Add(const std::string& value) { return Add("", value); }
     JSON Add(const char* value) { return Add("", value); }
     JSON Add(double value) { return Add("", value); }
     JSON Add(long value) { return Add("", (double)value); }
