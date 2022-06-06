@@ -372,6 +372,10 @@ struct InitializeRequestArguments : public Any {
     bool linesStartAt1 = true;
     bool columnsStartAt1 = true;
     /**
+     * Client supports the invalidated event.
+     */
+    bool supportsInvalidatedEvent = false;
+    /**
      * Determines in what format paths are specified. The default is 'path',
      * which is the native format. Values: 'path', 'uri', etc.
      */
@@ -431,11 +435,19 @@ struct LaunchRequestArguments : public Any {
      * enabling debugging.
      */
     bool noDebug = false;
-    /**
-     * the program launch. debuggee[0] should contain the executable
-     * the other items in the std::vector are passed to the debuggee
-     */
-    std::vector<wxString> debuggee;
+
+    /// program to launch
+    wxString program;
+
+    /// extra arguments to append to the program
+    std::vector<wxString> args;
+
+    /// working directory
+    wxString cwd;
+
+    /// stop on entry?
+    bool stopOnEntry = false;
+
     /*
      * start the debugger from this directory
      */

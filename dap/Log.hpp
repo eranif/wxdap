@@ -1,7 +1,6 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
-#include <sstream>
 #include <string>
 #include <vector>
 #include <wx/string.h>
@@ -10,7 +9,6 @@
 class Log;
 namespace dap
 {
-typedef Log& (*LogFunction)(Log&);
 class Log
 {
 public:
@@ -22,7 +20,7 @@ protected:
     static bool m_useStdout;
     int m_requestedLogLevel = Error;
     FILE* m_fp = nullptr;
-    std::stringstream m_buffer;
+    wxString m_buffer;
 
 protected:
     static const wxString& GetColour(int verbo);
@@ -35,7 +33,7 @@ public:
     /**
      * @brief return the internal stream buffer
      */
-    std::stringstream& GetStream() { return m_buffer; }
+    wxString& GetStream() { return m_buffer; }
 
     Log& SetRequestedLogLevel(int level)
     {
@@ -92,7 +90,7 @@ public:
         if(GetRequestedLogLevel() > m_verbosity) {
             return *this;
         }
-        if(!m_buffer.str().empty()) {
+        if(!m_buffer.empty()) {
             m_buffer << " ";
         }
         m_buffer << str;
@@ -108,7 +106,7 @@ public:
         if(level > m_verbosity) {
             return *this;
         }
-        if(!m_buffer.str().empty()) {
+        if(!m_buffer.empty()) {
             m_buffer << " ";
         }
         m_buffer << elem;
@@ -121,10 +119,17 @@ public:
     void Flush();
 };
 
-inline std::stringstream& clEndl(Log& d)
+inline Log& endl(Log& d)
 {
     d.Flush();
-    return d.GetStream();
+    return d;
+}
+
+typedef Log& (*LogFunction)(Log&);
+inline Log& operator<<(Log& logger, const LogFunction&)
+{
+    logger.Flush();
+    return logger;
 }
 
 template <typename T>

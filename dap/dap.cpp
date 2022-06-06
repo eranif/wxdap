@@ -492,6 +492,7 @@ JSON InitializeRequestArguments::To() const
     json.Add("linesStartAt1", linesStartAt1);
     json.Add("columnsStartAt1", columnsStartAt1);
     json.Add("pathFormat", pathFormat);
+    json.Add("supportsInvalidatedEvent", supportsInvalidatedEvent);
     return json;
 }
 
@@ -504,7 +505,9 @@ void InitializeRequestArguments::From(const JSON& json)
     linesStartAt1 = json["linesStartAt1"].GetBool();
     columnsStartAt1 = json["columnsStartAt1"].GetBool();
     pathFormat = json["pathFormat"].GetString();
+    supportsInvalidatedEvent = json["supportsInvalidatedEvent"].GetBool();
 }
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -563,16 +566,20 @@ JSON LaunchRequestArguments::To() const
 {
     CREATE_JSON();
     ADD_PROP(noDebug);
-    ADD_PROP(debuggee);
-    ADD_PROP(workingDirectory);
+    ADD_PROP(program);
+    ADD_PROP(args);
+    ADD_PROP(cwd);
+    ADD_PROP(stopOnEntry);
     return json;
 }
 
 void LaunchRequestArguments::From(const JSON& json)
 {
     GET_PROP(noDebug, Bool);
-    GET_PROP(debuggee, StringArray);
-    GET_PROP(workingDirectory, String);
+    GET_PROP(program, String);
+    GET_PROP(args, StringArray);
+    GET_PROP(cwd, String);
+    GET_PROP(stopOnEntry, Bool);
 }
 
 // ----------------------------------------

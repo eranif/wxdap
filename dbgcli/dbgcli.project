@@ -3,8 +3,9 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="ConsoleApp.cpp"/>
+    <File Name="ConsoleApp.hpp"/>
     <File Name="CMakeLists.txt"/>
-    <File Name="main.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

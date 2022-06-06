@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include "Exception.hpp"
+#include "Log.hpp"
 #include "SocketClient.hpp"
 #include "dap.hpp"
 #include <iostream>
@@ -22,14 +23,14 @@ dap::Client::~Client()
     }
 }
 
-bool dap::Client::Connect(int timeoutSeconds)
+bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
 {
     long loops = timeoutSeconds;
 #ifndef _WIN32
     loops *= 1000;
 #endif
     while(loops) {
-        if(!m_socket->As<SocketClient>()->Connect("tcp://127.0.0.1:12345")) {
+        if(!m_socket->As<SocketClient>()->Connect(connection_string)) {
             this_thread::sleep_for(chrono::milliseconds(1));
             --loops;
         } else {
@@ -56,7 +57,7 @@ void dap::Client::Initialize()
                     m_inputQueue.push(content);
                 }
             } catch(Exception& e) {
-                cerr << "Connection error: " << e.What() << endl;
+                LOG_ERROR() << "Connection error: " << e.What() << endl;
                 m_terminated.store(true);
                 break;
             }
@@ -81,16 +82,16 @@ void dap::Client::Initialize()
                     switch(state) {
                     case kWaitingInitResponse:
                         if(msg->type == "response" && msg->As<Response>()->command == "initialize") {
-                            cout << "Received initialized response" << endl;
-                            state = kWaitingInitEvent;
-                        }
-                        break;
-                    case kWaitingInitEvent:
-                        if(msg->type == "event" && msg->As<Event>()->event == "initialized") {
-                            cout << "Received initialized event" << endl;
+                            LOG_DEBUG() << "Received initialized response";
                             state = kExecute;
                         }
                         break;
+                        //                    case kWaitingInitEvent:
+                        //                        if(msg->type == "event" && msg->As<Event>()->event == "initialized") {
+                        //                            LOG_DEBUG() << "Received initialized event";
+                        //                            state = kExecute;
+                        //                        }
+                        //                        break;
                     case kExecute:
                         // handle anything else here
                         break;
@@ -104,7 +105,7 @@ void dap::Client::Initialize()
         // connection lost to server
         throw Exception("Connection closed");
     }
-
+    LOG_INFO() << "Initialize completed" << endl;
     // Initialized completed successfully
     // we got both Initialized response & Initialized event
 }
@@ -128,11 +129,15 @@ void dap::Client::ConfigurationDone()
     m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_socket);
 }
 
-void dap::Client::Launch(const std::vector<wxString>& cmd)
+void dap::Client::Launch(std::vector<wxString> cmd)
 {
     LaunchRequest* launchRequest = new LaunchRequest();
     launchRequest->seq = GetNextSequence(); // command sequence
-    launchRequest->arguments.debuggee = cmd;
+    launchRequest->arguments.program = cmd[0];
+
+    cmd.erase(cmd.begin());
+    launchRequest->arguments.args = cmd; // the remainder are the args
+
     m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
 }
 

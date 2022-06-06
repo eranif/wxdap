@@ -3,6 +3,8 @@
 #include <chrono>
 #include <sstream>
 #include <sys/time.h>
+#include <wx/crt.h>
+
 namespace dap
 {
 int Log::m_verbosity = Log::Error;
@@ -158,8 +160,7 @@ void Log::OpenStdout(int verbosity)
 
 void Log::Flush()
 {
-    wxString buffer = m_buffer.str();
-    if(buffer.empty()) {
+    if(m_buffer.empty()) {
         return;
     }
 
@@ -172,14 +173,14 @@ void Log::Flush()
     }
 
     if(m_fp) {
-        fprintf(m_fp, "%s\n", buffer.c_str());
+        wxFprintf(m_fp, "%s\n", m_buffer);
         // Dont close stdout
         if(!m_useStdout) {
             fclose(m_fp);
         }
         m_fp = nullptr;
     }
-    m_buffer = {};
+    m_buffer.clear();
 }
 
 wxString Log::Prefix(int verbosity)

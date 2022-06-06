@@ -1,20 +1,31 @@
+#include "ConsoleApp.hpp"
 #include "dap/Client.hpp"
 #include "dap/Exception.hpp"
-#include "dap/JsonRPC.hpp"
 #include "dap/Log.hpp"
-#include "dap/SocketClient.hpp"
-#include <iostream>
-#include <stdio.h>
-#include <thread>
+#include <wx/log.h>
 
-using namespace std;
-int main(int argc, char** argv)
+IMPLEMENT_APP_CONSOLE(DAPCli)
+
+DAPCli::DAPCli() {}
+
+DAPCli::~DAPCli() {}
+
+void DAPCli::DoExitApp() {}
+
+bool DAPCli::OnInit()
 {
+    SetAppName("DAPCli");
+    wxLog::EnableLogging(false);
+
+    m_parser.SetCmdLine(wxAppConsole::argc, wxAppConsole::argv);
+    if(!DoParseCommandLine())
+        return false;
+
     try {
         dap::Log::OpenStdout(dap::Log::Dbg);
         LOG_INFO() << "Starting client...";
         dap::Client client;
-        if(!client.Connect(10)) {
+        if(!client.Connect("tcp://127.0.0.1:12345", 10)) {
             LOG_ERROR() << "Error: failed to connect to server";
             exit(1);
         }
@@ -22,15 +33,9 @@ int main(int argc, char** argv)
 
         // This part is done in mode **sync**
         client.Initialize();
-        client.SetBreakpointsFile("main.cpp", { { 10, "" }, { 12, "" } });
+        client.SetBreakpointsFile("main.cpp", { { 17, "" }, { 18, "" } });
         client.ConfigurationDone();
-        client.Launch({ "C:\\Users\\Eran\\Documents\\AmitTest\\build-Debug\\bin\\AmitTest.exe" });
-
-        //-----------------------------------------------------
-        // The main loop
-        //-----------------------------------------------------
-
-        // TODO:: move the client code to use wxEvents
+        client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
 
         // Now that the initialization is completed, run the main loop
         while(client.IsConnected()) {
@@ -56,7 +61,10 @@ int main(int argc, char** argv)
         }
 
     } catch(dap::Exception& e) {
-        LOG_ERROR() << "Error: " << e.What();
     }
-    return 0;
+    return true;
 }
+
+int DAPCli::OnExit() { return true; }
+
+bool DAPCli::DoParseCommandLine() { return true; }

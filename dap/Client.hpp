@@ -37,7 +37,7 @@ public:
     /**
      * @brief Wait until connection is established
      */
-    bool Connect(int timeoutSeconds);
+    bool Connect(const wxString& connection_string, int timeoutSeconds);
 
     /**
      * @brief initiate the handshake between the server and the client
@@ -61,7 +61,7 @@ public:
     /**
      * @brief start the debuggee
      */
-    void Launch(const std::vector<wxString>& cmd);
+    void Launch(std::vector<wxString> cmd);
 
     /**
      * @brief ask for list of threads
