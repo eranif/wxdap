@@ -3,6 +3,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="../README.md"/>
     <File Name="ConsoleApp.cpp"/>
     <File Name="ConsoleApp.hpp"/>
     <File Name="CMakeLists.txt"/>
