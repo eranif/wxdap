@@ -73,7 +73,8 @@ void DAPCli::OnStopped(DAPEvent& event)
     if(stopped_data) {
         LOG_INFO() << "Stopped reason:" << stopped_data->reason << endl;
         LOG_INFO() << "All threads stopped:" << stopped_data->allThreadsStopped << endl;
-        LOG_INFO() << "Stopped thread ID:" << stopped_data->threadId << endl;
+        LOG_INFO() << "Stopped thread ID:" << stopped_data->threadId
+                   << "(active thread ID:" << m_client.GetActiveThreadId() << ")" << endl;
 
         if(stopped_data->reason == "exception") {
             // apply breakpoints
@@ -83,11 +84,12 @@ void DAPCli::OnStopped(DAPEvent& event)
         } else if(stopped_data->reason == "breakpoint" /* breakpoint hit */
                   || stopped_data->reason == "step" /* user called "Next" */) {
             // request the stack for the stopped thread
-            m_client.GetFrames(stopped_data->threadId);
-            m_client.Next(stopped_data->threadId);
+            m_client.GetFrames(m_client.GetActiveThreadId());
+            m_client.Next(m_client.GetActiveThreadId());
         }
     }
 }
+
 /// Received a response to `GetFrames()` call
 void DAPCli::OnStackTrace(DAPEvent& event)
 {
@@ -116,5 +118,5 @@ void DAPCli::OnExited(DAPEvent& event)
 void DAPCli::OnTerminated(DAPEvent& event)
 {
     wxUnusedVar(event);
-    LOG_INFO() << "DAP server terminated!" << endl;
+    LOG_INFO() << "Session terminated!" << endl;
 }

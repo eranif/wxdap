@@ -66,6 +66,7 @@ void dap::Client::ConfigurationDone()
 
 void dap::Client::Launch(std::vector<wxString> cmd)
 {
+    m_active_thread_id = wxNOT_FOUND;
     LaunchRequest* launchRequest = new LaunchRequest();
     launchRequest->seq = GetNextSequence(); // command sequence
     launchRequest->arguments.program = cmd[0];
@@ -195,6 +196,11 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
 
     std::shared_ptr<dap::Any> ptr{ dap_message };
     ptr->From(json);
+    if(type == wxEVT_DAP_STOPPED_EVENT) {
+        // keep track of the current active thread ID
+        m_active_thread_id = ptr->As<StoppedEvent>()->threadId;
+    }
+
     DAPEvent __event(type);
     __event.SetAnyObject(ptr);
     __event.SetEventObject(this);

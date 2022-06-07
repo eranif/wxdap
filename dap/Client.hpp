@@ -22,6 +22,7 @@ class WXDLLIMPEXP_DAP Client : public wxEvtHandler
     thread* m_readerThread = nullptr;
     size_t m_requestSeuqnce = 0;
     eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
+    int m_active_thread_id = wxNOT_FOUND;
 
 protected:
     size_t GetNextSequence()
@@ -58,6 +59,11 @@ protected:
 public:
     Client();
     virtual ~Client();
+
+    /**
+     * @brief return the currently active thread ID
+     */
+    int GetActiveThreadId() const { return m_active_thread_id; }
 
     /**
      * @brief Wait until connection is established
