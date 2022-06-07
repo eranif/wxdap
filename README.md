@@ -31,3 +31,4 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] Exited - the debuggee process exited
 - [x] Initialized - dap server is initialized
 - [x] Process - the debuggee process started
+- [ ] Output - The event indicates that the target has produced some output
