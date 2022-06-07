@@ -35,6 +35,10 @@ int DAPCli::OnRun()
 }
 bool DAPCli::DoParseCommandLine() { return true; }
 
+/// Initialize the DAP client:
+/// - Bind events
+/// - Connect
+/// - And launch our debuggee process
 void DAPCli::InitializeClient()
 {
     dap::Log::OpenStdout(dap::Log::Dbg);
@@ -58,6 +62,10 @@ void DAPCli::InitializeClient()
     m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
 }
 
+/// DAP server stopped. This can happen for multiple reasons:
+/// - exception
+/// - breakpoint hit
+/// - step (user previously issued `Next` command)
 void DAPCli::OnStopped(DAPEvent& event)
 {
     // got stopped event
@@ -80,7 +88,7 @@ void DAPCli::OnStopped(DAPEvent& event)
         }
     }
 }
-
+/// Received a response to `GetFrames()` call
 void DAPCli::OnStackTrace(DAPEvent& event)
 {
     dap::StackTraceResponse* stack_trace_data = event.GetDapResponse()->As<dap::StackTraceResponse>();
@@ -91,18 +99,20 @@ void DAPCli::OnStackTrace(DAPEvent& event)
         }
     }
 }
-
+/// DAP server responded to our `initialize` request
 void DAPCli::OnInitialized(DAPEvent& event)
 {
     // got initialized event
     LOG_INFO() << "Received" << event.GetDapResponse()->command << "response" << endl;
 }
 
+/// Debuggee process exited, print the exit code
 void DAPCli::OnExited(DAPEvent& event)
 {
     LOG_INFO() << "Debuggee exited. Exit code:" << event.GetDapEvent()->As<dap::ExitedEvent>()->exitCode << endl;
 }
 
+/// Debug session terminated
 void DAPCli::OnTerminated(DAPEvent& event)
 {
     wxUnusedVar(event);
