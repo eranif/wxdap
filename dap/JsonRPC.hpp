@@ -4,13 +4,15 @@
 #include "Queue.hpp"
 #include "Socket.hpp"
 #include "dap.hpp"
+#include "dap_exports.hpp"
 #include <atomic>
 #include <thread>
 #include <unordered_map>
+#include <wx/object.h>
 
 namespace dap
 {
-class JsonRPC
+class WXDLLIMPEXP_DAP JsonRPC
 {
 protected:
     wxString m_buffer;
@@ -38,8 +40,10 @@ public:
      * @brief Check if we have a complete JSON message in the internal buffer and invoke callback
      * If successful, callback is called. Note that it will get called as long there are complete messages in the
      * internal buffer
+     * @param callback
+     * @param o user object that is sent back to the callback
      */
-    void ProcessBuffer(std::function<void(const JSON& obj)> callback);
+    void ProcessBuffer(std::function<void(const JSON&, wxObject*)> callback, wxObject* o);
 
     /**
      * @brief send protocol message over the network

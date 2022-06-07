@@ -3,10 +3,11 @@
 
 #include "JsonRPC.hpp"
 #include "Socket.hpp"
+#include "dap_exports.hpp"
 
 namespace dap
 {
-class ServerProtocol
+class WXDLLIMPEXP_DAP ServerProtocol
 {
     JsonRPC m_rpc;
     Socket::Ptr_t m_conn;

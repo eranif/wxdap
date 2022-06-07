@@ -1,11 +1,12 @@
 #ifndef EXCEPTION_HPP
 #define EXCEPTION_HPP
 
+#include "dap_exports.hpp"
 #include <wx/string.h>
 
 namespace dap
 {
-class Exception
+class WXDLLIMPEXP_DAP Exception
 {
     wxString m_what;
 

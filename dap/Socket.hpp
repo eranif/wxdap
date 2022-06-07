@@ -1,6 +1,8 @@
 #ifndef CLSOCKETBASE_H
 #define CLSOCKETBASE_H
 
+#include "dap_exports.hpp"
+
 #include <memory>
 #include <sys/param.h>
 #include <wx/string.h>
@@ -23,7 +25,7 @@ typedef int socket_t;
 using namespace std;
 namespace dap
 {
-class Socket
+class WXDLLIMPEXP_DAP Socket
 {
 protected:
     socket_t m_socket;

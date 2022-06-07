@@ -22,21 +22,23 @@ void dap::ServerProtocol::Initialize()
                 m_rpc.AppendBuffer(network_buffer);
 
                 // Try to construct a message and process it
-                m_rpc.ProcessBuffer([&](JSON json) {
-                    dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
-                    if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
-                        dap::InitializeResponse initResponse;
-                        m_rpc.Send(initResponse, m_conn);
-                        LOG_DEBUG() << "Sending InitializeRequest";
+                m_rpc.ProcessBuffer(
+                    [&](JSON json, wxObject*) {
+                        dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
+                        if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
+                            dap::InitializeResponse initResponse;
+                            m_rpc.Send(initResponse, m_conn);
+                            LOG_DEBUG() << "Sending InitializeRequest";
 
-                        // Send InitializedEvent
-                        dap::InitializedEvent initEvent;
-                        m_rpc.Send(initEvent, m_conn);
-                        LOG_DEBUG() << "Sending InitializedEvent";
-                        LOG_INFO() << "Initialization completed";
-                        state = kDone;
-                    };
-                });
+                            // Send InitializedEvent
+                            dap::InitializedEvent initEvent;
+                            m_rpc.Send(initEvent, m_conn);
+                            LOG_DEBUG() << "Sending InitializedEvent";
+                            LOG_INFO() << "Initialization completed";
+                            state = kDone;
+                        };
+                    },
+                    nullptr);
             }
         }
     }
@@ -52,12 +54,14 @@ void dap::ServerProtocol::Check()
         }
 
         // Process it
-        m_rpc.ProcessBuffer([&](JSON json) {
-            dap::ProtocolMessage::Ptr_t message = ObjGenerator::Get().FromJSON(json);
-            if(message) {
-                return m_onNetworkMessage(message);
-            }
-        });
+        m_rpc.ProcessBuffer(
+            [&](JSON json, wxObject*) {
+                dap::ProtocolMessage::Ptr_t message = ObjGenerator::Get().FromJSON(json);
+                if(message) {
+                    return m_onNetworkMessage(message);
+                }
+            },
+            nullptr);
     }
 }
 

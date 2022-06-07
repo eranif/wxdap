@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "DAPEvent.hpp"
 #include "Exception.hpp"
 #include "Log.hpp"
 #include "SocketClient.hpp"
@@ -14,14 +15,7 @@ dap::Client::Client()
     m_terminated.store(false);
 }
 
-dap::Client::~Client()
-{
-    if(m_readerThread) {
-        m_shutdown.store(true);
-        m_readerThread->join();
-        delete m_readerThread;
-    }
-}
+dap::Client::~Client() { StopReaderThread(); }
 
 bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
 {
@@ -34,6 +28,8 @@ bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
             this_thread::sleep_for(chrono::milliseconds(1));
             --loops;
         } else {
+            LOG_INFO() << "Successfully connected to DAP server" << endl;
+            StartReaderThread();
             return true;
         }
     }
@@ -46,68 +42,7 @@ void dap::Client::Initialize()
     InitializeRequest req;
     req.arguments.clientID = "dbgcli";
     m_rpc.Send(req, m_socket);
-
-    // Start a reader thread
-    // and put the input buffer in queue
-    m_readerThread = new thread([this]() {
-        while(!m_shutdown.load()) {
-            try {
-                wxString content;
-                if(m_socket->SelectReadMS(10) == Socket::kSuccess && m_socket->Read(content) == Socket::kSuccess) {
-                    m_inputQueue.push(content);
-                }
-            } catch(Exception& e) {
-                LOG_ERROR() << "Connection error: " << e.What() << endl;
-                m_terminated.store(true);
-                break;
-            }
-        }
-    });
-
-    // We are expecting 'initialized' request
-    enum eState { kWaitingInitResponse, kWaitingInitEvent, kExecute };
-    eState state = kWaitingInitResponse;
-
-    // This part is for performing the initialization part of the debugger
-    while(!m_terminated.load() && (state != kExecute)) {
-        wxString buffer = m_inputQueue.pop(chrono::milliseconds(1));
-        if(!buffer.empty()) {
-            // got something on the network
-            m_rpc.AppendBuffer(buffer);
-            // ProcessBuffer is called for all compeleted JSON messages found in 'buffer'
-            m_rpc.ProcessBuffer([&](JSON json) {
-                // construct a message from the JSON
-                ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
-                if(msg) {
-                    switch(state) {
-                    case kWaitingInitResponse:
-                        if(msg->type == "response" && msg->As<Response>()->command == "initialize") {
-                            LOG_DEBUG() << "Received initialized response";
-                            state = kExecute;
-                        }
-                        break;
-                        //                    case kWaitingInitEvent:
-                        //                        if(msg->type == "event" && msg->As<Event>()->event == "initialized") {
-                        //                            LOG_DEBUG() << "Received initialized event";
-                        //                            state = kExecute;
-                        //                        }
-                        //                        break;
-                    case kExecute:
-                        // handle anything else here
-                        break;
-                    }
-                }
-            });
-        }
-    }
-
-    if(m_terminated.load()) {
-        // connection lost to server
-        throw Exception("Connection closed");
-    }
-    LOG_INFO() << "Initialize completed" << endl;
-    // Initialized completed successfully
-    // we got both Initialized response & Initialized event
+    m_handshake_state = eHandshakeState::kInProgress;
 }
 
 bool dap::Client::IsConnected() const { return m_readerThread && !m_terminated.load(); }
@@ -141,16 +76,6 @@ void dap::Client::Launch(std::vector<wxString> cmd)
     m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
 }
 
-void dap::Client::Check(function<void(JSON)> callback)
-{
-    wxString buffer = m_inputQueue.pop(chrono::milliseconds(1));
-    if(!buffer.empty()) {
-        // got something on the network
-        m_rpc.AppendBuffer(buffer);
-        m_rpc.ProcessBuffer(callback);
-    }
-}
-
 void dap::Client::GetThreads()
 {
     ThreadsRequest* threadsRequest = new ThreadsRequest();
@@ -164,4 +89,139 @@ void dap::Client::GetScopes(int frameId)
     scopesRequest->arguments.frameId = frameId;
     scopesRequest->seq = GetNextSequence();
     m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_socket);
+}
+
+void dap::Client::StopReaderThread()
+{
+    if(!m_readerThread) {
+        return;
+    }
+    m_shutdown.store(true);
+    m_readerThread->join();
+    wxDELETE(m_readerThread);
+}
+
+void dap::Client::StartReaderThread()
+{
+    if(m_readerThread) {
+        return;
+    }
+
+    m_readerThread = new thread(
+        [this](dap::Client* sink) {
+            LOG_INFO() << "Reader thread successfully started" << endl;
+            while(!m_shutdown.load()) {
+                try {
+                    wxString content;
+                    if(m_socket->SelectReadMS(10) == Socket::kSuccess && m_socket->Read(content) == Socket::kSuccess) {
+                        sink->CallAfter(&dap::Client::OnDataRead, content);
+                    }
+                } catch(Exception& e) {
+                    LOG_ERROR() << "Connection error: " << e.What() << endl;
+                    m_terminated.store(true);
+                    break;
+                }
+            }
+            LOG_INFO() << "Going down" << endl;
+        },
+        this);
+}
+
+void dap::Client::OnDataRead(const wxString& buffer)
+{
+    // process the buffer
+    if(buffer.empty())
+        return;
+
+    m_rpc.AppendBuffer(buffer);
+
+    // dap::Client::StaticOnJsonRead will get called for every JSON payload that will arrive over the network
+    m_rpc.ProcessBuffer(dap::Client::StaticOnJsonRead, this);
+}
+
+void dap::Client::StaticOnJsonRead(JSON json, wxObject* o)
+{
+    dap::Client* This = static_cast<dap::Client*>(o);
+    This->OnJsonRead(json);
+}
+
+void dap::Client::OnJsonRead(JSON json)
+{
+    if(m_handshake_state != eHandshakeState::kCompleted) {
+        // construct a message from the JSON
+        ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
+        if(msg && msg->type == "response" && msg->As<Response>()->command == "initialize") {
+            m_handshake_state = eHandshakeState::kCompleted;
+            SendDAPEvent(wxEVT_DAP_INITIALIZE_RESPONSE, new dap::InitializeResponse, json);
+        }
+        return;
+    }
+
+    // Other messages, convert the DAP message into wxEvent and fire it here
+    auto msg = dap::ObjGenerator::Get().FromJSON(json);
+
+    auto as_event = msg->AsEvent();
+    auto as_response = msg->AsResponse();
+    if(as_event) {
+        // received an event
+        if(as_event->event == "stopped") {
+            SendDAPEvent(wxEVT_DAP_STOPPED_EVENT, new dap::StoppedEvent, json);
+        } else if(as_event->event == "process") {
+            SendDAPEvent(wxEVT_DAP_PROCESS_EVENT, new dap::ProcessEvent, json);
+        } else if(as_event->event == "exited") {
+            SendDAPEvent(wxEVT_DAP_EXITED_EVENT, new dap::ExitedEvent, json);
+        } else if(as_event->event == "terminated") {
+            SendDAPEvent(wxEVT_DAP_TERMINATED_EVENT, new dap::TerminatedEvent, json);
+        } else {
+            LOG_DEBUG() << "Received JSON Event payload:" << endl;
+            LOG_DEBUG() << json.ToString(false) << endl;
+        }
+    } else if(as_response) {
+        if(as_response->command == "stackTrace") {
+            // received a stack trace response
+            SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, new dap::StackTraceResponse, json);
+        } else {
+            LOG_DEBUG() << json.ToString(false) << endl;
+        }
+    } else {
+        LOG_DEBUG() << "Received JSON payload:" << endl;
+        LOG_DEBUG() << json.ToString(false) << endl;
+    }
+}
+
+void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json)
+{
+    LOG_DEBUG() << json.ToString(false) << endl;
+
+    std::shared_ptr<dap::Any> ptr{ dap_message };
+    ptr->From(json);
+    DAPEvent __event(type);
+    __event.SetAnyObject(ptr);
+    __event.SetEventObject(this);
+    ProcessEvent(__event);
+}
+
+void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
+{
+    StackTraceRequest* req = new StackTraceRequest();
+    req->seq = GetNextSequence();
+    req->arguments.threadId = threadId;
+    req->arguments.levels = frame_count;
+    req->arguments.startFrame = starting_frame;
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+}
+
+void dap::Client::Next(int threadId)
+{
+    NextRequest* req = new NextRequest();
+    req->seq = GetNextSequence();
+    req->arguments.threadId = threadId;
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+}
+
+void dap::Client::Continue()
+{
+    ContinueRequest* req = new ContinueRequest();
+    req->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }

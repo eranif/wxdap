@@ -2,12 +2,13 @@
 #define SOCKETSERVER_H
 
 #include "Socket.hpp"
+#include "dap_exports.hpp"
 #include <string>
 
 using namespace std;
 namespace dap
 {
-class SocketServer : public Socket
+class WXDLLIMPEXP_DAP SocketServer : public Socket
 {
 public:
     SocketServer();

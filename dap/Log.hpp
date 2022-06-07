@@ -1,6 +1,7 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
+#include "dap_exports.hpp"
 #include <string>
 #include <vector>
 #include <wx/string.h>
@@ -9,7 +10,7 @@
 class Log;
 namespace dap
 {
-class Log
+class WXDLLIMPEXP_DAP Log
 {
 public:
     enum eLogVerbosity { System = -1, Error, Warning, Info, Dbg, Developer };

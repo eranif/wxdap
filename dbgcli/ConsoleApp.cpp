@@ -6,7 +6,10 @@
 
 IMPLEMENT_APP_CONSOLE(DAPCli)
 
-DAPCli::DAPCli() {}
+DAPCli::DAPCli()
+    : wxAppConsole()
+{
+}
 
 DAPCli::~DAPCli() {}
 
@@ -21,50 +24,87 @@ bool DAPCli::OnInit()
     if(!DoParseCommandLine())
         return false;
 
-    try {
-        dap::Log::OpenStdout(dap::Log::Dbg);
-        LOG_INFO() << "Starting client...";
-        dap::Client client;
-        if(!client.Connect("tcp://127.0.0.1:12345", 10)) {
-            LOG_ERROR() << "Error: failed to connect to server";
-            exit(1);
-        }
-        LOG_INFO() << "Connected!";
-
-        // This part is done in mode **sync**
-        client.Initialize();
-        client.SetBreakpointsFile("main.cpp", { { 17, "" }, { 18, "" } });
-        client.ConfigurationDone();
-        client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
-
-        // Now that the initialization is completed, run the main loop
-        while(client.IsConnected()) {
-            // our callback we get keep called as long there are messages to process
-            client.Check([&](JSON json) {
-                auto msg = dap::ObjGenerator::Get().FromJSON(json);
-                if(msg) {
-                    LOG_DEBUG() << "<== " << msg->ToString();
-                    // Stopped cause of breakpoint
-                    if(msg->AsEvent() && msg->AsEvent()->event == "stopped") {
-                        LOG_INFO() << "Stopped." << msg->As<dap::StoppedEvent>()->text;
-                        // Ask for call stack
-                        client.GetThreads();
-                        LOG_INFO() << "Fetching threads...";
-                    } else if(msg->AsResponse() && msg->AsResponse()->command == "threads") {
-                        LOG_INFO() << "Fetching scopes...";
-                        // Return variables for stack frame 0
-                        client.GetScopes(0);
-                    }
-                }
-            });
-            this_thread::sleep_for(chrono::milliseconds(1));
-        }
-
-    } catch(dap::Exception& e) {
-    }
     return true;
 }
 
 int DAPCli::OnExit() { return true; }
-
+int DAPCli::OnRun()
+{
+    InitializeClient();
+    return wxAppConsole::OnRun();
+}
 bool DAPCli::DoParseCommandLine() { return true; }
+
+void DAPCli::InitializeClient()
+{
+    dap::Log::OpenStdout(dap::Log::Dbg);
+    LOG_INFO() << "Starting client...";
+
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &DAPCli::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZE_RESPONSE, &DAPCli::OnInitialized, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &DAPCli::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &DAPCli::OnExited, this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &DAPCli::OnTerminated, this);
+
+    if(!m_client.Connect("tcp://127.0.0.1:12345", 10)) {
+        LOG_ERROR() << "Error: failed to connect to server";
+        exit(1);
+    }
+    LOG_INFO() << "Connected!" << endl;
+
+    // This part is done in mode **sync**
+    m_client.Initialize();
+    m_client.ConfigurationDone();
+    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
+}
+
+void DAPCli::OnStopped(DAPEvent& event)
+{
+    // got stopped event
+    dap::StoppedEvent* stopped_data = event.GetDapEvent()->As<dap::StoppedEvent>();
+    if(stopped_data) {
+        LOG_INFO() << "Stopped reason:" << stopped_data->reason << endl;
+        LOG_INFO() << "All threads stopped:" << stopped_data->allThreadsStopped << endl;
+        LOG_INFO() << "Stopped thread ID:" << stopped_data->threadId << endl;
+
+        if(stopped_data->reason == "exception") {
+            // apply breakpoints
+            m_client.SetBreakpointsFile("main.cpp", { { 17, "" } });
+            // Continue
+            m_client.Continue();
+        } else if(stopped_data->reason == "breakpoint" /* breakpoint hit */
+                  || stopped_data->reason == "step" /* user called "Next" */) {
+            // request the stack for the stopped thread
+            m_client.GetFrames(stopped_data->threadId);
+            m_client.Next(stopped_data->threadId);
+        }
+    }
+}
+
+void DAPCli::OnStackTrace(DAPEvent& event)
+{
+    dap::StackTraceResponse* stack_trace_data = event.GetDapResponse()->As<dap::StackTraceResponse>();
+    if(stack_trace_data) {
+        LOG_INFO() << "Stack trace:" << endl;
+        for(const auto& stack : stack_trace_data->stackFrames) {
+            LOG_INFO() << stack.id << "," << stack.name << "," << stack.source.path << "," << stack.line << endl;
+        }
+    }
+}
+
+void DAPCli::OnInitialized(DAPEvent& event)
+{
+    // got initialized event
+    LOG_INFO() << "Received" << event.GetDapResponse()->command << "response" << endl;
+}
+
+void DAPCli::OnExited(DAPEvent& event)
+{
+    LOG_INFO() << "Debuggee exited. Exit code:" << event.GetDapEvent()->As<dap::ExitedEvent>()->exitCode << endl;
+}
+
+void DAPCli::OnTerminated(DAPEvent& event)
+{
+    wxUnusedVar(event);
+    LOG_INFO() << "DAP server terminated!" << endl;
+}

@@ -1,11 +1,12 @@
 #ifndef CLCONNECTIONSTRING_H
 #define CLCONNECTIONSTRING_H
 
+#include "dap_exports.hpp"
 #include <string>
 
 namespace dap
 {
-class ConnectionString
+class WXDLLIMPEXP_DAP ConnectionString
 {
 public:
     enum eProtocol {

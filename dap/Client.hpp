@@ -4,19 +4,24 @@
 #include "JsonRPC.hpp"
 #include "Socket.hpp"
 
+#include "DAPEvent.hpp"
+#include "dap_exports.hpp"
+#include <wx/event.h>
 #include <wx/string.h>
 
 namespace dap
 {
-class Client
+class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
+    enum class eHandshakeState { kNotPerformed, kInProgress, kCompleted };
+
     Socket::Ptr_t m_socket = nullptr;
     dap::JsonRPC m_rpc;
-    Queue<wxString> m_inputQueue;
     atomic_bool m_shutdown;
     atomic_bool m_terminated;
     thread* m_readerThread = nullptr;
     size_t m_requestSeuqnce = 0;
+    eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
 
 protected:
     size_t GetNextSequence()
@@ -25,14 +30,34 @@ protected:
         return m_requestSeuqnce;
     }
 
+    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json);
+
+    /**
+     * @brief we maintain a reader thread that is responsible for reading
+     * from the socket and post events when new messages arrived
+     */
+    void StartReaderThread();
+
+    /**
+     * @brief stop the reader thread if needed and clean any resources allocted
+     */
+    void StopReaderThread();
+
+    /**
+     * @brief this callback is called by the reader thread whenever data arrives on the socket
+     */
+    void OnDataRead(const wxString& buffer);
+
+    /**
+     * @brief handle JSON payload received from the DAP server
+     * @param json
+     */
+    void OnJsonRead(JSON json);
+    static void StaticOnJsonRead(JSON json, wxObject* o);
+
 public:
     Client();
     virtual ~Client();
-
-    /**
-     * @brief Check if a new message arrived from the debugger server
-     */
-    void Check(function<void(JSON)> callback);
 
     /**
      * @brief Wait until connection is established
@@ -67,6 +92,25 @@ public:
      * @brief ask for list of threads
      */
     void GetThreads();
+
+    /**
+     * @brief get list of frames for a given thread ID
+     * @param threadId
+     * @param starting_frame
+     * @param frame_count number of frames to return
+     */
+    void GetFrames(int threadId, int starting_frame = 0, int frame_count = 0);
+
+    /**
+     * @brief continue execution
+     */
+    void Continue();
+
+    /**
+     * @brief The request executes one step (in the given granularity) for the specified thread and allows all other
+     * threads to run freely by resuming them
+     */
+    void Next(int threadId);
 
     /**
      * @brief return the variables for stack frame

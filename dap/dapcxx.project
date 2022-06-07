@@ -3,6 +3,9 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="dap_exports.hpp"/>
+    <File Name="DAPEvent.cpp"/>
+    <File Name="DAPEvent.hpp"/>
     <File Name="Socket.hpp"/>
     <File Name="Socket.cpp"/>
     <File Name="JSON.hpp"/>

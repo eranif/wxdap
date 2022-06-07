@@ -24,13 +24,14 @@
 #define JSON_HPP
 
 #include "cJSON.hpp"
+#include "dap_exports.hpp"
 #include <atomic>
 #include <cstring>
 #include <memory>
 #include <vector>
 #include <wx/string.h>
 
-struct JSON {
+struct WXDLLIMPEXP_DAP JSON {
     cJSON* m_cjson = nullptr;
     std::atomic_int* m_refCount = nullptr;
 

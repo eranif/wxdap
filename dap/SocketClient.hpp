@@ -2,11 +2,13 @@
 #define CLSOCKETCLIENT_H
 
 #include "Socket.hpp"
+#include "dap_exports.hpp"
 #include <string>
+
 using namespace std;
 namespace dap
 {
-class SocketClient : public Socket
+class WXDLLIMPEXP_DAP SocketClient : public Socket
 {
     string m_path;
 

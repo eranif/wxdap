@@ -50,12 +50,12 @@ JSON dap::JsonRPC::DoProcessBuffer()
     return JSON::Parse(payload);
 }
 
-void dap::JsonRPC::ProcessBuffer(function<void(const JSON& obj)> callback)
+void dap::JsonRPC::ProcessBuffer(std::function<void(const JSON&, wxObject*)> callback, wxObject* o)
 {
     JSON json = DoProcessBuffer();
     while(json.IsOK()) {
         if(json.IsOK()) {
-            callback(json);
+            callback(json, o);
         }
         json = DoProcessBuffer();
     }

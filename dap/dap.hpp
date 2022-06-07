@@ -2,6 +2,7 @@
 #define PROTOCOLMESSAGE_HPP
 
 #include "JSON.hpp"
+#include "dap_exports.hpp"
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -55,10 +56,10 @@
 #define PTR_SIZE (sizeof(void*))
 namespace dap
 {
-void Initialize();
+void WXDLLIMPEXP_DAP Initialize();
 // base class representing anything
 
-struct Any {
+struct WXDLLIMPEXP_DAP Any {
     Any() {}
     virtual ~Any() {}
 
@@ -82,7 +83,7 @@ struct Request;
 struct Response;
 
 /// Base class of requests, responses, and events
-struct ProtocolMessage : public Any {
+struct WXDLLIMPEXP_DAP ProtocolMessage : public Any {
     int seq = -1;
     wxString type;
     typedef std::shared_ptr<ProtocolMessage> Ptr_t;
@@ -96,7 +97,7 @@ struct ProtocolMessage : public Any {
     JSON_SERIALIZE();
 };
 
-class ObjGenerator
+class WXDLLIMPEXP_DAP ObjGenerator
 {
     typedef std::function<ProtocolMessage::Ptr_t()> onNewObject;
     std::unordered_map<wxString, onNewObject> m_responses;
@@ -128,7 +129,7 @@ public:
 
 /// A client or debug adapter initiated request
 /// ->
-struct Request : public ProtocolMessage {
+struct WXDLLIMPEXP_DAP Request : public ProtocolMessage {
     wxString command;
 
     Request() { type = "request"; }
@@ -140,7 +141,7 @@ struct Request : public ProtocolMessage {
 /// longer interested in the result produced by a specific request issued
 /// earlier.
 /// <->
-struct CancelRequest : public Request {
+struct WXDLLIMPEXP_DAP CancelRequest : public Request {
     int requestId = -1;
     REQUEST_CLASS(CancelRequest, "cancel");
     JSON_SERIALIZE();
@@ -148,7 +149,7 @@ struct CancelRequest : public Request {
 
 /// A debug adapter initiated event
 ///
-struct Event : public ProtocolMessage {
+struct WXDLLIMPEXP_DAP Event : public ProtocolMessage {
     wxString event;
     Event() { type = "event"; }
     virtual ~Event() = 0; // force to abstract class
@@ -157,7 +158,7 @@ struct Event : public ProtocolMessage {
 
 /// Response for a request
 /// <-
-struct Response : public ProtocolMessage {
+struct WXDLLIMPEXP_DAP Response : public ProtocolMessage {
     int request_seq = -1;
     bool success = true;
     wxString command;
@@ -178,7 +179,7 @@ struct Response : public ProtocolMessage {
 /// Response to 'cancel' request. This is just an acknowledgement, so no body
 /// field is required.
 /// <-
-struct CancelResponse : public Response {
+struct WXDLLIMPEXP_DAP CancelResponse : public Response {
     RESPONSE_CLASS(CancelResponse, "cancel");
     JSON To() const override { return Response::To(); }
     void From(const JSON& json) override { Response::From(json); }
@@ -187,7 +188,7 @@ struct CancelResponse : public Response {
 /// This event indicates that the debug adapter is ready to accept configuration
 /// requests (e.g. SetBreakpointsRequest, SetExceptionBreakpointsRequest).
 /// <-
-struct InitializedEvent : public Event {
+struct WXDLLIMPEXP_DAP InitializedEvent : public Event {
     EVENT_CLASS(InitializedEvent, "initialized");
     JSON_SERIALIZE();
 };
@@ -195,7 +196,7 @@ struct InitializedEvent : public Event {
 /// The event indicates that the execution of the debuggee has stopped due to
 /// some condition. This can be caused by a break point previously set, a
 /// stepping action has completed, by executing a debugger statement etc.
-struct StoppedEvent : public Event {
+struct WXDLLIMPEXP_DAP StoppedEvent : public Event {
     /**
      * The reason for the event.
      * For backward compatibility this wxString is shown in the UI if the
@@ -209,6 +210,24 @@ struct StoppedEvent : public Event {
      * exception name. This wxString is shown in the UI.
      */
     wxString text;
+    /**
+     * The full reason for the event, e.g. 'Paused on exception'. This string is
+     * shown in the UI as is and must be translated.
+     */
+    wxString description;
+    /**
+     * If 'allThreadsStopped' is true, a debug adapter can announce that all
+     * threads have stopped.
+     * - The client should use this information to enable that all threads can
+     * be expanded to access their stacktraces.
+     * - If the attribute is missing or false, only the thread with the given
+     * threadId can be expanded.
+     */
+    bool allThreadsStopped = false;
+    /**
+     * The thread which was stopped.
+     */
+    int threadId = wxNOT_FOUND;
     EVENT_CLASS(StoppedEvent, "stopped");
     JSON_SERIALIZE();
 };
@@ -218,7 +237,7 @@ struct StoppedEvent : public Event {
 /// to a request that implies that execution continues, e.g. 'launch' or
 /// 'continue'.  It is only necessary to send a 'continued' event if there was
 /// no previous request that implied this
-struct ContinuedEvent : public Event {
+struct WXDLLIMPEXP_DAP ContinuedEvent : public Event {
     /**
      * The thread which was continued.
      */
@@ -233,7 +252,7 @@ struct ContinuedEvent : public Event {
 };
 
 /// The event indicates that the debuggee has exited and returns its exit code.
-struct ExitedEvent : public Event {
+struct WXDLLIMPEXP_DAP ExitedEvent : public Event {
     int exitCode = 0;
     EVENT_CLASS(ExitedEvent, "exited");
     JSON_SERIALIZE();
@@ -241,13 +260,13 @@ struct ExitedEvent : public Event {
 
 /// The event indicates that debugging of the debuggee has terminated. This does
 /// not mean that the debuggee itself has exited
-struct TerminatedEvent : public Event {
+struct WXDLLIMPEXP_DAP TerminatedEvent : public Event {
     EVENT_CLASS(TerminatedEvent, "terminated");
     JSON_SERIALIZE();
 };
 
 /// The event indicates that a thread has started or exited.
-struct ThreadEvent : public Event {
+struct WXDLLIMPEXP_DAP ThreadEvent : public Event {
     wxString reason;
     int threadId = 0;
     EVENT_CLASS(ThreadEvent, "thread");
@@ -256,7 +275,7 @@ struct ThreadEvent : public Event {
 
 /// The event indicates that a thread has started or exited.
 // <-
-struct OutputEvent : public Event {
+struct WXDLLIMPEXP_DAP OutputEvent : public Event {
     /**
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
@@ -271,7 +290,7 @@ struct OutputEvent : public Event {
 /// A Source is a descriptor for source code. It is returned from the debug
 /// adapter as part of a StackFrame and it is used by clients when specifying
 /// breakpoints
-struct Source : public Any {
+struct WXDLLIMPEXP_DAP Source : public Any {
     /**
      * The short name of the source. Every source returned from the debug
      * adapter has a name. When sending a source to the debug adapter this name
@@ -290,7 +309,7 @@ struct Source : public Any {
 
 /// Information about a Breakpoint created in setBreakpoints or
 /// setFunctionBreakpoints.
-struct Breakpoint : public Any {
+struct WXDLLIMPEXP_DAP Breakpoint : public Any {
     int id = -1;
     bool verified = false;
     wxString message;
@@ -305,7 +324,7 @@ struct Breakpoint : public Any {
 
 /// The event indicates that some information about a breakpoint has changed.
 // <-
-struct BreakpointEvent : public Event {
+struct WXDLLIMPEXP_DAP BreakpointEvent : public Event {
     /**
      * The output category. If not specified, 'console' is assumed.
      * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
@@ -322,7 +341,7 @@ struct BreakpointEvent : public Event {
 
 /// The event indicates that the debugger has begun debugging a new process.
 /// Either one that it has launched, or one that it has attached to
-struct ProcessEvent : public Event {
+struct WXDLLIMPEXP_DAP ProcessEvent : public Event {
     /**
      * The logical name of the process. This is usually the full path to
      * process's executable file. Example: /home/example/myproj/program.exe
@@ -351,7 +370,7 @@ struct ProcessEvent : public Event {
     JSON_SERIALIZE();
 };
 
-struct InitializeRequestArguments : public Any {
+struct WXDLLIMPEXP_DAP InitializeRequestArguments : public Any {
     /**
      * The ID of the (frontend) client using this adapter.
      */
@@ -393,7 +412,7 @@ struct InitializeRequestArguments : public Any {
 /// has responded with an 'initialize' response.  The 'initialize' request may
 /// only be sent once.
 /// <->
-struct InitializeRequest : public Request {
+struct WXDLLIMPEXP_DAP InitializeRequest : public Request {
     InitializeRequestArguments arguments;
     REQUEST_CLASS(InitializeRequest, "initialize");
     JSON_SERIALIZE();
@@ -401,7 +420,7 @@ struct InitializeRequest : public Request {
 
 /// Response to 'initialize' request.
 /// <-
-struct InitializeResponse : public Response {
+struct WXDLLIMPEXP_DAP InitializeResponse : public Response {
     RESPONSE_CLASS(InitializeResponse, "initialize");
     JSON_SERIALIZE();
 };
@@ -410,12 +429,12 @@ struct InitializeResponse : public Response {
 /// sequence of configuration requests (which was started by the 'initialized'
 /// event).
 /// <->
-struct ConfigurationDoneRequest : public Request {
+struct WXDLLIMPEXP_DAP ConfigurationDoneRequest : public Request {
     REQUEST_CLASS(ConfigurationDoneRequest, "configurationDone");
     JSON_SERIALIZE();
 };
 
-struct EmptyAckResponse : public Response {
+struct WXDLLIMPEXP_DAP EmptyAckResponse : public Response {
     RESPONSE_CLASS(EmptyAckResponse, "");
     JSON_SERIALIZE();
 };
@@ -423,13 +442,13 @@ struct EmptyAckResponse : public Response {
 /// Response to 'configurationDone' request. This is just an acknowledgement, so
 /// no body field is required.
 /// <-
-struct ConfigurationDoneResponse : public EmptyAckResponse {
+struct WXDLLIMPEXP_DAP ConfigurationDoneResponse : public EmptyAckResponse {
     RESPONSE_CLASS(ConfigurationDoneResponse, "configurationDone");
 };
 
 /// Arguments for 'launch' request. Additional attributes are implementation
 /// specific.
-struct LaunchRequestArguments : public Any {
+struct WXDLLIMPEXP_DAP LaunchRequestArguments : public Any {
     /**
      * If noDebug is true the launch request should launch the program without
      * enabling debugging.
@@ -460,7 +479,7 @@ struct LaunchRequestArguments : public Any {
 /// debuggee with or without debugging (if 'noDebug' is true). Since launching
 /// is debugger/runtime specific, the arguments for this request are not part of
 /// this specification
-struct LaunchRequest : public Request {
+struct WXDLLIMPEXP_DAP LaunchRequest : public Request {
     LaunchRequestArguments arguments;
     REQUEST_CLASS(LaunchRequest, "launch");
     JSON_SERIALIZE();
@@ -469,7 +488,7 @@ struct LaunchRequest : public Request {
 /// Response to 'launch' request. This is just an acknowledgement, so no body
 /// field is required.
 /// <-
-struct LaunchResponse : public EmptyAckResponse {
+struct WXDLLIMPEXP_DAP LaunchResponse : public EmptyAckResponse {
     RESPONSE_CLASS(LaunchResponse, "launch");
 };
 
@@ -481,18 +500,18 @@ struct LaunchResponse : public EmptyAckResponse {
 /// 'disconnect' does not terminate the debuggee. This behavior can be
 /// controlled with the 'terminateDebuggee' argument (if supported by the debug
 /// adapter).
-struct DisconnectRequest : public Request {
+struct WXDLLIMPEXP_DAP DisconnectRequest : public Request {
     bool restart = false;
     bool terminateDebuggee = true;
     REQUEST_CLASS(DisconnectRequest, "disconnect");
     JSON_SERIALIZE();
 };
 
-struct DisconnectResponse : public EmptyAckResponse {
+struct WXDLLIMPEXP_DAP DisconnectResponse : public EmptyAckResponse {
     RESPONSE_CLASS(DisconnectResponse, "disconnect");
 };
 
-struct BreakpointLocationsArguments : public Any {
+struct WXDLLIMPEXP_DAP BreakpointLocationsArguments : public Any {
     Source source;
     int line = -1;
     int column = -1;
@@ -504,7 +523,7 @@ struct BreakpointLocationsArguments : public Any {
 
 /// Properties of a breakpoint location returned from the 'breakpointLocations'
 /// request.
-struct BreakpointLocation : public Any {
+struct WXDLLIMPEXP_DAP BreakpointLocation : public Any {
     int line = -1;
     int column = -1;
     int endLine = -1;
@@ -515,7 +534,7 @@ struct BreakpointLocation : public Any {
 
 /// Response to 'breakpointLocations' request.
 /// Contains possible locations for source breakpoints.
-struct BreakpointLocationsResponse : public Response {
+struct WXDLLIMPEXP_DAP BreakpointLocationsResponse : public Response {
     std::vector<BreakpointLocation> breakpoints;
     RESPONSE_CLASS(BreakpointLocationsResponse, "breakpointLocations");
     JSON_SERIALIZE();
@@ -523,14 +542,14 @@ struct BreakpointLocationsResponse : public Response {
 
 /// The 'breakpointLocations' request returns all possible locations for source
 /// breakpoints in a given range.
-struct BreakpointLocationsRequest : public Request {
+struct WXDLLIMPEXP_DAP BreakpointLocationsRequest : public Request {
     BreakpointLocationsArguments arguments;
     REQUEST_CLASS(BreakpointLocationsRequest, "breakpointLocations");
     JSON_SERIALIZE();
 };
 
 /// Properties of a breakpoint or logpoint passed to the setBreakpoints request.
-struct SourceBreakpoint : public Any {
+struct WXDLLIMPEXP_DAP SourceBreakpoint : public Any {
     int line = -1;
     /**
      * An optional expression for conditional breakpoints.
@@ -546,7 +565,7 @@ struct SourceBreakpoint : public Any {
 };
 
 /// Properties of a breakpoint or logpoint passed to the setBreakpoints request.
-struct SetBreakpointsArguments : public Any {
+struct WXDLLIMPEXP_DAP SetBreakpointsArguments : public Any {
     Source source;
     std::vector<SourceBreakpoint> breakpoints;
     JSON_SERIALIZE();
@@ -556,7 +575,7 @@ struct SetBreakpointsArguments : public Any {
 /// breakpoints in that source. To clear all breakpoint for a source, specify an
 /// empty array. When a breakpoint is hit, a 'stopped' event (with reason
 /// 'breakpoint') is generated.
-struct SetBreakpointsRequest : public Request {
+struct WXDLLIMPEXP_DAP SetBreakpointsRequest : public Request {
     SetBreakpointsArguments arguments;
     REQUEST_CLASS(SetBreakpointsRequest, "setBreakpoints");
     JSON_SERIALIZE();
@@ -567,14 +586,14 @@ struct SetBreakpointsRequest : public Request {
 /// This includes the actual code location and whether the breakpoint could be verified.
 /// The breakpoints returned are in the same order as the elements of the 'breakpoints'
 ///(or the deprecated 'lines') array in the arguments
-struct SetBreakpointsResponse : public Response {
+struct WXDLLIMPEXP_DAP SetBreakpointsResponse : public Response {
     std::vector<Breakpoint> breakpoints;
     RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
     JSON_SERIALIZE();
 };
 
 /// Arguments for the continue request
-struct ContinueArguments : public Any {
+struct WXDLLIMPEXP_DAP ContinueArguments : public Any {
     /**
      * Continue execution for the specified thread (if possible). If the backend
      * cannot continue on a single thread but will continue on all threads, it
@@ -586,7 +605,7 @@ struct ContinueArguments : public Any {
 };
 
 /// Arguments for the continue request
-struct NextArguments : public Any {
+struct WXDLLIMPEXP_DAP NextArguments : public Any {
     /**
      * Execute 'next' for this thread.
      */
@@ -596,38 +615,38 @@ struct NextArguments : public Any {
 };
 
 /// The request starts the debuggee to run again.
-struct ContinueRequest : public Request {
+struct WXDLLIMPEXP_DAP ContinueRequest : public Request {
     ContinueArguments arguments;
     REQUEST_CLASS(ContinueRequest, "continue");
     JSON_SERIALIZE();
 };
 
 /// Response to 'continue' request.
-struct ContinueResponse : public Response {
+struct WXDLLIMPEXP_DAP ContinueResponse : public Response {
     bool allThreadsContinued = true;
     RESPONSE_CLASS(ContinueResponse, "continue");
     JSON_SERIALIZE();
 };
 
 /// The request starts the debuggee to run again.
-struct NextRequest : public Request {
+struct WXDLLIMPEXP_DAP NextRequest : public Request {
     NextArguments arguments;
     REQUEST_CLASS(NextRequest, "next");
     JSON_SERIALIZE();
 };
 
 /// Response to 'continue' request.
-struct NextResponse : public EmptyAckResponse {
+struct WXDLLIMPEXP_DAP NextResponse : public EmptyAckResponse {
     RESPONSE_CLASS(NextResponse, "next");
 };
 
 /// A Stackframe contains the source location
-struct StackFrame : public Any {
+struct WXDLLIMPEXP_DAP StackFrame : public Any {
     /**
      * An identifier for the stack frame. It must be unique across all threads. This id can be used to retrieve the
      * scopes of the frame with the 'scopesRequest' or to restart the execution of a stackframe.
      */
-    int number = -1;
+    int id = -1;
     /**
      * The name of the stack frame, typically a method name.
      */
@@ -646,13 +665,13 @@ struct StackFrame : public Any {
 };
 
 /// The request retrieves a list of all threads.
-struct ThreadsRequest : public Request {
+struct WXDLLIMPEXP_DAP ThreadsRequest : public Request {
     REQUEST_CLASS(ThreadsRequest, "threads");
     JSON_SERIALIZE();
 };
 
 /// A Thread
-struct Thread : public Any {
+struct WXDLLIMPEXP_DAP Thread : public Any {
     /**
      * Unique identifier for the thread.
      */
@@ -667,14 +686,14 @@ struct Thread : public Any {
 };
 
 /// Response to 'threads' request.
-struct ThreadsResponse : public Response {
+struct WXDLLIMPEXP_DAP ThreadsResponse : public Response {
     std::vector<Thread> threads;
     RESPONSE_CLASS(ThreadsResponse, "threads");
     JSON_SERIALIZE();
 };
 
 /// Optional properties of a variable that can be used to determine how to render the variable in the UI.
-struct VariablePresentationHint : public Any {
+struct WXDLLIMPEXP_DAP VariablePresentationHint : public Any {
     /**
      * The kind of variable. Before introducing additional values, try to use the listed values.
      * Values:
@@ -718,7 +737,7 @@ struct VariablePresentationHint : public Any {
 /// retrieve the children with the VariablesRequest. If the number of named or indexed children is large, the numbers
 /// should be returned via the optional 'namedVariables' and 'indexedVariables' attributes. The client can use this
 /// optional information to present the children in a paged UI and fetch them in chunks.
-struct Variable : public Any {
+struct WXDLLIMPEXP_DAP Variable : public Any {
     wxString name;
     wxString value;
     wxString type;
@@ -733,7 +752,7 @@ struct Variable : public Any {
 };
 
 /// Arguments for 'scopes' request.
-struct ScopesArguments : public Any {
+struct WXDLLIMPEXP_DAP ScopesArguments : public Any {
     /**
      * Retrieve the scopes for this stackframe.
      */
@@ -743,13 +762,13 @@ struct ScopesArguments : public Any {
 };
 
 /// The request returns the variable scopes for a given stackframe ID.
-struct ScopesRequest : public Request {
+struct WXDLLIMPEXP_DAP ScopesRequest : public Request {
     ScopesArguments arguments;
     REQUEST_CLASS(ScopesRequest, "scopes");
     JSON_SERIALIZE();
 };
 
-struct Scope : public Any {
+struct WXDLLIMPEXP_DAP Scope : public Any {
     wxString name;
     eScopes variablesReference = eScopes::kArguments;
     bool expensive = false;
@@ -763,14 +782,14 @@ struct Scope : public Any {
     JSON_SERIALIZE();
 };
 
-struct ScopesResponse : public Response {
+struct WXDLLIMPEXP_DAP ScopesResponse : public Response {
     std::vector<Scope> scopes;
     RESPONSE_CLASS(ScopesResponse, "scopes");
     JSON_SERIALIZE();
 };
 
 /// Arguments for 'stackTrace' request.
-struct StackTraceArguments : public Any {
+struct WXDLLIMPEXP_DAP StackTraceArguments : public Any {
     /**
      * Retrieve the stacktrace for this thread.
      */
@@ -788,20 +807,20 @@ struct StackTraceArguments : public Any {
 };
 
 /// The request returns a stacktrace from the current execution state.
-struct StackTraceRequest : public Request {
+struct WXDLLIMPEXP_DAP StackTraceRequest : public Request {
     StackTraceArguments arguments;
     REQUEST_CLASS(StackTraceRequest, "stackTrace");
     JSON_SERIALIZE();
 };
 
 /// Response to 'stackTrace' request.
-struct StackTraceResponse : public Response {
+struct WXDLLIMPEXP_DAP StackTraceResponse : public Response {
     std::vector<StackFrame> stackFrames;
     RESPONSE_CLASS(StackTraceResponse, "stackTrace");
     JSON_SERIALIZE();
 };
 
-struct ValueFormat : public Any {
+struct WXDLLIMPEXP_DAP ValueFormat : public Any {
     /**
      * Display the value in hex.
      */
@@ -810,7 +829,7 @@ struct ValueFormat : public Any {
     JSON_SERIALIZE();
 };
 
-struct VariablesArguments : public Any {
+struct WXDLLIMPEXP_DAP VariablesArguments : public Any {
     /**
      * The Variable reference.
      */
@@ -820,13 +839,13 @@ struct VariablesArguments : public Any {
     JSON_SERIALIZE();
 };
 
-struct VariablesRequest : public Request {
+struct WXDLLIMPEXP_DAP VariablesRequest : public Request {
     VariablesArguments arguments;
     REQUEST_CLASS(VariablesRequest, "variables");
     JSON_SERIALIZE();
 };
 
-struct VariablesResponse : public Response {
+struct WXDLLIMPEXP_DAP VariablesResponse : public Response {
     /**
      * All (or a range) of variables for the given variable reference.
      */

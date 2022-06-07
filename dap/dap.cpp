@@ -257,6 +257,9 @@ JSON StoppedEvent::To() const
 
     body.Add("reason", reason);
     body.Add("text", text);
+    body.Add("description", description);
+    body.Add("allThreadsStopped", allThreadsStopped);
+    body.Add("threadId", threadId);
     return json;
 }
 
@@ -266,6 +269,9 @@ void StoppedEvent::From(const JSON& json)
     JSON body = json["body"];
     reason = body["reason"].GetString();
     text = body["text"].GetString();
+    description = body["description"].GetString();
+    allThreadsStopped = body["allThreadsStopped"].GetBool();
+    threadId = body["threadId"].GetInteger(wxNOT_FOUND);
 }
 
 // ----------------------------------------
@@ -386,7 +392,7 @@ JSON StackFrame::To() const
 {
     CREATE_JSON();
     ADD_PROP(name);
-    ADD_PROP(number);
+    ADD_PROP(id);
     ADD_PROP(line);
     ADD_OBJ(source);
     return json;
@@ -395,7 +401,7 @@ JSON StackFrame::To() const
 void StackFrame::From(const JSON& json)
 {
     GET_PROP(name, String);
-    GET_PROP(number, Integer);
+    GET_PROP(id, Integer);
     GET_PROP(line, Integer);
     READ_OBJ(source);
 }

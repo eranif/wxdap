@@ -1,6 +1,7 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
+#include "dap_exports.hpp"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -10,12 +11,12 @@
 // we add one here
 namespace std
 {
-const wxString& to_string(const wxString& str);
+WXDLLIMPEXP_DAP const wxString& to_string(const wxString& str);
 };
 
 #define UNUSED(x) ((void)x)
 
-class StringUtils
+class WXDLLIMPEXP_DAP StringUtils
 {
 protected:
     static char** BuildArgv(const wxString& str, int& argc);

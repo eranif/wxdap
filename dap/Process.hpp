@@ -2,13 +2,14 @@
 #define PROCESS_H__
 
 #include "Queue.hpp"
+#include "dap_exports.hpp"
 #include <atomic>
 #include <thread>
 #include <wx/string.h>
 
 namespace dap
 {
-class Process
+class WXDLLIMPEXP_DAP Process
 {
     Queue<std::pair<wxString, wxString>> m_inQueue;
     std::thread* m_readerThread = nullptr;
