@@ -82,7 +82,7 @@ void DAPCli::OnStopped(DAPEvent& event)
             // Continue
             m_client.Continue();
         } else if(stopped_data->reason == "breakpoint" /* breakpoint hit */
-                  || stopped_data->reason == "step" /* user called "Next" */) {
+                  || stopped_data->reason == "step" /* user called "Next", "StepIn", "StepOut" */) {
             // request the stack for the stopped thread
             m_client.GetFrames(m_client.GetActiveThreadId());
             m_client.Next(m_client.GetActiveThreadId());
