@@ -101,11 +101,11 @@ public:
 
     /**
      * @brief get list of frames for a given thread ID
-     * @param threadId
+     * @param threadId if wxNOT_FOUND is specified, use the thread ID as returned by GetActiveThreadId()
      * @param starting_frame
      * @param frame_count number of frames to return
      */
-    void GetFrames(int threadId, int starting_frame = 0, int frame_count = 0);
+    void GetFrames(int threadId = wxNOT_FOUND, int starting_frame = 0, int frame_count = 0);
 
     /**
      * @brief continue execution
@@ -115,8 +115,10 @@ public:
     /**
      * @brief The request executes one step (in the given granularity) for the specified thread and allows all other
      * threads to run freely by resuming them
+     * @param threadId execute one step for this thread. If wxNOT_FOUND is passed, use the thread returned by
+     * GetActiveThreadId()
      */
-    void Next(int threadId);
+    void Next(int threadId = wxNOT_FOUND);
 
     /**
      * @brief return the variables for stack frame

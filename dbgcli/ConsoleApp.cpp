@@ -45,10 +45,10 @@ void DAPCli::InitializeClient()
     LOG_INFO() << "Starting client...";
 
     m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &DAPCli::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZE_RESPONSE, &DAPCli::OnInitialized, this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &DAPCli::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &DAPCli::OnInitialized, this);
     m_client.Bind(wxEVT_DAP_EXITED_EVENT, &DAPCli::OnExited, this);
     m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &DAPCli::OnTerminated, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &DAPCli::OnStackTrace, this);
 
     if(!m_client.Connect("tcp://127.0.0.1:12345", 10)) {
         LOG_ERROR() << "Error: failed to connect to server";
@@ -105,7 +105,7 @@ void DAPCli::OnStackTrace(DAPEvent& event)
 void DAPCli::OnInitialized(DAPEvent& event)
 {
     // got initialized event
-    LOG_INFO() << "Received" << event.GetDapResponse()->command << "response" << endl;
+    LOG_INFO() << "Received" << event.GetDapEvent()->event << "event" << endl;
 }
 
 /// Debuggee process exited, print the exit code

@@ -173,6 +173,8 @@ void dap::Client::OnJsonRead(JSON json)
             SendDAPEvent(wxEVT_DAP_EXITED_EVENT, new dap::ExitedEvent, json);
         } else if(as_event->event == "terminated") {
             SendDAPEvent(wxEVT_DAP_TERMINATED_EVENT, new dap::TerminatedEvent, json);
+        } else if(as_event->event == "initialized") {
+            SendDAPEvent(wxEVT_DAP_INITIALIZED_EVENT, new dap::InitializedEvent, json);
         } else {
             LOG_DEBUG() << "Received JSON Event payload:" << endl;
             LOG_DEBUG() << json.ToString(false) << endl;
@@ -192,8 +194,6 @@ void dap::Client::OnJsonRead(JSON json)
 
 void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json)
 {
-    LOG_DEBUG() << json.ToString(false) << endl;
-
     std::shared_ptr<dap::Any> ptr{ dap_message };
     ptr->From(json);
     if(type == wxEVT_DAP_STOPPED_EVENT) {
@@ -201,17 +201,17 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
         m_active_thread_id = ptr->As<StoppedEvent>()->threadId;
     }
 
-    DAPEvent __event(type);
-    __event.SetAnyObject(ptr);
-    __event.SetEventObject(this);
-    ProcessEvent(__event);
+    DAPEvent event(type);
+    event.SetAnyObject(ptr);
+    event.SetEventObject(this);
+    ProcessEvent(event);
 }
 
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
 {
     StackTraceRequest* req = new StackTraceRequest();
     req->seq = GetNextSequence();
-    req->arguments.threadId = threadId;
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     req->arguments.levels = frame_count;
     req->arguments.startFrame = starting_frame;
     m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
@@ -221,7 +221,7 @@ void dap::Client::Next(int threadId)
 {
     NextRequest* req = new NextRequest();
     req->seq = GetNextSequence();
-    req->arguments.threadId = threadId;
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }
 
