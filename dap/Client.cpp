@@ -234,3 +234,15 @@ void dap::Client::Continue()
     req->seq = GetNextSequence();
     m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }
+
+void dap::Client::Cleanup()
+{
+    StopReaderThread();
+    m_socket.reset(new SocketClient());
+    m_shutdown.store(false);
+    m_terminated.store(false);
+    m_rpc = {};
+    m_requestSeuqnce = 0;
+    m_handshake_state = eHandshakeState::kNotPerformed;
+    m_active_thread_id = wxNOT_FOUND;
+}

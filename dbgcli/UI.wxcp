@@ -1536,6 +1536,12 @@
 									"m_functionNameAndSignature":	"OnConnect(wxCommandEvent& event)",
 									"m_description":	"Process a wxEVT_COMMAND_TOOL_CLICKED event (a synonym for wxEVT_COMMAND_MENU_SELECTED). Pass the id of the tool",
 									"m_noBody":	false
+								}, {
+									"m_eventName":	"wxEVT_UPDATE_UI",
+									"m_eventClass":	"wxUpdateUIEvent",
+									"m_functionNameAndSignature":	"OnConnectUI(wxUpdateUIEvent& event)",
+									"m_description":	"Process a wxEVT_UPDATE_UI event",
+									"m_noBody":	false
 								}],
 							"m_children":	[]
 						}, {
@@ -1610,6 +1616,12 @@
 									"m_functionNameAndSignature":	"OnNext(wxCommandEvent& event)",
 									"m_description":	"Process a wxEVT_COMMAND_TOOL_CLICKED event (a synonym for wxEVT_COMMAND_MENU_SELECTED). Pass the id of the tool",
 									"m_noBody":	false
+								}, {
+									"m_eventName":	"wxEVT_UPDATE_UI",
+									"m_eventClass":	"wxUpdateUIEvent",
+									"m_functionNameAndSignature":	"OnNextUI(wxUpdateUIEvent& event)",
+									"m_description":	"Process a wxEVT_UPDATE_UI event",
+									"m_noBody":	false
 								}],
 							"m_children":	[]
 						}, {
@@ -1664,6 +1676,12 @@
 									"m_functionNameAndSignature":	"OnStepIn(wxCommandEvent& event)",
 									"m_description":	"Process a wxEVT_COMMAND_TOOL_CLICKED event (a synonym for wxEVT_COMMAND_MENU_SELECTED). Pass the id of the tool",
 									"m_noBody":	false
+								}, {
+									"m_eventName":	"wxEVT_UPDATE_UI",
+									"m_eventClass":	"wxUpdateUIEvent",
+									"m_functionNameAndSignature":	"OnStepInUI(wxUpdateUIEvent& event)",
+									"m_description":	"Process a wxEVT_UPDATE_UI event",
+									"m_noBody":	false
 								}],
 							"m_children":	[]
 						}, {
@@ -1717,6 +1735,12 @@
 									"m_eventClass":	"wxCommandEvent",
 									"m_functionNameAndSignature":	"OnStepOut(wxCommandEvent& event)",
 									"m_description":	"Process a wxEVT_COMMAND_TOOL_CLICKED event (a synonym for wxEVT_COMMAND_MENU_SELECTED). Pass the id of the tool",
+									"m_noBody":	false
+								}, {
+									"m_eventName":	"wxEVT_UPDATE_UI",
+									"m_eventClass":	"wxUpdateUIEvent",
+									"m_functionNameAndSignature":	"OnStepOutUI(wxUpdateUIEvent& event)",
+									"m_description":	"Process a wxEVT_UPDATE_UI event",
 									"m_noBody":	false
 								}],
 							"m_children":	[]

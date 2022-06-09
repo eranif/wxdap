@@ -1,15 +1,22 @@
 #include "MainFrame.hpp"
 #include "dap/Log.hpp"
+#include <vector>
 #include <wx/ffile.h>
 #include <wx/msgdlg.h>
 
 namespace
 {
-void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND)
+constexpr int MARKER_NUMBER = 4;
+
+void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker = false)
 {
     if(line == wxNOT_FOUND) {
         line = ctrl->LineFromPosition(ctrl->GetLastPosition());
     }
+
+    int lines_on_screen = ctrl->LinesOnScreen();
+    int first_visible_line = line - lines_on_screen / 2;
+    first_visible_line = wxMax(0, first_visible_line);
 
     int pos = ctrl->PositionFromLine(line);
     ctrl->SetCurrentPos(pos);
@@ -17,6 +24,11 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND)
     ctrl->SetSelectionEnd(pos);
     ctrl->SetAnchor(pos);
     ctrl->EnsureCaretVisible();
+    if(add_marker) {
+        ctrl->MarkerDeleteAll(MARKER_NUMBER);
+        ctrl->MarkerAdd(line, MARKER_NUMBER);
+    }
+    ctrl->SetFirstVisibleLine(first_visible_line);
 }
 } // namespace
 
@@ -24,12 +36,25 @@ MainFrame::MainFrame(wxWindow* parent)
     : MainFrameBase(parent)
 {
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
+
+    m_ctrls = { m_stcLog, m_stcText, m_stcThreads, m_stcStack };
     for(int i = 0; i < wxSTC_STYLE_MAX; ++i) {
-        m_stcLog->StyleSetFont(i, code_font);
-        m_stcText->StyleSetFont(i, code_font);
-        m_stcThreads->StyleSetFont(i, code_font);
-        m_stcStack->StyleSetFont(i, code_font);
+        for(auto ctrl : m_ctrls) {
+            ctrl->StyleSetFont(i, code_font);
+        }
     }
+
+    for(auto ctrl : m_ctrls) {
+        ctrl->MarkerDefine(MARKER_NUMBER, wxSTC_MARK_ARROW, *wxGREEN, *wxGREEN);
+    }
+
+    // bind the client events
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
 }
 
 MainFrame::~MainFrame() {}
@@ -40,13 +65,6 @@ MainFrame::~MainFrame() {}
 /// - And launch our debuggee process
 void MainFrame::InitializeClient()
 {
-    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
-    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
-    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
-    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
-
     wxBusyCursor cursor;
     if(!m_client.Connect("tcp://127.0.0.1:12345", 10)) {
         wxMessageBox("Failed to connect to DAP server", "DAP Demo", wxICON_ERROR | wxOK | wxCENTRE);
@@ -139,6 +157,11 @@ void MainFrame::OnTerminated(DAPEvent& event)
 {
     wxUnusedVar(event);
     AddLog(wxString() << "Session terminated!");
+    m_client.Cleanup();
+    for(auto ctrl : m_ctrls) {
+        ctrl->ClearAll();
+    }
+    m_current_file_loaded.Clear();
 }
 
 void MainFrame::OnOutput(DAPEvent& event)
@@ -170,5 +193,10 @@ void MainFrame::LoadFile(const wxString& filepath, int line_number)
         m_current_file_loaded = fp;
         m_stcText->LoadFile(m_current_file_loaded.GetFullPath());
     }
-    center_line(m_stcText, line_number);
+    center_line(m_stcText, line_number, true);
 }
+
+void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
+void MainFrame::OnStepInUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
+void MainFrame::OnStepOutUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
+void MainFrame::OnConnectUI(wxUpdateUIEvent& event) { event.Enable(!m_client.IsConnected()); }

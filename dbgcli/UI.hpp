@@ -58,9 +58,13 @@ protected:
 
 protected:
     virtual void OnConnect(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnConnectUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnNext(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnNextUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnStepIn(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnStepInUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnStepOut(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnStepOutUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
     wxStyledTextCtrl* GetStcText() { return m_stcText; }

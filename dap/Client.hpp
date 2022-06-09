@@ -125,6 +125,11 @@ public:
      * @param frameId
      */
     void GetScopes(int frameId);
+
+    /**
+     * @brief reset the session and clear all states
+     */
+    void Cleanup();
 };
 
 };     // namespace dap

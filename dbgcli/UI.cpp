@@ -282,15 +282,23 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     }
     // Connect events
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_EXECUTE);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_EXECUTE);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnNext, this, wxID_FORWARD);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnNextUI, this, wxID_FORWARD);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepIn, this, wxID_DOWN);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepInUI, this, wxID_DOWN);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepOut, this, wxID_UP);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepOutUI, this, wxID_UP);
 }
 
 MainFrameBase::~MainFrameBase()
 {
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_EXECUTE);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_EXECUTE);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnNext, this, wxID_FORWARD);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnNextUI, this, wxID_FORWARD);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepIn, this, wxID_DOWN);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepInUI, this, wxID_DOWN);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepOut, this, wxID_UP);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepOutUI, this, wxID_UP);
 }
