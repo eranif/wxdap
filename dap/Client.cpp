@@ -153,6 +153,7 @@ void dap::Client::OnJsonRead(JSON json)
         ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
         if(msg && msg->type == "response" && msg->As<Response>()->command == "initialize") {
             m_handshake_state = eHandshakeState::kCompleted;
+            LOG_ERROR() << json.ToString() << endl;
             SendDAPEvent(wxEVT_DAP_INITIALIZE_RESPONSE, new dap::InitializeResponse, json);
         }
         return;
@@ -175,20 +176,22 @@ void dap::Client::OnJsonRead(JSON json)
             SendDAPEvent(wxEVT_DAP_TERMINATED_EVENT, new dap::TerminatedEvent, json);
         } else if(as_event->event == "initialized") {
             SendDAPEvent(wxEVT_DAP_INITIALIZED_EVENT, new dap::InitializedEvent, json);
+        } else if(as_event->event == "output") {
+            SendDAPEvent(wxEVT_DAP_OUTPUT_EVENT, new dap::OutputEvent, json);
         } else {
-            LOG_DEBUG() << "Received JSON Event payload:" << endl;
-            LOG_DEBUG() << json.ToString(false) << endl;
+            LOG_ERROR() << "Received JSON Event payload:" << endl;
+            LOG_ERROR() << json.ToString(false) << endl;
         }
     } else if(as_response) {
         if(as_response->command == "stackTrace") {
             // received a stack trace response
             SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, new dap::StackTraceResponse, json);
         } else {
-            LOG_DEBUG() << json.ToString(false) << endl;
+            LOG_ERROR() << json.ToString(false) << endl;
         }
     } else {
-        LOG_DEBUG() << "Received JSON payload:" << endl;
-        LOG_DEBUG() << json.ToString(false) << endl;
+        LOG_ERROR() << "Received JSON payload:" << endl;
+        LOG_ERROR() << json.ToString(false) << endl;
     }
 }
 

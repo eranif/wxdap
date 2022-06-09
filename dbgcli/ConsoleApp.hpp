@@ -10,20 +10,12 @@
 // -----------------------------------------------------------
 using namespace dap;
 
-class DAPCli : public wxAppConsole
+class DAPCli : public wxApp
 {
     wxCmdLineParser m_parser;
-    dap::Client m_client;
 
 protected:
     bool DoParseCommandLine();
-
-    void OnStopped(DAPEvent& event);
-    void OnStackTrace(DAPEvent& event);
-    void OnInitialized(DAPEvent& event);
-    void OnExited(DAPEvent& event);
-    void OnTerminated(DAPEvent& event);
-    void InitializeClient();
 
 public:
     DAPCli();

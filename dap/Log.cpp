@@ -37,24 +37,26 @@ static void SetupConsole()
     HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if(stdoutHandle == INVALID_HANDLE_VALUE) {
-        exit(GetLastError());
+        return;
     }
 
     if(!GetConsoleMode(stdoutHandle, &outMode)) {
-        exit(GetLastError());
+        return;
     }
     initMode = outMode;
     // Enable ANSI escape codes
     outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
     if(!SetConsoleMode(stdoutHandle, outMode)) {
-        exit(GetLastError());
+        return;
     }
 }
 static void ResetConsole()
 {
     HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleMode(stdoutHandle, initMode);
+    if(stdoutHandle != INVALID_HANDLE_VALUE) {
+        SetConsoleMode(stdoutHandle, initMode);
+    }
 }
 #else
 static void SetupConsole() {}
