@@ -388,8 +388,8 @@ struct WXDLLIMPEXP_DAP InitializeRequestArguments : public Any {
      * en-US or de-CH.
      */
     wxString locale = "en-US";
-    bool linesStartAt1 = true;
-    bool columnsStartAt1 = true;
+    bool linesStartAt1 = false;
+    bool columnsStartAt1 = false;
     /**
      * Client supports the invalidated event.
      */
@@ -461,16 +461,15 @@ struct WXDLLIMPEXP_DAP LaunchRequestArguments : public Any {
     /// extra arguments to append to the program
     std::vector<wxString> args;
 
+    /// environment variables (A=B strings)
+    std::vector<wxString> env;
+
     /// working directory
     wxString cwd;
 
     /// stop on entry?
     bool stopOnEntry = false;
 
-    /*
-     * start the debugger from this directory
-     */
-    wxString workingDirectory = ".";
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();
 };

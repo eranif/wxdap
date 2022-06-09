@@ -23,6 +23,7 @@ class WXDLLIMPEXP_DAP Client : public wxEvtHandler
     size_t m_requestSeuqnce = 0;
     eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
     int m_active_thread_id = wxNOT_FOUND;
+    bool m_waiting_for_stopped_on_entry = false;
 
 protected:
     size_t GetNextSequence()
@@ -86,13 +87,23 @@ public:
     void SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines);
 
     /**
+     * @brief set breakpoint on a function
+     */
+    void SetFunctionBreakpoints(const wxString& function);
+
+    /**
      * @brief tell the debugger that we are done and ready to start the main loop
      */
     void ConfigurationDone();
     /**
      * @brief start the debuggee
+     * @param cmd the cmd in [0] is the program, the remainder are the arguments
+     * @param workingDirectory working directory, if empty, use `wxGetCwd()`
+     * @param stopOnEntry stop the debugger as soon as the debug session starts
+     * @param env array of strings in the form of `{ "A=B", "C=D", ... }`
      */
-    void Launch(std::vector<wxString> cmd);
+    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
+                const std::vector<wxString>& env = {});
 
     /**
      * @brief ask for list of threads

@@ -33,6 +33,7 @@ protected:
 
     /// Dap events
     void OnStopped(DAPEvent& event);
+    void OnStoppedOnFirstEntry(DAPEvent& event);
     void OnStackTrace(DAPEvent& event);
     void OnInitialized(DAPEvent& event);
     void OnExited(DAPEvent& event);

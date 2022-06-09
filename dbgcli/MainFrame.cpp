@@ -13,7 +13,6 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker
     if(line == wxNOT_FOUND) {
         line = ctrl->LineFromPosition(ctrl->GetLastPosition());
     }
-
     int lines_on_screen = ctrl->LinesOnScreen();
     int first_visible_line = line - lines_on_screen / 2;
     first_visible_line = wxMax(0, first_visible_line);
@@ -50,6 +49,7 @@ MainFrame::MainFrame(wxWindow* parent)
 
     // bind the client events
     m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, &MainFrame::OnStoppedOnFirstEntry, this);
     m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
     m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
     m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
@@ -74,7 +74,7 @@ void MainFrame::InitializeClient()
     // This part is done in mode **sync**
     m_client.Initialize();
     m_client.ConfigurationDone();
-    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
+    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" }, wxEmptyString, true);
 }
 
 void MainFrame::OnNext(wxCommandEvent& event)
@@ -92,6 +92,18 @@ void MainFrame::OnConnect(wxCommandEvent& event)
     InitializeClient();
 }
 
+/// DAP server stopped due to `stopOnEntry` true when called Launch()
+void MainFrame::OnStoppedOnFirstEntry(DAPEvent& event)
+{
+    dap::StoppedEvent* stopped_data = event.GetDapEvent()->As<dap::StoppedEvent>();
+    if(stopped_data) {
+        AddLog("Stopped on first entry!");
+        // Apply breakpoints and continue
+        m_client.SetBreakpointsFile("main.cpp", { { 26, "" } });
+        m_client.Continue();
+    }
+}
+
 /// DAP server stopped. This can happen for multiple reasons:
 /// - exception
 /// - breakpoint hit
@@ -106,16 +118,7 @@ void MainFrame::OnStopped(DAPEvent& event)
         AddLog(wxString() << "Stopped thread ID:" << stopped_data->threadId
                           << "(active thread ID:" << m_client.GetActiveThreadId() << ")");
 
-        if(stopped_data->reason == "exception") {
-            // apply breakpoints
-            m_client.SetBreakpointsFile("main.cpp", { { 17, "" } });
-            // Continue
-            m_client.Continue();
-        } else if(stopped_data->reason == "breakpoint" /* breakpoint hit */
-                  || stopped_data->reason == "step" /* user called "Next", "StepIn", "StepOut" */) {
-            // request the stack for the stopped thread
-            m_client.GetFrames();
-        }
+        m_client.GetFrames();
     }
 }
 
@@ -128,7 +131,7 @@ void MainFrame::OnStackTrace(DAPEvent& event)
         AddLog("Received stack trace event");
         if(!stack_trace_data->stackFrames.empty()) {
             wxString file = stack_trace_data->stackFrames[0].source.path;
-            int line = stack_trace_data->stackFrames[0].line;
+            int line = stack_trace_data->stackFrames[0].line - 1; // 0 based lines
             LoadFile(file, line);
         }
 
