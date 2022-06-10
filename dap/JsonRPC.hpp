@@ -1,11 +1,12 @@
 #ifndef JSONRPC_HPP
 #define JSONRPC_HPP
 
+#include "Exception.hpp"
 #include "Queue.hpp"
-#include "Socket.hpp"
 #include "dap.hpp"
 #include "dap_exports.hpp"
 #include <atomic>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <wx/object.h>
@@ -47,12 +48,38 @@ public:
 
     /**
      * @brief send protocol message over the network
+     * TransportPtr must have a Send(const wxString&) method
      */
-    void Send(ProtocolMessage& msg, Socket::Ptr_t conn) const;
+    template <typename TransportPtr>
+    void Send(ProtocolMessage& msg, TransportPtr conn) const
+    {
+        if(!conn) {
+            throw Exception("Invalid connection");
+        }
+        wxString network_buffer;
+        wxString payload = msg.ToString();
+        network_buffer = "Content-Length: ";
+        network_buffer += std::to_string(payload.length());
+        network_buffer += "\r\n\r\n";
+        network_buffer += payload;
+        conn->Send(network_buffer);
+    }
+
     /**
      * @brief send protocol message over the network
+     * TransportPtr must have a Send(const wxString&) method
      */
-    void Send(ProtocolMessage::Ptr_t msg, Socket::Ptr_t conn) const;
+    template <typename TransportPtr>
+    void Send(ProtocolMessage::Ptr_t msg, TransportPtr conn) const
+    {
+        if(!msg) {
+            throw Exception("Unable to send empty message");
+        }
+        if(!conn) {
+            throw Exception("Invalid connection");
+        }
+        Send(*msg.get(), conn);
+    }
 };
 };     // namespace dap
 #endif // JSONRPC_HPP

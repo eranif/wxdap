@@ -82,28 +82,3 @@ int dap::JsonRPC::ReadHeaders(unordered_map<wxString, wxString>& headers)
 void dap::JsonRPC::SetBuffer(const wxString& buffer) { m_buffer = buffer; }
 
 void dap::JsonRPC::AppendBuffer(const wxString& buffer) { m_buffer.append(buffer); }
-
-void dap::JsonRPC::Send(ProtocolMessage& msg, Socket::Ptr_t conn) const
-{
-    if(!conn) {
-        throw Exception("Invalid connection");
-    }
-    wxString network_buffer;
-    wxString payload = msg.ToString();
-    network_buffer = "Content-Length: ";
-    network_buffer += to_string(payload.length());
-    network_buffer += "\r\n\r\n";
-    network_buffer += payload;
-    conn->Send(network_buffer);
-}
-
-void dap::JsonRPC::Send(ProtocolMessage::Ptr_t msg, Socket::Ptr_t conn) const
-{
-    if(!msg) {
-        throw Exception("Unable to send empty message");
-    }
-    if(!conn) {
-        throw Exception("Invalid connection");
-    }
-    Send(*msg.get(), conn);
-}
