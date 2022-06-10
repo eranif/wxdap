@@ -5,6 +5,8 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 
 ### Requests
 
+#### Mandatory requests
+
 - [x] Connect
 - [x] Initialize
 - [x] Launch - This launch request is sent from the client to the debug adapter to start the debuggee
@@ -16,14 +18,17 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] Next - executes one step for the specified thread
 - [X] StepIn - resumes the given thread to step into a function/method and allows all other threads to run freely by resuming them
 - [X] StepOut - The request resumes the given thread to step out (return) from a function/method and allows all other threads to run freely by resuming them
-- [ ] NextInstruction - executes one instruction for the specified thread
 - [ ] Pause - pause the debugger execution
-- [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of code or to execute code again
 - [ ] BreakpointLocations - returns all possible locations for source breakpoints in a given range
 - [X] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
+- [X] Variables - return list of variables
+
+#### Lower priority requests
+
+- [ ] NextInstruction - executes one instruction for the specified thread
+- [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of code or to execute code again
 - [ ] ReadMemory - Reads bytes from memory at the provided location
 - [ ] Disassemble - Disassembles code stored at the provided location
-- [X] Variables - return list variables
 
 ### Events
 
