@@ -1,4 +1,5 @@
 #include "dap.hpp"
+
 #include "Socket.hpp"
 
 #define CREATE_JSON() JSON json = JSON::CreateObject()
@@ -69,6 +70,7 @@ void Initialize()
     REGISTER_CLASS(ThreadsResponse);
     REGISTER_CLASS(ScopesResponse);
     REGISTER_CLASS(StackTraceResponse);
+    REGISTER_CLASS(VariablesResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -1086,7 +1088,7 @@ JSON Variable::To() const
     json.Add("name", name);
     json.Add("value", value);
     json.Add("type", type);
-    json.Add("variablesReference", (int)variablesReference);
+    json.Add("variablesReference", variablesReference);
     json.Add("presentationHint", presentationHint.To());
     return json;
 }
@@ -1096,7 +1098,7 @@ void Variable::From(const JSON& json)
     name = json["name"].GetString();
     value = json["value"].GetString();
     type = json["type"].GetString();
-    variablesReference = (eScopes)json["variablesReference"].GetInteger();
+    variablesReference = json["variablesReference"].GetInteger();
     presentationHint.From(json["presentationHint"]);
 }
 
@@ -1165,7 +1167,7 @@ JSON Scope::To() const
 {
     auto json = JSON::CreateObject();
     json.Add("name", name);
-    json.Add("variablesReference", (int)variablesReference);
+    json.Add("variablesReference", variablesReference);
     json.Add("expensive", expensive);
     return json;
 }
@@ -1173,7 +1175,7 @@ JSON Scope::To() const
 void Scope::From(const JSON& json)
 {
     name = json["name"].GetString();
-    variablesReference = (eScopes)json["variablesReference"].GetInteger();
+    variablesReference = json["variablesReference"].GetInteger();
     expensive = json["expensive"].GetBool();
 }
 // ----------------------------------------
@@ -1217,13 +1219,15 @@ JSON VariablesArguments::To() const
 {
     auto json = JSON::CreateObject();
     json.Add("variablesReference", (int)variablesReference);
+    json.Add("count", count);
     json.Add("format", format.To());
     return json;
 }
 
 void VariablesArguments::From(const JSON& json)
 {
-    variablesReference = (eScopes)json["variablesReference"].GetInteger();
+    variablesReference = json["variablesReference"].GetInteger();
+    count = json["count"].GetInteger(0);
     format.From(json["format"]);
 }
 

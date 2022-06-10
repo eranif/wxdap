@@ -54,6 +54,8 @@ protected:
     wxStyledTextCtrl* m_stcThreads;
     wxPanel* m_panel27;
     wxStyledTextCtrl* m_stcLog;
+    wxPanel* m_panel30;
+    wxStyledTextCtrl* m_stcScopes;
     wxToolBar* m_toolbar12;
 
 protected:
@@ -75,6 +77,8 @@ public:
     wxPanel* GetPanel19() { return m_panel19; }
     wxStyledTextCtrl* GetStcLog() { return m_stcLog; }
     wxPanel* GetPanel27() { return m_panel27; }
+    wxStyledTextCtrl* GetStcScopes() { return m_stcScopes; }
+    wxPanel* GetPanel30() { return m_panel30; }
     wxNotebook* GetNotebook17() { return m_notebook17; }
     wxPanel* GetSplitterPage8() { return m_splitterPage8; }
     wxSplitterWindow* GetSplitter4() { return m_splitter4; }

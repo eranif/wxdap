@@ -119,11 +119,6 @@ public:
     int GetActiveThreadId() const { return m_active_thread_id; }
 
     /**
-     * @brief Wait until connection is established
-     */
-    bool Connect(const wxString& connection_string, int timeoutSeconds);
-
-    /**
      * @brief initiate the handshake between the server and the client
      */
     void Initialize();
@@ -203,6 +198,13 @@ public:
      * @brief step out of a function
      */
     void StepOut(int threadId = wxNOT_FOUND);
+
+    /**
+     * @brief return the list of all children variables of `variablesReference`
+     * @param variablesReference the parent ID
+     * @param count number of children. If count 0, all variables are returned
+     */
+    void GetChildrenVariables(int variablesReference, size_t count = 10, const wxString& format = wxEmptyString);
 };
 
 };     // namespace dap

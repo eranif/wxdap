@@ -3,6 +3,7 @@
 
 #include "JSON.hpp"
 #include "dap_exports.hpp"
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -73,11 +74,6 @@ struct WXDLLIMPEXP_DAP Any {
     }
 };
 
-enum class eScopes {
-    kArguments = 0,
-    kLocals = 1,
-    kRegisters = 2,
-};
 struct Event;
 struct Request;
 struct Response;
@@ -829,7 +825,7 @@ struct WXDLLIMPEXP_DAP Variable : public Any {
      * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing
      * variablesReference to the VariablesRequest.
      */
-    eScopes variablesReference = eScopes::kArguments;
+    int variablesReference = 0;
     VariablePresentationHint presentationHint;
     ANY_CLASS(Variable);
     JSON_SERIALIZE();
@@ -854,11 +850,11 @@ struct WXDLLIMPEXP_DAP ScopesRequest : public Request {
 
 struct WXDLLIMPEXP_DAP Scope : public Any {
     wxString name;
-    eScopes variablesReference = eScopes::kArguments;
+    int variablesReference = 0;
     bool expensive = false;
-    Scope(const wxString& n, eScopes ref)
+    Scope(const wxString& n, int varRef)
         : name(n)
-        , variablesReference(ref)
+        , variablesReference(varRef)
     {
     }
 
@@ -917,8 +913,9 @@ struct WXDLLIMPEXP_DAP VariablesArguments : public Any {
     /**
      * The Variable reference.
      */
-    eScopes variablesReference = eScopes::kLocals;
+    int variablesReference = 0;
     ValueFormat format;
+    int count = 0;
     ANY_CLASS(VariablesArguments);
     JSON_SERIALIZE();
 };

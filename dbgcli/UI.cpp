@@ -237,6 +237,53 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
 
     boxSizer28->Add(m_stcLog, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
+    m_panel30 = new wxPanel(m_notebook17, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_notebook17, wxSize(-1, -1)),
+                            wxTAB_TRAVERSAL);
+    m_notebook17->AddPage(m_panel30, _("Scope Variables"), false);
+
+    wxBoxSizer* boxSizer31 = new wxBoxSizer(wxVERTICAL);
+    m_panel30->SetSizer(boxSizer31);
+
+    m_stcScopes =
+        new wxStyledTextCtrl(m_panel30, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_panel30, wxSize(-1, -1)), 0);
+    // Configure the fold margin
+    m_stcScopes->SetMarginType(4, wxSTC_MARGIN_SYMBOL);
+    m_stcScopes->SetMarginMask(4, wxSTC_MASK_FOLDERS);
+    m_stcScopes->SetMarginSensitive(4, true);
+    m_stcScopes->SetMarginWidth(4, 0);
+
+    // Configure the tracker margin
+    m_stcScopes->SetMarginWidth(1, 0);
+
+    // Configure the symbol margin
+    m_stcScopes->SetMarginType(2, wxSTC_MARGIN_SYMBOL);
+    m_stcScopes->SetMarginMask(2, ~(wxSTC_MASK_FOLDERS));
+    m_stcScopes->SetMarginWidth(2, 0);
+    m_stcScopes->SetMarginSensitive(2, true);
+
+    // Configure the line numbers margin
+    int m_stcScopes_PixelWidth = 4 + 5 * m_stcScopes->TextWidth(wxSTC_STYLE_LINENUMBER, wxT("9"));
+    m_stcScopes->SetMarginType(0, wxSTC_MARGIN_NUMBER);
+    m_stcScopes->SetMarginWidth(0, m_stcScopes_PixelWidth);
+
+    // Configure the line symbol margin
+    m_stcScopes->SetMarginType(3, wxSTC_MARGIN_FORE);
+    m_stcScopes->SetMarginMask(3, 0);
+    m_stcScopes->SetMarginWidth(3, 0);
+    // Select the lexer
+    m_stcScopes->SetLexer(wxSTC_LEX_NULL);
+    // Set default font / styles
+    m_stcScopes->StyleClearAll();
+    m_stcScopes->SetWrapMode(0);
+    m_stcScopes->SetIndentationGuides(0);
+    m_stcScopes->SetKeyWords(0, wxT(""));
+    m_stcScopes->SetKeyWords(1, wxT(""));
+    m_stcScopes->SetKeyWords(2, wxT(""));
+    m_stcScopes->SetKeyWords(3, wxT(""));
+    m_stcScopes->SetKeyWords(4, wxT(""));
+
+    boxSizer31->Add(m_stcScopes, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+
     m_toolbar12 = this->CreateToolBar(wxTB_HORZ_TEXT | wxTB_NOICONS | wxTB_FLAT, wxID_ANY);
     m_toolbar12->SetToolBitmapSize(wxSize(16, 16));
 

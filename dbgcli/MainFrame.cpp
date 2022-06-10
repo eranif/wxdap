@@ -38,7 +38,7 @@ MainFrame::MainFrame(wxWindow* parent)
 {
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
 
-    m_ctrls = { m_stcLog, m_stcText, m_stcThreads, m_stcStack };
+    m_ctrls = { m_stcLog, m_stcText, m_stcThreads, m_stcStack, m_stcScopes };
     for(int i = 0; i < wxSTC_STYLE_MAX; ++i) {
         for(auto ctrl : m_ctrls) {
             ctrl->StyleSetFont(i, code_font);
@@ -82,6 +82,8 @@ void MainFrame::InitializeClient()
     m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
     m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
     m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
+    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
     m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
 
     // This part is done in mode **sync**
@@ -146,6 +148,33 @@ void MainFrame::OnStopped(DAPEvent& event)
 }
 
 /// Received a response to `GetFrames()` call
+void MainFrame::OnScopes(DAPEvent& event)
+{
+    m_stcScopes->AppendText("-- Requesting variables for scopes --\n");
+    dap::ScopesResponse* resp = event.GetDapResponse()->As<dap::ScopesResponse>();
+    if(resp) {
+        for(const auto& scope : resp->scopes) {
+            m_client.GetChildrenVariables(scope.variablesReference);
+        }
+    }
+    center_line(m_stcScopes);
+}
+
+void MainFrame::OnVariables(DAPEvent& event)
+{
+    dap::VariablesResponse* resp = event.GetDapResponse()->As<dap::VariablesResponse>();
+    if(resp) {
+        for(const auto& var : resp->variables) {
+            wxString button = (var.variablesReference > 0 ? "> " : "  ");
+            wxString value = var.value.empty() ? "\"\"" : var.value;
+            m_stcScopes->AppendText(wxString() << button << "(" << var.variablesReference << ") " << var.name << " = "
+                                               << value << "\n");
+        }
+    }
+    center_line(m_stcScopes);
+}
+
+/// Received a response to `GetFrames()` call
 void MainFrame::OnStackTrace(DAPEvent& event)
 {
     dap::StackTraceResponse* stack_trace_data = event.GetDapResponse()->As<dap::StackTraceResponse>();
@@ -156,6 +185,9 @@ void MainFrame::OnStackTrace(DAPEvent& event)
             wxString file = stack_trace_data->stackFrames[0].source.path;
             int line = stack_trace_data->stackFrames[0].line - 1; // 0 based lines
             LoadFile(file, line);
+
+            // request the scopes for the first stack
+            m_client.GetScopes(stack_trace_data->stackFrames[0].id);
         }
 
         for(const auto& stack : stack_trace_data->stackFrames) {

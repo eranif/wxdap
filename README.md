@@ -10,7 +10,7 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] Launch - This launch request is sent from the client to the debug adapter to start the debuggee
 - [x] SetBreakpointsFile - Sets multiple breakpoints for a single source and clears all previous breakpoints in that source
 - [x] Threads - The request retrieves a list of all threads.
-- [x] Scopes - The request returns the variable scopes for a given stackframe ID
+- [x] Scopes - The request returns the variable scopes for a given stackframe ID (this does not return the variables themselves, but only their groups, like "Locals", "Registers" etc)
 - [x] GetFrames - return list of frames for a given thread ID
 - [x] Continue - continue the execution
 - [x] Next - executes one step for the specified thread
@@ -23,6 +23,7 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [X] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
 - [ ] ReadMemory - Reads bytes from memory at the provided location
 - [ ] Disassemble - Disassembles code stored at the provided location
+- [X] Variables - return list variables
 
 ### Events
 

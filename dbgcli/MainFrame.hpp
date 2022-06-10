@@ -35,6 +35,8 @@ protected:
     void OnStopped(DAPEvent& event);
     void OnStoppedOnFirstEntry(DAPEvent& event);
     void OnStackTrace(DAPEvent& event);
+    void OnScopes(DAPEvent& event);
+    void OnVariables(DAPEvent& event);
     void OnInitialized(DAPEvent& event);
     void OnExited(DAPEvent& event);
     void OnTerminated(DAPEvent& event);

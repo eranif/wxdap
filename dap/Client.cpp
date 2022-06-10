@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <thread>
+#include <wx/msgdlg.h>
 
 ///----------------------------------------------
 /// Socket
@@ -185,6 +186,20 @@ void dap::Client::OnJsonRead(JSON json)
         if(as_response->command == "stackTrace") {
             // received a stack trace response
             SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, new dap::StackTraceResponse, json);
+
+        } else if(as_response->command == "scopes") {
+            // Scopes response.
+            // Usually contains top level items to display in the tree view of the variables
+            // example:
+            //
+            // > Locals
+            // > Registers
+            // > Globals
+            //
+            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, new dap::ScopesResponse, json);
+        } else if(as_response->command == "variables") {
+            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, new dap::VariablesResponse, json);
+
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
                   as_response->command == "next" || as_response->command == "continue") {
             // the above responses indicate that the debugger accepted the corresponding command and can not be
@@ -250,91 +265,103 @@ void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap
 
 void dap::Client::ConfigurationDone()
 {
-    ConfigurationDoneRequest* configDone = new ConfigurationDoneRequest();
-    configDone->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_transport);
+    ConfigurationDoneRequest configDone;
+    configDone.seq = GetNextSequence();
+    m_rpc.Send(configDone, m_transport);
 }
 
 void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
                          const std::vector<wxString>& env)
 {
     m_active_thread_id = wxNOT_FOUND;
-    LaunchRequest* launchRequest = new LaunchRequest();
-    launchRequest->seq = GetNextSequence(); // command sequence
-    launchRequest->arguments.program = cmd[0];
+    LaunchRequest launchRequest;
+    launchRequest.seq = GetNextSequence(); // command sequence
+    launchRequest.arguments.program = cmd[0];
 
     cmd.erase(cmd.begin());
-    launchRequest->arguments.args = cmd; // the remainder are the args
-    launchRequest->arguments.stopOnEntry = stopOnEntry;
-    launchRequest->arguments.env = env;
+    launchRequest.arguments.args = cmd; // the remainder are the args
+    launchRequest.arguments.stopOnEntry = stopOnEntry;
+    launchRequest.arguments.env = env;
 
     // set the working directory
-    launchRequest->arguments.cwd = workingDirectory;
-    if(launchRequest->arguments.cwd.empty()) {
-        launchRequest->arguments.cwd = ::wxGetCwd();
+    launchRequest.arguments.cwd = workingDirectory;
+    if(launchRequest.arguments.cwd.empty()) {
+        launchRequest.arguments.cwd = ::wxGetCwd();
     }
     m_waiting_for_stopped_on_entry = stopOnEntry;
-    m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_transport);
+    m_rpc.Send(launchRequest, m_transport);
 }
 
 void dap::Client::GetThreads()
 {
-    ThreadsRequest* threadsRequest = new ThreadsRequest();
-    threadsRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_transport);
+    ThreadsRequest threadsRequest;
+    threadsRequest.seq = GetNextSequence();
+    m_rpc.Send(threadsRequest, m_transport);
 }
 
 void dap::Client::GetScopes(int frameId)
 {
-    ScopesRequest* scopesRequest = new ScopesRequest();
-    scopesRequest->arguments.frameId = frameId;
-    scopesRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_transport);
+    ScopesRequest scopesRequest;
+    scopesRequest.seq = GetNextSequence();
+    scopesRequest.arguments.frameId = frameId;
+    m_rpc.Send(scopesRequest, m_transport);
 }
 
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
 {
-    StackTraceRequest* req = new StackTraceRequest();
-    req->seq = GetNextSequence();
-    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req->arguments.levels = frame_count;
-    req->arguments.startFrame = starting_frame;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    StackTraceRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req.arguments.levels = frame_count;
+    req.arguments.startFrame = starting_frame;
+    m_rpc.Send(req, m_transport);
 }
 
 void dap::Client::Next(int threadId)
 {
-    NextRequest* req = new NextRequest();
-    req->seq = GetNextSequence();
-    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    NextRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    m_rpc.Send(req, m_transport);
 }
 
 void dap::Client::Continue()
 {
-    ContinueRequest* req = new ContinueRequest();
-    req->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    ContinueRequest req;
+    req.seq = GetNextSequence();
+    m_rpc.Send(req, m_transport);
 }
 
 void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints)
 {
     // place breakpoint based on function name
-    SetFunctionBreakpointsRequest* req = new SetFunctionBreakpointsRequest();
-    req->arguments.breakpoints = breakpoints;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    SetFunctionBreakpointsRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.breakpoints = breakpoints;
+    m_rpc.Send(req, m_transport);
 }
 
 void dap::Client::StepIn(int threadId)
 {
-    StepInRequest* req = new StepInRequest();
-    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    StepInRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    m_rpc.Send(req, m_transport);
 }
 
 void dap::Client::StepOut(int threadId)
 {
-    StepOutRequest* req = new StepOutRequest();
-    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
+    StepOutRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    m_rpc.Send(req, m_transport);
+}
+
+void dap::Client::GetChildrenVariables(int variablesReference, size_t count, const wxString& format)
+{
+    VariablesRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.variablesReference = variablesReference;
+    req.arguments.count = count;
+    m_rpc.Send(req, m_transport);
 }
