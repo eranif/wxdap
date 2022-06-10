@@ -37,6 +37,8 @@ void Initialize()
     REGISTER_CLASS(SetBreakpointsRequest);
     REGISTER_CLASS(ContinueRequest);
     REGISTER_CLASS(NextRequest);
+    REGISTER_CLASS(StepInRequest);
+    REGISTER_CLASS(StepOutRequest);
     REGISTER_CLASS(ThreadsRequest);
     REGISTER_CLASS(ScopesRequest);
     REGISTER_CLASS(StackTraceRequest);
@@ -60,6 +62,8 @@ void Initialize()
     REGISTER_CLASS(SetBreakpointsResponse);
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
+    REGISTER_CLASS(StepInResponse);
+    REGISTER_CLASS(StepOutResponse);
     REGISTER_CLASS(ThreadsResponse);
     REGISTER_CLASS(ScopesResponse);
     REGISTER_CLASS(StackTraceResponse);
@@ -667,6 +671,25 @@ void BreakpointLocationsArguments::From(const JSON& json)
     column = json["column"].GetInteger(column);
     endColumn = json["endColumn"].GetInteger(endColumn);
 }
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON StepArguments::To() const
+{
+    JSON json = JSON::CreateObject();
+    json.Add("threadId", threadId);
+    json.Add("singleThread", singleThread);
+    return json;
+}
+
+void StepArguments::From(const JSON& json)
+{
+    threadId = json["threadId"].GetInteger(wxNOT_FOUND);
+    singleThread = json["singleThread"].GetBool(false);
+}
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -844,6 +867,23 @@ void ContinueRequest::From(const JSON& json)
     REQUEST_FROM();
     READ_OBJ(arguments);
 }
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON StepRequest::To() const
+{
+    REQUEST_TO();
+    ADD_OBJ(arguments);
+    return json;
+}
+
+void StepRequest::From(const JSON& json)
+{
+    REQUEST_FROM();
+    READ_OBJ(arguments);
+}
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------

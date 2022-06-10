@@ -141,6 +141,16 @@ public:
      * @brief reset the session and clear all states
      */
     void Cleanup();
+
+    /**
+     * @brief step into function
+     */
+    void StepIn(int threadId = wxNOT_FOUND);
+
+    /**
+     * @brief step out of a function
+     */
+    void StepOut(int threadId = wxNOT_FOUND);
 };
 
 };     // namespace dap

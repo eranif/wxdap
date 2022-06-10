@@ -83,9 +83,18 @@ void MainFrame::OnNext(wxCommandEvent& event)
     m_client.Next();
 }
 
-void MainFrame::OnStepIn(wxCommandEvent& event) {}
+void MainFrame::OnStepIn(wxCommandEvent& event)
+{
+    wxUnusedVar(event);
+    m_client.StepIn();
+}
 
-void MainFrame::OnStepOut(wxCommandEvent& event) {}
+void MainFrame::OnStepOut(wxCommandEvent& event)
+{
+    wxUnusedVar(event);
+    m_client.StepOut();
+}
+
 void MainFrame::OnConnect(wxCommandEvent& event)
 {
     wxUnusedVar(event);

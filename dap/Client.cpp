@@ -36,70 +36,7 @@ bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
     return false;
 }
 
-void dap::Client::Initialize()
-{
-    // Send initialize request
-    InitializeRequest req;
-    req.arguments.clientID = "dbgcli";
-    m_rpc.Send(req, m_socket);
-    m_handshake_state = eHandshakeState::kInProgress;
-}
-
 bool dap::Client::IsConnected() const { return m_readerThread && !m_terminated.load(); }
-
-void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
-{
-    // Now that the initialize is done, we can call 'setBreakpoints' command
-    SetBreakpointsRequest* setBreakpoints = new SetBreakpointsRequest();
-    setBreakpoints->seq = GetNextSequence(); // command sequence
-    setBreakpoints->arguments.breakpoints = lines;
-    setBreakpoints->arguments.source.path = file;
-    m_rpc.Send(ProtocolMessage::Ptr_t(setBreakpoints), m_socket);
-}
-
-void dap::Client::ConfigurationDone()
-{
-    ConfigurationDoneRequest* configDone = new ConfigurationDoneRequest();
-    configDone->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_socket);
-}
-
-void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
-                         const std::vector<wxString>& env)
-{
-    m_active_thread_id = wxNOT_FOUND;
-    LaunchRequest* launchRequest = new LaunchRequest();
-    launchRequest->seq = GetNextSequence(); // command sequence
-    launchRequest->arguments.program = cmd[0];
-
-    cmd.erase(cmd.begin());
-    launchRequest->arguments.args = cmd; // the remainder are the args
-    launchRequest->arguments.stopOnEntry = stopOnEntry;
-    launchRequest->arguments.env = env;
-
-    // set the working directory
-    launchRequest->arguments.cwd = workingDirectory;
-    if(launchRequest->arguments.cwd.empty()) {
-        launchRequest->arguments.cwd = ::wxGetCwd();
-    }
-    m_waiting_for_stopped_on_entry = stopOnEntry;
-    m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
-}
-
-void dap::Client::GetThreads()
-{
-    ThreadsRequest* threadsRequest = new ThreadsRequest();
-    threadsRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_socket);
-}
-
-void dap::Client::GetScopes(int frameId)
-{
-    ScopesRequest* scopesRequest = new ScopesRequest();
-    scopesRequest->arguments.frameId = frameId;
-    scopesRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_socket);
-}
 
 void dap::Client::StopReaderThread()
 {
@@ -224,6 +161,83 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
     ProcessEvent(event);
 }
 
+void dap::Client::Cleanup()
+{
+    StopReaderThread();
+    m_socket.reset(new SocketClient());
+    m_shutdown.store(false);
+    m_terminated.store(false);
+    m_rpc = {};
+    m_requestSeuqnce = 0;
+    m_handshake_state = eHandshakeState::kNotPerformed;
+    m_active_thread_id = wxNOT_FOUND;
+    m_waiting_for_stopped_on_entry = false;
+}
+
+/// API
+void dap::Client::Initialize()
+{
+    // Send initialize request
+    InitializeRequest req;
+    req.arguments.clientID = "dbgcli";
+    m_rpc.Send(req, m_socket);
+    m_handshake_state = eHandshakeState::kInProgress;
+}
+
+void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
+{
+    // Now that the initialize is done, we can call 'setBreakpoints' command
+    SetBreakpointsRequest* setBreakpoints = new SetBreakpointsRequest();
+    setBreakpoints->seq = GetNextSequence(); // command sequence
+    setBreakpoints->arguments.breakpoints = lines;
+    setBreakpoints->arguments.source.path = file;
+    m_rpc.Send(ProtocolMessage::Ptr_t(setBreakpoints), m_socket);
+}
+
+void dap::Client::ConfigurationDone()
+{
+    ConfigurationDoneRequest* configDone = new ConfigurationDoneRequest();
+    configDone->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_socket);
+}
+
+void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
+                         const std::vector<wxString>& env)
+{
+    m_active_thread_id = wxNOT_FOUND;
+    LaunchRequest* launchRequest = new LaunchRequest();
+    launchRequest->seq = GetNextSequence(); // command sequence
+    launchRequest->arguments.program = cmd[0];
+
+    cmd.erase(cmd.begin());
+    launchRequest->arguments.args = cmd; // the remainder are the args
+    launchRequest->arguments.stopOnEntry = stopOnEntry;
+    launchRequest->arguments.env = env;
+
+    // set the working directory
+    launchRequest->arguments.cwd = workingDirectory;
+    if(launchRequest->arguments.cwd.empty()) {
+        launchRequest->arguments.cwd = ::wxGetCwd();
+    }
+    m_waiting_for_stopped_on_entry = stopOnEntry;
+    m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
+}
+
+void dap::Client::GetThreads()
+{
+    ThreadsRequest* threadsRequest = new ThreadsRequest();
+    threadsRequest->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_socket);
+}
+
+void dap::Client::GetScopes(int frameId)
+{
+    ScopesRequest* scopesRequest = new ScopesRequest();
+    scopesRequest->arguments.frameId = frameId;
+    scopesRequest->seq = GetNextSequence();
+    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_socket);
+}
+
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
 {
     StackTraceRequest* req = new StackTraceRequest();
@@ -249,20 +263,21 @@ void dap::Client::Continue()
     m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }
 
-void dap::Client::Cleanup()
-{
-    StopReaderThread();
-    m_socket.reset(new SocketClient());
-    m_shutdown.store(false);
-    m_terminated.store(false);
-    m_rpc = {};
-    m_requestSeuqnce = 0;
-    m_handshake_state = eHandshakeState::kNotPerformed;
-    m_active_thread_id = wxNOT_FOUND;
-    m_waiting_for_stopped_on_entry = false;
-}
-
 void dap::Client::SetFunctionBreakpoints(const wxString& function)
 {
     // place breakpoint based on function name
+}
+
+void dap::Client::StepIn(int threadId)
+{
+    StepInRequest* req = new StepInRequest();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+}
+
+void dap::Client::StepOut(int threadId)
+{
+    StepOutRequest* req = new StepOutRequest();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }

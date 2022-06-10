@@ -520,6 +520,23 @@ struct WXDLLIMPEXP_DAP BreakpointLocationsArguments : public Any {
     JSON_SERIALIZE();
 };
 
+struct WXDLLIMPEXP_DAP StepArguments : public Any {
+    /**
+     * Specifies the thread for which to resume execution for one step-into (of
+     * the given granularity).
+     */
+    int threadId = wxNOT_FOUND;
+    /**
+     * If this optional flag is true, all other suspended threads are not resumed.
+     */
+    int singleThread = false;
+    ANY_CLASS(StepArguments);
+    JSON_SERIALIZE();
+};
+
+typedef StepArguments StepInArguments;
+typedef StepArguments StepOutArguments;
+
 /// Properties of a breakpoint location returned from the 'breakpointLocations'
 /// request.
 struct WXDLLIMPEXP_DAP BreakpointLocation : public Any {
@@ -637,6 +654,34 @@ struct WXDLLIMPEXP_DAP NextRequest : public Request {
 /// Response to 'continue' request.
 struct WXDLLIMPEXP_DAP NextResponse : public EmptyAckResponse {
     RESPONSE_CLASS(NextResponse, "next");
+};
+
+/// Step request (base for In and Out)
+struct WXDLLIMPEXP_DAP StepRequest : public Request {
+    StepArguments arguments;
+    REQUEST_CLASS(StepRequest, "step");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP StepInRequest : public StepRequest {
+    REQUEST_CLASS(StepInRequest, "stepIn");
+};
+
+struct WXDLLIMPEXP_DAP StepOutRequest : public StepRequest {
+    REQUEST_CLASS(StepOutRequest, "stepOut");
+};
+
+/// Step response (base for In and Out)
+struct WXDLLIMPEXP_DAP StepResponse : public Response {
+    RESPONSE_CLASS(StepResponse, "step");
+};
+
+struct WXDLLIMPEXP_DAP StepInResponse : public Response {
+    RESPONSE_CLASS(StepInResponse, "stepIn");
+};
+
+struct WXDLLIMPEXP_DAP StepOutResponse : public Response {
+    RESPONSE_CLASS(StepOutResponse, "stepOut");
 };
 
 /// A Stackframe contains the source location
