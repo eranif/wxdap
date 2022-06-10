@@ -14,8 +14,8 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] GetFrames - return list of frames for a given thread ID
 - [x] Continue - continue the execution
 - [x] Next - executes one step for the specified thread
-- [ ] StepIn - resumes the given thread to step into a function/method and allows all other threads to run freely by resuming them
-- [ ] StepOut - The request resumes the given thread to step out (return) from a function/method and allows all other threads to run freely by resuming them
+- [X] StepIn - resumes the given thread to step into a function/method and allows all other threads to run freely by resuming them
+- [X] StepOut - The request resumes the given thread to step out (return) from a function/method and allows all other threads to run freely by resuming them
 - [ ] NextInstruction - executes one instruction for the specified thread
 - [ ] Pause - pause the debugger execution
 - [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of code or to execute code again

@@ -24,6 +24,7 @@ class WXDLLIMPEXP_DAP Client : public wxEvtHandler
     eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
     int m_active_thread_id = wxNOT_FOUND;
     bool m_waiting_for_stopped_on_entry = false;
+    bool m_can_interact = false;
 
 protected:
     size_t GetNextSequence()
@@ -60,6 +61,11 @@ protected:
 public:
     Client();
     virtual ~Client();
+
+    /**
+     * @brief can we interact with the debugger?
+     */
+    bool CanInteract() const { return m_can_interact; }
 
     /**
      * @brief return the currently active thread ID

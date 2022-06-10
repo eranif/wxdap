@@ -113,6 +113,7 @@ void dap::Client::OnJsonRead(JSON json)
     if(as_event) {
         // received an event
         if(as_event->event == "stopped") {
+            m_can_interact = true;
             if(m_waiting_for_stopped_on_entry) {
                 m_waiting_for_stopped_on_entry = false;
                 SendDAPEvent(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, new dap::StoppedEvent, json);
@@ -137,6 +138,11 @@ void dap::Client::OnJsonRead(JSON json)
         if(as_response->command == "stackTrace") {
             // received a stack trace response
             SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, new dap::StackTraceResponse, json);
+        } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
+                  as_response->command == "next" || as_response->command == "continue") {
+            // the above responses indicate that the debugger accepted the corresponding command and can not be
+            // interacted for now
+            m_can_interact = false;
         } else {
             LOG_ERROR() << json.ToString(false) << endl;
         }
@@ -172,6 +178,7 @@ void dap::Client::Cleanup()
     m_handshake_state = eHandshakeState::kNotPerformed;
     m_active_thread_id = wxNOT_FOUND;
     m_waiting_for_stopped_on_entry = false;
+    m_can_interact = false;
 }
 
 /// API

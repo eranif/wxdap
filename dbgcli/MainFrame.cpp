@@ -208,7 +208,7 @@ void MainFrame::LoadFile(const wxString& filepath, int line_number)
     center_line(m_stcText, line_number, true);
 }
 
-void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
-void MainFrame::OnStepInUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
-void MainFrame::OnStepOutUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected()); }
+void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
+void MainFrame::OnStepInUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
+void MainFrame::OnStepOutUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
 void MainFrame::OnConnectUI(wxUpdateUIEvent& event) { event.Enable(!m_client.IsConnected()); }
