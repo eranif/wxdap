@@ -142,6 +142,7 @@ public:
      * @brief tell the debugger that we are done and ready to start the main loop
      */
     void ConfigurationDone();
+
     /**
      * @brief start the debuggee
      * @param cmd the cmd in [0] is the program, the remainder are the arguments
@@ -179,7 +180,7 @@ public:
     void Next(int threadId = wxNOT_FOUND);
 
     /**
-     * @brief return the variables for stack frame
+     * @brief return the variable scopes for a given frame
      * @param frameId
      */
     void GetScopes(int frameId);
@@ -200,7 +201,7 @@ public:
     void StepOut(int threadId = wxNOT_FOUND);
 
     /**
-     * @brief return the list of all children variables of `variablesReference`
+     * @brief return the list of all children variables for `variablesReference`
      * @param variablesReference the parent ID
      * @param count number of children. If count 0, all variables are returned
      */
