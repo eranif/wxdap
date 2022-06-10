@@ -1,25 +1,64 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include "DAPEvent.hpp"
 #include "JsonRPC.hpp"
 #include "Socket.hpp"
-
-#include "DAPEvent.hpp"
 #include "dap_exports.hpp"
+
+#include <atomic>
 #include <wx/event.h>
 #include <wx/string.h>
 
 namespace dap
 {
+/// The transport class used to communicate with the DAP server
+/// Note about thread safety:
+/// This class must be stateless and thread-safe since it is
+/// used by both an internal thread and the caller thread
+class WXDLLIMPEXP_DAP Transport
+{
+public:
+    typedef std::shared_ptr<Transport> ptr_t;
+
+    /**
+     * @brief return from the network with a given timeout
+     * @returns true on success, false in case of an error. True is also returned when timeout occurs, check the buffer
+     * length if it is 0, timeout occured
+     */
+    virtual bool Read(wxString& WXUNUSED(buffer), int msTimeout) = 0;
+
+    /**
+     * @brief send data over the network
+     * @return number of bytes written
+     */
+    virtual size_t Send(const wxString& WXUNUSED(buffer)) = 0;
+};
+
+/// simple socket implementation for Socket
+class WXDLLIMPEXP_DAP SocketTransport : public Transport
+{
+    Socket::Ptr_t m_socket = nullptr;
+
+public:
+    SocketTransport();
+    virtual ~SocketTransport();
+
+    bool Read(wxString& buffer, int msTimeout) override;
+    size_t Send(const wxString& buffer) override;
+
+    // socket specific
+    bool Connect(const wxString& connection_string, int timeoutSeconds);
+};
+
 class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
     enum class eHandshakeState { kNotPerformed, kInProgress, kCompleted };
-
-    Socket::Ptr_t m_socket = nullptr;
+    Transport::ptr_t m_transport = nullptr;
     dap::JsonRPC m_rpc;
-    atomic_bool m_shutdown;
-    atomic_bool m_terminated;
-    thread* m_readerThread = nullptr;
+    std::atomic_bool m_shutdown;
+    std::atomic_bool m_terminated;
+    std::thread* m_readerThread = nullptr;
     size_t m_requestSeuqnce = 0;
     eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
     int m_active_thread_id = wxNOT_FOUND;
@@ -61,6 +100,13 @@ protected:
 public:
     Client();
     virtual ~Client();
+
+    /**
+     * @brief set the tranposrt for this client. The `Client` takes
+     * the ownership for this pointer and will free it when its done with it.
+     * This means that transport **must** be allocated on the heap
+     */
+    void SetTransport(dap::Transport* transport);
 
     /**
      * @brief can we interact with the debugger?
@@ -146,7 +192,7 @@ public:
     /**
      * @brief reset the session and clear all states
      */
-    void Cleanup();
+    void Reset();
 
     /**
      * @brief step into function

@@ -1,23 +1,22 @@
 #include "Client.hpp"
+
 #include "DAPEvent.hpp"
 #include "Exception.hpp"
 #include "Log.hpp"
 #include "SocketClient.hpp"
 #include "dap.hpp"
+
 #include <iostream>
 #include <thread>
 
-dap::Client::Client()
-{
-    dap::Initialize();
-    m_socket.reset(new SocketClient());
-    m_shutdown.store(false);
-    m_terminated.store(false);
-}
+///----------------------------------------------
+/// Socket
+///----------------------------------------------
+dap::SocketTransport::SocketTransport() { m_socket.reset(new SocketClient()); }
 
-dap::Client::~Client() { StopReaderThread(); }
+dap::SocketTransport::~SocketTransport() { m_socket.reset(); }
 
-bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
+bool dap::SocketTransport::Connect(const wxString& connection_string, int timeoutSeconds)
 {
     long loops = timeoutSeconds;
 #ifndef _WIN32
@@ -29,11 +28,60 @@ bool dap::Client::Connect(const wxString& connection_string, int timeoutSeconds)
             --loops;
         } else {
             LOG_INFO() << "Successfully connected to DAP server" << endl;
-            StartReaderThread();
             return true;
         }
     }
     return false;
+}
+
+bool dap::SocketTransport::Read(wxString& buffer, int msTimeout)
+{
+    try {
+        buffer.clear();
+        if(m_socket->SelectReadMS(msTimeout) == Socket::kTimeout) {
+            buffer.clear();
+            return true;
+        } else {
+            // success
+            if(m_socket->Read(buffer) != Socket::kSuccess) {
+                return false;
+            }
+            return true;
+        }
+    } catch(Exception& e) {
+        LOG_ERROR() << e.What() << endl;
+        return false;
+    }
+    return false;
+}
+
+size_t dap::SocketTransport::Send(const wxString& buffer)
+{
+    try {
+        m_socket->Send(buffer);
+        return buffer.length();
+    } catch(Exception& e) {
+        return 0;
+    }
+}
+
+///----------------------------------------------
+// Client
+///----------------------------------------------
+dap::Client::Client()
+{
+    dap::Initialize();
+    m_shutdown.store(false);
+    m_terminated.store(false);
+}
+
+dap::Client::~Client() { StopReaderThread(); }
+
+void dap::Client::SetTransport(dap::Transport* transport)
+{
+    Reset();
+    m_transport.reset(transport);
+    StartReaderThread();
 }
 
 bool dap::Client::IsConnected() const { return m_readerThread && !m_terminated.load(); }
@@ -50,7 +98,7 @@ void dap::Client::StopReaderThread()
 
 void dap::Client::StartReaderThread()
 {
-    if(m_readerThread) {
+    if(m_readerThread || !m_transport) {
         return;
     }
 
@@ -58,13 +106,12 @@ void dap::Client::StartReaderThread()
         [this](dap::Client* sink) {
             LOG_INFO() << "Reader thread successfully started" << endl;
             while(!m_shutdown.load()) {
-                try {
-                    wxString content;
-                    if(m_socket->SelectReadMS(10) == Socket::kSuccess && m_socket->Read(content) == Socket::kSuccess) {
-                        sink->CallAfter(&dap::Client::OnDataRead, content);
-                    }
-                } catch(Exception& e) {
-                    LOG_ERROR() << "Connection error: " << e.What() << endl;
+                wxString content;
+                bool success = m_transport->Read(content, 10);
+                if(success && !content.empty()) {
+                    sink->CallAfter(&dap::Client::OnDataRead, content);
+                } else if(!success) {
+                    LOG_ERROR() << "Transport error. Failed to read" << endl;
                     m_terminated.store(true);
                     break;
                 }
@@ -167,10 +214,10 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
     ProcessEvent(event);
 }
 
-void dap::Client::Cleanup()
+void dap::Client::Reset()
 {
     StopReaderThread();
-    m_socket.reset(new SocketClient());
+    m_transport.reset();
     m_shutdown.store(false);
     m_terminated.store(false);
     m_rpc = {};
@@ -187,25 +234,25 @@ void dap::Client::Initialize()
     // Send initialize request
     InitializeRequest req;
     req.arguments.clientID = "dbgcli";
-    m_rpc.Send(req, m_socket);
+    m_rpc.Send(req, m_transport);
     m_handshake_state = eHandshakeState::kInProgress;
 }
 
 void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
 {
     // Now that the initialize is done, we can call 'setBreakpoints' command
-    SetBreakpointsRequest* setBreakpoints = new SetBreakpointsRequest();
-    setBreakpoints->seq = GetNextSequence(); // command sequence
-    setBreakpoints->arguments.breakpoints = lines;
-    setBreakpoints->arguments.source.path = file;
-    m_rpc.Send(ProtocolMessage::Ptr_t(setBreakpoints), m_socket);
+    SetBreakpointsRequest setBreakpoints;
+    setBreakpoints.seq = GetNextSequence(); // command sequence
+    setBreakpoints.arguments.breakpoints = lines;
+    setBreakpoints.arguments.source.path = file;
+    m_rpc.Send(setBreakpoints, m_transport);
 }
 
 void dap::Client::ConfigurationDone()
 {
     ConfigurationDoneRequest* configDone = new ConfigurationDoneRequest();
     configDone->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(configDone), m_transport);
 }
 
 void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
@@ -227,14 +274,14 @@ void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDir
         launchRequest->arguments.cwd = ::wxGetCwd();
     }
     m_waiting_for_stopped_on_entry = stopOnEntry;
-    m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(launchRequest), m_transport);
 }
 
 void dap::Client::GetThreads()
 {
     ThreadsRequest* threadsRequest = new ThreadsRequest();
     threadsRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(threadsRequest), m_transport);
 }
 
 void dap::Client::GetScopes(int frameId)
@@ -242,7 +289,7 @@ void dap::Client::GetScopes(int frameId)
     ScopesRequest* scopesRequest = new ScopesRequest();
     scopesRequest->arguments.frameId = frameId;
     scopesRequest->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(scopesRequest), m_transport);
 }
 
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
@@ -252,7 +299,7 @@ void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
     req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     req->arguments.levels = frame_count;
     req->arguments.startFrame = starting_frame;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }
 
 void dap::Client::Next(int threadId)
@@ -260,14 +307,14 @@ void dap::Client::Next(int threadId)
     NextRequest* req = new NextRequest();
     req->seq = GetNextSequence();
     req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }
 
 void dap::Client::Continue()
 {
     ContinueRequest* req = new ContinueRequest();
     req->seq = GetNextSequence();
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }
 
 void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints)
@@ -275,19 +322,19 @@ void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoi
     // place breakpoint based on function name
     SetFunctionBreakpointsRequest* req = new SetFunctionBreakpointsRequest();
     req->arguments.breakpoints = breakpoints;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }
 
 void dap::Client::StepIn(int threadId)
 {
     StepInRequest* req = new StepInRequest();
     req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }
 
 void dap::Client::StepOut(int threadId)
 {
     StepOutRequest* req = new StepOutRequest();
     req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_transport);
 }

@@ -1,5 +1,7 @@
 #include "MainFrame.hpp"
+
 #include "dap/Log.hpp"
+
 #include <vector>
 #include <wx/ffile.h>
 #include <wx/msgdlg.h>
@@ -46,15 +48,6 @@ MainFrame::MainFrame(wxWindow* parent)
     for(auto ctrl : m_ctrls) {
         ctrl->MarkerDefine(MARKER_NUMBER, wxSTC_MARK_ARROW, *wxGREEN, *wxGREEN);
     }
-
-    // bind the client events
-    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, &MainFrame::OnStoppedOnFirstEntry, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
-    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
-    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
-    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
 }
 
 MainFrame::~MainFrame() {}
@@ -65,11 +58,31 @@ MainFrame::~MainFrame() {}
 /// - And launch our debuggee process
 void MainFrame::InitializeClient()
 {
+    // Reset the client
+    m_client.Reset();
+
     wxBusyCursor cursor;
-    if(!m_client.Connect("tcp://127.0.0.1:12345", 10)) {
+    // For this demo, we use socket transport. But you may choose
+    // to write your own transport that implements the dap::Transport interface
+    // This is useful when the user wishes to use stdin/out for communicating with
+    // the dap and not over socket
+    dap::SocketTransport* transport = new dap::SocketTransport();
+    if(!transport->Connect("tcp://127.0.0.1:12345", 10)) {
         wxMessageBox("Failed to connect to DAP server", "DAP Demo", wxICON_ERROR | wxOK | wxCENTRE);
         exit(1);
     }
+
+    // construct new client with the transport
+    m_client.SetTransport(transport);
+
+    // bind the client events
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, &MainFrame::OnStoppedOnFirstEntry, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
@@ -170,7 +183,7 @@ void MainFrame::OnTerminated(DAPEvent& event)
 {
     wxUnusedVar(event);
     AddLog(wxString() << "Session terminated!");
-    m_client.Cleanup();
+    m_client.Reset();
     for(auto ctrl : m_ctrls) {
         ctrl->ClearAll();
     }
