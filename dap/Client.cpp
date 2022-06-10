@@ -270,9 +270,12 @@ void dap::Client::Continue()
     m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }
 
-void dap::Client::SetFunctionBreakpoints(const wxString& function)
+void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints)
 {
     // place breakpoint based on function name
+    SetFunctionBreakpointsRequest* req = new SetFunctionBreakpointsRequest();
+    req->arguments.breakpoints = breakpoints;
+    m_rpc.Send(ProtocolMessage::Ptr_t(req), m_socket);
 }
 
 void dap::Client::StepIn(int threadId)

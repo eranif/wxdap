@@ -95,7 +95,7 @@ public:
     /**
      * @brief set breakpoint on a function
      */
-    void SetFunctionBreakpoints(const wxString& function);
+    void SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints);
 
     /**
      * @brief tell the debugger that we are done and ready to start the main loop

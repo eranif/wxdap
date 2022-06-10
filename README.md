@@ -20,7 +20,7 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [ ] Pause - pause the debugger execution
 - [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of code or to execute code again
 - [ ] BreakpointLocations - returns all possible locations for source breakpoints in a given range
-- [ ] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
+- [X] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
 - [ ] ReadMemory - Reads bytes from memory at the provided location
 - [ ] Disassemble - Disassembles code stored at the provided location
 

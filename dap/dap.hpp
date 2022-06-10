@@ -581,9 +581,36 @@ struct WXDLLIMPEXP_DAP SourceBreakpoint : public Any {
 };
 
 /// Properties of a breakpoint or logpoint passed to the setBreakpoints request.
+struct WXDLLIMPEXP_DAP FunctionBreakpoint : public Any {
+    /**
+     * The name of the function
+     */
+    wxString name;
+
+    /**
+     * An optional expression for conditional breakpoints.
+     */
+    wxString condition;
+
+    FunctionBreakpoint() {}
+    FunctionBreakpoint(const wxString& name, const wxString& cond = wxEmptyString)
+    {
+        this->name = name;
+        this->condition = cond;
+    }
+    JSON_SERIALIZE();
+};
+
+/// Properties of a breakpoint or logpoint passed to the setBreakpoints request.
 struct WXDLLIMPEXP_DAP SetBreakpointsArguments : public Any {
     Source source;
     std::vector<SourceBreakpoint> breakpoints;
+    JSON_SERIALIZE();
+};
+
+/// Properties of a function breakpoint
+struct WXDLLIMPEXP_DAP SetFunctionBreakpointsArguments : public Any {
+    std::vector<FunctionBreakpoint> breakpoints;
     JSON_SERIALIZE();
 };
 
@@ -605,6 +632,19 @@ struct WXDLLIMPEXP_DAP SetBreakpointsRequest : public Request {
 struct WXDLLIMPEXP_DAP SetBreakpointsResponse : public Response {
     std::vector<Breakpoint> breakpoints;
     RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP SetFunctionBreakpointsResponse : public SetBreakpointsResponse {
+    RESPONSE_CLASS(SetFunctionBreakpointsResponse, "setFunctionBreakpoints");
+};
+
+/// Replaces all existing function breakpoints with new function breakpoints
+/// To clear all function breakpoints, specify an empty array
+/// When a function breakpoint is hit, a ‘stopped’ event (with reason ‘function breakpoint’) is generated
+struct WXDLLIMPEXP_DAP SetFunctionBreakpointsRequest : public Request {
+    SetFunctionBreakpointsArguments arguments;
+    REQUEST_CLASS(SetFunctionBreakpointsRequest, "setFunctionBreakpoints");
     JSON_SERIALIZE();
 };
 

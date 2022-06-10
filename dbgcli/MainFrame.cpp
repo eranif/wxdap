@@ -107,8 +107,9 @@ void MainFrame::OnStoppedOnFirstEntry(DAPEvent& event)
     dap::StoppedEvent* stopped_data = event.GetDapEvent()->As<dap::StoppedEvent>();
     if(stopped_data) {
         AddLog("Stopped on first entry!");
+        AddLog("Placing breakpoint at main...");
         // Apply breakpoints and continue
-        m_client.SetBreakpointsFile("main.cpp", { { 26, "" } });
+        m_client.SetFunctionBreakpoints({ { "main" } });
         m_client.Continue();
     }
 }

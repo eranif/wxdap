@@ -35,6 +35,7 @@ void Initialize()
     REGISTER_CLASS(LaunchRequest);
     REGISTER_CLASS(DisconnectRequest);
     REGISTER_CLASS(SetBreakpointsRequest);
+    REGISTER_CLASS(SetFunctionBreakpointsRequest);
     REGISTER_CLASS(ContinueRequest);
     REGISTER_CLASS(NextRequest);
     REGISTER_CLASS(StepInRequest);
@@ -60,6 +61,7 @@ void Initialize()
     REGISTER_CLASS(DisconnectResponse);
     REGISTER_CLASS(BreakpointLocationsResponse);
     REGISTER_CLASS(SetBreakpointsResponse);
+    REGISTER_CLASS(SetFunctionBreakpointsResponse);
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
     REGISTER_CLASS(StepInResponse);
@@ -783,6 +785,24 @@ void SourceBreakpoint::From(const JSON& json)
 // ----------------------------------------
 // ----------------------------------------
 
+JSON FunctionBreakpoint::To() const
+{
+    JSON json = JSON::CreateObject();
+    json.Add("name", name);
+    json.Add("condition", condition);
+    return json;
+}
+
+void FunctionBreakpoint::From(const JSON& json)
+{
+    name = json["name"].GetString(name);
+    condition = json["condition"].GetString(condition);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSON SetBreakpointsArguments::To() const
 {
     JSON json = JSON::CreateObject();
@@ -812,6 +832,32 @@ void SetBreakpointsArguments::From(const JSON& json)
 // ----------------------------------------
 // ----------------------------------------
 
+JSON SetFunctionBreakpointsArguments::To() const
+{
+    JSON json = JSON::CreateObject();
+    JSON arr = json.AddArray("breakpoints");
+    for(const auto& sb : breakpoints) {
+        arr.Add(sb.To());
+    }
+    return json;
+}
+
+void SetFunctionBreakpointsArguments::From(const JSON& json)
+{
+    breakpoints.clear();
+    JSON arr = json["breakpoints"];
+    int size = arr.GetCount();
+    for(int i = 0; i < size; ++i) {
+        FunctionBreakpoint fb;
+        fb.From(arr[i]);
+        breakpoints.push_back(fb);
+    }
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
 JSON SetBreakpointsRequest::To() const
 {
     REQUEST_TO();
@@ -820,6 +866,23 @@ JSON SetBreakpointsRequest::To() const
 }
 
 void SetBreakpointsRequest::From(const JSON& json)
+{
+    REQUEST_FROM();
+    READ_OBJ(arguments);
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+JSON SetFunctionBreakpointsRequest::To() const
+{
+    REQUEST_TO();
+    ADD_OBJ(arguments);
+    return json;
+}
+
+void SetFunctionBreakpointsRequest::From(const JSON& json)
 {
     REQUEST_FROM();
     READ_OBJ(arguments);
