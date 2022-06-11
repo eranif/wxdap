@@ -271,7 +271,9 @@ void dap::Client::OnJsonRead(JSON json)
                 m_requestIdToFilepath.erase(as_response->request_seq);
             }
             SendDAPEvent(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, ptr, json);
-
+        } else if(as_response->command == "setFunctionBreakpoints" || as_response->command == "setBreakpoints") {
+            // respond to "setXXXBreakpoints" command
+            SendDAPEvent(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, new dap::SetBreakpointsResponse, json);
         } else {
             // LOG_ERROR() << json.ToString(false) << endl;
         }

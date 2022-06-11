@@ -287,7 +287,7 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     m_toolbar12 = this->CreateToolBar(wxTB_HORZ_TEXT | wxTB_NOICONS | wxTB_FLAT, wxID_ANY);
     m_toolbar12->SetToolBitmapSize(wxSize(16, 16));
 
-    m_toolbar12->AddTool(wxID_EXECUTE, _("Connect..."), wxXmlResource::Get()->LoadBitmap(wxT("placeholder16")),
+    m_toolbar12->AddTool(wxID_NETWORK, _("Connect..."), wxXmlResource::Get()->LoadBitmap(wxT("placeholder16")),
                          wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""), NULL);
 
     m_toolbar12->AddSeparator();
@@ -302,6 +302,11 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
 
     m_toolbar12->AddTool(wxID_UP, _("Step Out"), wxArtProvider::GetBitmap(wxART_GO_BACK, wxART_TOOLBAR, wxSize(24, 24)),
                          wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""), NULL);
+
+    m_toolbar12->AddTool(wxID_EXECUTE, _("Continue"), wxNullBitmap, wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""),
+                         NULL);
+
+    m_toolbar12->AddSeparator();
 
     m_toolbar12->AddTool(wxID_ABORT, _("Pause"), wxNullBitmap, wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""), NULL);
     m_toolbar12->Realize();
@@ -330,28 +335,32 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
         wxPersistenceManager::Get().Restore(this);
     }
     // Connect events
-    this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_EXECUTE);
-    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_EXECUTE);
+    this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_NETWORK);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_NETWORK);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnNext, this, wxID_FORWARD);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnNextUI, this, wxID_FORWARD);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepIn, this, wxID_DOWN);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepInUI, this, wxID_DOWN);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepOut, this, wxID_UP);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepOutUI, this, wxID_UP);
+    this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnContinue, this, wxID_EXECUTE);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnContinueUI, this, wxID_EXECUTE);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnPause, this, wxID_ABORT);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnPauseUI, this, wxID_ABORT);
 }
 
 MainFrameBase::~MainFrameBase()
 {
-    this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_EXECUTE);
-    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_EXECUTE);
+    this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_NETWORK);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_NETWORK);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnNext, this, wxID_FORWARD);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnNextUI, this, wxID_FORWARD);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepIn, this, wxID_DOWN);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepInUI, this, wxID_DOWN);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnStepOut, this, wxID_UP);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnStepOutUI, this, wxID_UP);
+    this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnContinue, this, wxID_EXECUTE);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnContinueUI, this, wxID_EXECUTE);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnPause, this, wxID_ABORT);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnPauseUI, this, wxID_ABORT);
 }

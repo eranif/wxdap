@@ -87,6 +87,7 @@ void MainFrame::InitializeClient()
     m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
     m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
+    m_client.Bind(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
@@ -118,6 +119,10 @@ void MainFrame::OnConnect(wxCommandEvent& event)
     InitializeClient();
 }
 
+/// ----------------------------------
+/// -- DAP EVENTS START --
+/// ----------------------------------
+
 /// DAP server stopped due to `stopOnEntry` true when called Launch()
 void MainFrame::OnStoppedOnFirstEntry(DAPEvent& event)
 {
@@ -125,8 +130,17 @@ void MainFrame::OnStoppedOnFirstEntry(DAPEvent& event)
     if(stopped_data) {
         AddLog("Stopped on first entry!");
         AddLog("Placing breakpoint at main...");
-        // Apply breakpoints and continue
+
+        // Set breakpoint on "main"
         m_client.SetFunctionBreakpoints({ { "main" } });
+
+        // place 3 source breakpoints, for testing purposes
+        std::vector<dap::SourceBreakpoint> bp_list;
+        bp_list.push_back({ 36, "" }); // line 36
+        bp_list.push_back({ 37, "" }); // line 37
+        bp_list.push_back({ 38, "" }); // line 38
+
+        m_client.SetBreakpointsFile("main.cpp", bp_list);
         m_client.Continue();
     }
 }
@@ -243,6 +257,28 @@ void MainFrame::OnBreakpointLocations(DAPEvent& event)
     }
 }
 
+void MainFrame::OnConnectionError(DAPEvent& event)
+{
+    wxUnusedVar(event);
+    wxMessageBox(_("Lost connection to dap server"));
+}
+
+void MainFrame::OnSetBreakpoint(DAPEvent& event)
+{
+    dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
+    if(resp) {
+        for(const auto& bp : resp->breakpoints) {
+            wxString message;
+            message << "ID: " << bp.id << ". Verified: " << bp.verified << ". File: " << bp.source.path
+                    << ". Line: " << bp.line;
+            AddLog(message);
+        }
+    }
+}
+/// ----------------------------------
+/// -- DAP EVENTS END --
+/// ----------------------------------
+
 void MainFrame::AddLog(const wxString& log)
 {
     m_stcLog->AppendText(log + "\n");
@@ -280,9 +316,9 @@ void MainFrame::OnPause(wxCommandEvent& event)
 }
 
 void MainFrame::OnPauseUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && !m_client.CanInteract()); }
-
-void MainFrame::OnConnectionError(DAPEvent& event)
+void MainFrame::OnContinueUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
+void MainFrame::OnContinue(wxCommandEvent& event)
 {
     wxUnusedVar(event);
-    wxMessageBox(_("Lost connection to dap server"));
+    m_client.Continue();
 }

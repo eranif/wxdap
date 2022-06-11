@@ -67,6 +67,8 @@ protected:
     virtual void OnStepInUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnStepOut(wxCommandEvent& event) { event.Skip(); }
     virtual void OnStepOutUI(wxUpdateUIEvent& event) { event.Skip(); }
+    virtual void OnContinue(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnContinueUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnPause(wxCommandEvent& event) { event.Skip(); }
     virtual void OnPauseUI(wxUpdateUIEvent& event) { event.Skip(); }
 

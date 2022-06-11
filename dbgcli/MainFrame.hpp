@@ -33,6 +33,8 @@ protected:
     void OnNext(wxCommandEvent& event) override;
     void OnStepIn(wxCommandEvent& event) override;
     void OnStepOut(wxCommandEvent& event) override;
+    void OnContinue(wxCommandEvent& event) override;
+    void OnContinueUI(wxUpdateUIEvent& event) override;
 
     /// Dap events
     void OnStopped(DAPEvent& event);
@@ -46,5 +48,6 @@ protected:
     void OnOutput(DAPEvent& event);
     void OnBreakpointLocations(DAPEvent& event);
     void OnConnectionError(DAPEvent& event);
+    void OnSetBreakpoint(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP
