@@ -54,6 +54,32 @@ public:
 
 class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
+    enum eFeatures {
+        supportsConfigurationDoneRequest = (1 << 0),
+        supportsFunctionBreakpoints = (1 << 1),
+        supportsConditionalBreakpoints = (1 << 2),
+        supportsHitConditionalBreakpoints = (1 << 3),
+        supportsEvaluateForHovers = (1 << 4),
+        supportsStepBack = (1 << 5),
+        supportsSetVariable = (1 << 6),
+        supportsRestartFrame = (1 << 7),
+        supportsGotoTargetsRequest = (1 << 8),
+        supportsStepInTargetsRequest = (1 << 9),
+        supportsCompletionsRequest = (1 << 10),
+        supportsModulesRequest = (1 << 11),
+        supportsRestartRequest = (1 << 12),
+        supportsExceptionOptions = (1 << 13),
+        supportsValueFormattingOptions = (1 << 14),
+        supportsExceptionInfoRequest = (1 << 15),
+        supportTerminateDebuggee = (1 << 16),
+        supportsDelayedStackTraceLoading = (1 << 17),
+        supportsLoadedSourcesRequest = (1 << 18),
+        supportsProgressReporting = (1 << 19),
+        supportsRunInTerminalRequest = (1 << 20),
+        supportsBreakpointLocationsRequest = (1 << 21),
+    };
+
+protected:
     enum class eHandshakeState { kNotPerformed, kInProgress, kCompleted };
     Transport* m_transport = nullptr;
     dap::JsonRPC m_rpc;
@@ -65,14 +91,14 @@ class WXDLLIMPEXP_DAP Client : public wxEvtHandler
     int m_active_thread_id = wxNOT_FOUND;
     bool m_waiting_for_stopped_on_entry = false;
     bool m_can_interact = false;
+    std::unordered_map<size_t, wxString> m_requestIdToFilepath;
+    size_t m_features = 0;
 
 protected:
-    size_t GetNextSequence()
-    {
-        m_requestSeuqnce++;
-        return m_requestSeuqnce;
-    }
+    bool IsSupported(eFeatures feature) const { return m_features & feature; }
+    bool SendRequest(dap::ProtocolMessage& request);
 
+protected:
     void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json);
 
     /**
@@ -92,6 +118,11 @@ protected:
     void OnDataRead(const wxString& buffer);
 
     /**
+     * @brief lost connection to the DAP server
+     */
+    void OnConnectionError();
+
+    /**
      * @brief handle JSON payload received from the DAP server
      * @param json
      */
@@ -101,6 +132,15 @@ protected:
 public:
     Client();
     virtual ~Client();
+
+    /**
+     * @brief return the next message sequence
+     */
+    size_t GetNextSequence()
+    {
+        m_requestSeuqnce++;
+        return m_requestSeuqnce;
+    }
 
     /**
      * @brief set the tranposrt for this client. The `Client` takes
@@ -213,6 +253,11 @@ public:
      * @param threadId
      */
     void Pause(int threadId = wxNOT_FOUND);
+
+    /**
+     * @brief request list of all breakpoints in a file
+     */
+    void BreakpointLocations(const wxString& filepath, int start_line, int end_line);
 };
 
 };     // namespace dap

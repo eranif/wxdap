@@ -547,6 +547,7 @@ struct WXDLLIMPEXP_DAP BreakpointLocation : public Any {
 /// Response to 'breakpointLocations' request.
 /// Contains possible locations for source breakpoints.
 struct WXDLLIMPEXP_DAP BreakpointLocationsResponse : public Response {
+    wxString filepath; /// wxDAP extension: used to pass the filepath back to the caller
     std::vector<BreakpointLocation> breakpoints;
     RESPONSE_CLASS(BreakpointLocationsResponse, "breakpointLocations");
     JSON_SERIALIZE();

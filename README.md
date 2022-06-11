@@ -19,7 +19,7 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [X] StepIn - resumes the given thread to step into a function/method and allows all other threads to run freely by resuming them
 - [X] StepOut - The request resumes the given thread to step out (return) from a function/method and allows all other threads to run freely by resuming them
 - [X] Pause - pause the debugger execution
-- [ ] BreakpointLocations - returns all possible locations for source breakpoints in a given range
+- [X] BreakpointLocations - returns all possible locations for source breakpoints in a given range
 - [X] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
 - [X] Variables - return list of variables
 

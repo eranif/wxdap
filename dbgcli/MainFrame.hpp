@@ -44,5 +44,7 @@ protected:
     void OnExited(DAPEvent& event);
     void OnTerminated(DAPEvent& event);
     void OnOutput(DAPEvent& event);
+    void OnBreakpointLocations(DAPEvent& event);
+    void OnConnectionError(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP

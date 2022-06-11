@@ -85,6 +85,8 @@ void MainFrame::InitializeClient()
     m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
     m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
     m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
+    m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
+    m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
@@ -230,6 +232,17 @@ void MainFrame::OnOutput(DAPEvent& event)
     }
 }
 
+void MainFrame::OnBreakpointLocations(DAPEvent& event)
+{
+    dap::BreakpointLocationsResponse* d = event.GetDapResponse()->As<dap::BreakpointLocationsResponse>();
+    if(d) {
+        AddLog(_("==> Breakpoints:\n"));
+        for(const auto& bp : d->breakpoints) {
+            AddLog(wxString() << d->filepath << ":" << bp.line);
+        }
+    }
+}
+
 void MainFrame::AddLog(const wxString& log)
 {
     m_stcLog->AppendText(log + "\n");
@@ -245,11 +258,13 @@ void MainFrame::LoadFile(const wxString& filepath, int line_number)
         AddLog(wxString() << "Loading file.." << file_to_load);
         wxFFile f(file_to_load, "rb");
         if(!f.IsOpened()) {
-            AddLog(wxString() << "Failed to open file: " << file_to_load);
             return;
         }
         m_current_file_loaded = fp;
         m_stcText->LoadFile(m_current_file_loaded.GetFullPath());
+        m_current_file_loaded.SetVolume("C");
+        wxString path_with_volume = m_current_file_loaded.GetFullPath();
+        m_client.BreakpointLocations(path_with_volume, 1, m_stcText->GetLineCount());
     }
     center_line(m_stcText, line_number, true);
 }
@@ -265,3 +280,9 @@ void MainFrame::OnPause(wxCommandEvent& event)
 }
 
 void MainFrame::OnPauseUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && !m_client.CanInteract()); }
+
+void MainFrame::OnConnectionError(DAPEvent& event)
+{
+    wxUnusedVar(event);
+    wxMessageBox(_("Lost connection to dap server"));
+}

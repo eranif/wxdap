@@ -13,6 +13,17 @@
 ///----------------------------------------------
 /// Socket
 ///----------------------------------------------
+namespace
+{
+template <typename RequestType>
+RequestType create_dap_request(dap::Client* client)
+{
+    RequestType req;
+    req.seq = client->GetNextSequence();
+    return req;
+}
+} // namespace
+
 dap::SocketTransport::SocketTransport() { m_socket = new SocketClient(); }
 
 dap::SocketTransport::~SocketTransport()
@@ -121,14 +132,21 @@ void dap::Client::StartReaderThread()
                 if(success && !content.empty()) {
                     sink->CallAfter(&dap::Client::OnDataRead, content);
                 } else if(!success) {
-                    LOG_ERROR() << "Transport error. Failed to read" << endl;
                     m_terminated.store(true);
+                    sink->CallAfter(&dap::Client::OnConnectionError);
                     break;
                 }
             }
-            LOG_INFO() << "Going down" << endl;
         },
         this);
+}
+
+void dap::Client::OnConnectionError()
+{
+    DAPEvent event{ wxEVT_DAP_LOST_CONNECTION };
+    event.SetEventObject(this);
+    ProcessEvent(event);
+    Reset();
 }
 
 void dap::Client::OnDataRead(const wxString& buffer)
@@ -149,6 +167,11 @@ void dap::Client::StaticOnJsonRead(JSON json, wxObject* o)
     This->OnJsonRead(json);
 }
 
+#define ENABLE_FEATURE(FeatureName)         \
+    if(body[#FeatureName].GetBool(false)) { \
+        m_features |= FeatureName;          \
+    }
+
 void dap::Client::OnJsonRead(JSON json)
 {
     if(m_handshake_state != eHandshakeState::kCompleted) {
@@ -156,7 +179,30 @@ void dap::Client::OnJsonRead(JSON json)
         ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
         if(msg && msg->type == "response" && msg->As<Response>()->command == "initialize") {
             m_handshake_state = eHandshakeState::kCompleted;
-            LOG_ERROR() << json.ToString() << endl;
+            // turn the feature bits
+            auto body = json["body"];
+            ENABLE_FEATURE(supportsConfigurationDoneRequest);
+            ENABLE_FEATURE(supportsFunctionBreakpoints);
+            ENABLE_FEATURE(supportsConditionalBreakpoints);
+            ENABLE_FEATURE(supportsHitConditionalBreakpoints);
+            ENABLE_FEATURE(supportsEvaluateForHovers);
+            ENABLE_FEATURE(supportsStepBack);
+            ENABLE_FEATURE(supportsSetVariable);
+            ENABLE_FEATURE(supportsRestartFrame);
+            ENABLE_FEATURE(supportsGotoTargetsRequest);
+            ENABLE_FEATURE(supportsStepInTargetsRequest);
+            ENABLE_FEATURE(supportsCompletionsRequest);
+            ENABLE_FEATURE(supportsModulesRequest);
+            ENABLE_FEATURE(supportsRestartRequest);
+            ENABLE_FEATURE(supportsExceptionOptions);
+            ENABLE_FEATURE(supportsValueFormattingOptions);
+            ENABLE_FEATURE(supportsExceptionInfoRequest);
+            ENABLE_FEATURE(supportTerminateDebuggee);
+            ENABLE_FEATURE(supportsDelayedStackTraceLoading);
+            ENABLE_FEATURE(supportsLoadedSourcesRequest);
+            ENABLE_FEATURE(supportsProgressReporting);
+            ENABLE_FEATURE(supportsRunInTerminalRequest);
+            ENABLE_FEATURE(supportsBreakpointLocationsRequest);
             SendDAPEvent(wxEVT_DAP_INITIALIZE_RESPONSE, new dap::InitializeResponse, json);
         }
         return;
@@ -214,12 +260,24 @@ void dap::Client::OnJsonRead(JSON json)
             // the above responses indicate that the debugger accepted the corresponding command and can not be
             // interacted for now
             m_can_interact = false;
+
+        } else if(as_response->command == "breakpointLocations") {
+            // special handling for breakpoint locations response:
+            // we would also like to pass the origin source file that was passed as part of the
+            // request
+            auto ptr = new dap::BreakpointLocationsResponse;
+            if(m_requestIdToFilepath.count(as_response->request_seq)) {
+                ptr->filepath = m_requestIdToFilepath[as_response->request_seq];
+                m_requestIdToFilepath.erase(as_response->request_seq);
+            }
+            SendDAPEvent(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, ptr, json);
+
         } else {
-            LOG_ERROR() << json.ToString(false) << endl;
+            // LOG_ERROR() << json.ToString(false) << endl;
         }
     } else {
-        LOG_ERROR() << "Received JSON payload:" << endl;
-        LOG_ERROR() << json.ToString(false) << endl;
+        // LOG_ERROR() << "Received JSON payload:" << endl;
+        // LOG_ERROR() << json.ToString(false) << endl;
     }
 }
 
@@ -250,135 +308,152 @@ void dap::Client::Reset()
     m_active_thread_id = wxNOT_FOUND;
     m_waiting_for_stopped_on_entry = false;
     m_can_interact = false;
+    m_requestIdToFilepath.clear();
+    m_features = 0;
 }
 
 /// API
 void dap::Client::Initialize()
 {
     // Send initialize request
-    InitializeRequest req;
+    InitializeRequest req = create_dap_request<InitializeRequest>(this);
     req.arguments.clientID = "dbgcli";
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
     m_handshake_state = eHandshakeState::kInProgress;
 }
 
 void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
 {
     // Now that the initialize is done, we can call 'setBreakpoints' command
-    SetBreakpointsRequest setBreakpoints;
-    setBreakpoints.seq = GetNextSequence(); // command sequence
-    setBreakpoints.arguments.breakpoints = lines;
-    setBreakpoints.arguments.source.path = file;
-    m_rpc.Send(setBreakpoints, m_transport);
+    SetBreakpointsRequest req = create_dap_request<SetBreakpointsRequest>(this) =
+        create_dap_request<SetBreakpointsRequest>(this);
+    req.arguments.breakpoints = lines;
+    req.arguments.source.path = file;
+    SendRequest(req);
 }
 
 void dap::Client::ConfigurationDone()
 {
-    ConfigurationDoneRequest configDone;
-    configDone.seq = GetNextSequence();
-    m_rpc.Send(configDone, m_transport);
+    ConfigurationDoneRequest req = create_dap_request<ConfigurationDoneRequest>(this) =
+        create_dap_request<ConfigurationDoneRequest>(this);
+    SendRequest(req);
 }
 
 void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
                          const std::vector<wxString>& env)
 {
     m_active_thread_id = wxNOT_FOUND;
-    LaunchRequest launchRequest;
-    launchRequest.seq = GetNextSequence(); // command sequence
-    launchRequest.arguments.program = cmd[0];
+    LaunchRequest req = create_dap_request<LaunchRequest>(this) = create_dap_request<LaunchRequest>(this);
+    req.arguments.program = cmd[0];
 
     cmd.erase(cmd.begin());
-    launchRequest.arguments.args = cmd; // the remainder are the args
-    launchRequest.arguments.stopOnEntry = stopOnEntry;
-    launchRequest.arguments.env = env;
+    req.arguments.args = cmd; // the remainder are the args
+    req.arguments.stopOnEntry = stopOnEntry;
+    req.arguments.env = env;
 
     // set the working directory
-    launchRequest.arguments.cwd = workingDirectory;
-    if(launchRequest.arguments.cwd.empty()) {
-        launchRequest.arguments.cwd = ::wxGetCwd();
+    req.arguments.cwd = workingDirectory;
+    if(req.arguments.cwd.empty()) {
+        req.arguments.cwd = ::wxGetCwd();
     }
     m_waiting_for_stopped_on_entry = stopOnEntry;
-    m_rpc.Send(launchRequest, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::GetThreads()
 {
-    ThreadsRequest threadsRequest;
-    threadsRequest.seq = GetNextSequence();
-    m_rpc.Send(threadsRequest, m_transport);
+    ThreadsRequest req = create_dap_request<ThreadsRequest>(this) = create_dap_request<ThreadsRequest>(this);
+    SendRequest(req);
 }
 
 void dap::Client::GetScopes(int frameId)
 {
-    ScopesRequest scopesRequest;
-    scopesRequest.seq = GetNextSequence();
-    scopesRequest.arguments.frameId = frameId;
-    m_rpc.Send(scopesRequest, m_transport);
+    ScopesRequest req = create_dap_request<ScopesRequest>(this) = create_dap_request<ScopesRequest>(this);
+    req.arguments.frameId = frameId;
+    SendRequest(req);
 }
 
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
 {
-    StackTraceRequest req;
-    req.seq = GetNextSequence();
+    StackTraceRequest req = create_dap_request<StackTraceRequest>(this);
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     req.arguments.levels = frame_count;
     req.arguments.startFrame = starting_frame;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::Next(int threadId)
 {
-    NextRequest req;
-    req.seq = GetNextSequence();
+    NextRequest req = create_dap_request<NextRequest>(this);
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::Continue()
 {
-    ContinueRequest req;
-    req.seq = GetNextSequence();
-    m_rpc.Send(req, m_transport);
+    ContinueRequest req = create_dap_request<ContinueRequest>(this);
+    SendRequest(req);
 }
 
 void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints)
 {
     // place breakpoint based on function name
-    SetFunctionBreakpointsRequest req;
-    req.seq = GetNextSequence();
+    SetFunctionBreakpointsRequest req = create_dap_request<SetFunctionBreakpointsRequest>(this);
     req.arguments.breakpoints = breakpoints;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::StepIn(int threadId)
 {
-    StepInRequest req;
-    req.seq = GetNextSequence();
+    StepInRequest req = create_dap_request<StepInRequest>(this);
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::StepOut(int threadId)
 {
-    StepOutRequest req;
-    req.seq = GetNextSequence();
+    StepOutRequest req = create_dap_request<StepOutRequest>(this);
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::GetChildrenVariables(int variablesReference, size_t count, const wxString& format)
 {
-    VariablesRequest req;
-    req.seq = GetNextSequence();
+    VariablesRequest req = create_dap_request<VariablesRequest>(this);
     req.arguments.variablesReference = variablesReference;
     req.arguments.count = count;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
 }
 
 void dap::Client::Pause(int threadId)
 {
-    PauseRequest req;
-    req.seq = GetNextSequence();
+    PauseRequest req = create_dap_request<PauseRequest>(this);
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    m_rpc.Send(req, m_transport);
+    SendRequest(req);
+}
+
+void dap::Client::BreakpointLocations(const wxString& filepath, int start_line, int end_line)
+{
+    if(!IsSupported(supportsBreakpointLocationsRequest)) {
+        return;
+    }
+
+    BreakpointLocationsRequest req = create_dap_request<BreakpointLocationsRequest>(this);
+    req.arguments.source.path = filepath;
+    req.arguments.line = start_line;
+    req.arguments.endLine = end_line;
+    SendRequest(req);
+    m_requestIdToFilepath.insert({ req.seq, filepath });
+}
+
+bool dap::Client::SendRequest(dap::ProtocolMessage& request)
+{
+    try {
+        m_rpc.Send(request, m_transport);
+    } catch(Exception& e) {
+        // an error occured
+        OnConnectionError();
+        return false;
+    }
+    return true;
 }
