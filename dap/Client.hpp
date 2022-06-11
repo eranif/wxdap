@@ -93,6 +93,7 @@ protected:
     bool m_can_interact = false;
     std::unordered_map<size_t, wxString> m_requestIdToFilepath;
     size_t m_features = 0;
+    bool m_stopOnEntry = true;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }
@@ -126,12 +127,15 @@ protected:
      * @brief handle JSON payload received from the DAP server
      * @param json
      */
-    void OnJsonRead(JSON json);
-    static void StaticOnJsonRead(JSON json, wxObject* o);
+    void OnMessage(JSON json);
+    static void StaticOnDataRead(JSON json, wxObject* o);
 
 public:
     Client();
     virtual ~Client();
+
+    void SetStopOnEntry(bool stopOnEntry) { this->m_stopOnEntry = stopOnEntry; }
+    bool IsStopOnEntry() const { return m_stopOnEntry; }
 
     /**
      * @brief return the next message sequence
@@ -191,7 +195,7 @@ public:
      * @param stopOnEntry stop the debugger as soon as the debug session starts
      * @param env array of strings in the form of `{ "A=B", "C=D", ... }`
      */
-    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
+    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString, bool stopOnEntry = false,
                 const std::vector<wxString>& env = {});
 
     /**

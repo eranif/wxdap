@@ -38,16 +38,16 @@ protected:
 
     /// Dap events
     void OnStopped(DAPEvent& event);
-    void OnStoppedOnFirstEntry(DAPEvent& event);
     void OnStackTrace(DAPEvent& event);
     void OnScopes(DAPEvent& event);
     void OnVariables(DAPEvent& event);
-    void OnInitialized(DAPEvent& event);
+    void OnInitializedEvent(DAPEvent& event);
     void OnExited(DAPEvent& event);
     void OnTerminated(DAPEvent& event);
     void OnOutput(DAPEvent& event);
     void OnBreakpointLocations(DAPEvent& event);
     void OnConnectionError(DAPEvent& event);
     void OnSetBreakpoint(DAPEvent& event);
+    void OnLaunchResponse(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP

@@ -157,14 +157,14 @@ void dap::Client::OnDataRead(const wxString& buffer)
 
     m_rpc.AppendBuffer(buffer);
 
-    // dap::Client::StaticOnJsonRead will get called for every JSON payload that will arrive over the network
-    m_rpc.ProcessBuffer(dap::Client::StaticOnJsonRead, this);
+    // dap::Client::StaticOnDataRead will get called for every JSON payload that will arrive over the network
+    m_rpc.ProcessBuffer(dap::Client::StaticOnDataRead, this);
 }
 
-void dap::Client::StaticOnJsonRead(JSON json, wxObject* o)
+void dap::Client::StaticOnDataRead(JSON json, wxObject* o)
 {
     dap::Client* This = static_cast<dap::Client*>(o);
-    This->OnJsonRead(json);
+    This->OnMessage(json);
 }
 
 #define ENABLE_FEATURE(FeatureName)         \
@@ -172,7 +172,7 @@ void dap::Client::StaticOnJsonRead(JSON json, wxObject* o)
         m_features |= FeatureName;          \
     }
 
-void dap::Client::OnJsonRead(JSON json)
+void dap::Client::OnMessage(JSON json)
 {
     if(m_handshake_state != eHandshakeState::kCompleted) {
         // construct a message from the JSON
@@ -274,8 +274,10 @@ void dap::Client::OnJsonRead(JSON json)
         } else if(as_response->command == "setFunctionBreakpoints" || as_response->command == "setBreakpoints") {
             // respond to "setXXXBreakpoints" command
             SendDAPEvent(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, new dap::SetBreakpointsResponse, json);
-        } else {
-            // LOG_ERROR() << json.ToString(false) << endl;
+        } else if(as_response->command == "configurationDone") {
+            SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json);
+        } else if(as_response->command == "launch") {
+            SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json);
         }
     } else {
         // LOG_ERROR() << "Received JSON payload:" << endl;
@@ -312,6 +314,7 @@ void dap::Client::Reset()
     m_can_interact = false;
     m_requestIdToFilepath.clear();
     m_features = 0;
+    m_stopOnEntry = true;
 }
 
 /// API
@@ -355,9 +358,7 @@ void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDir
 
     // set the working directory
     req.arguments.cwd = workingDirectory;
-    if(req.arguments.cwd.empty()) {
-        req.arguments.cwd = ::wxGetCwd();
-    }
+
     m_waiting_for_stopped_on_entry = stopOnEntry;
     SendRequest(req);
 }

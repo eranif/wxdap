@@ -77,8 +77,7 @@ void MainFrame::InitializeClient()
 
     // bind the client events
     m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, &MainFrame::OnStoppedOnFirstEntry, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitialized, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitializedEvent, this);
     m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
     m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
     m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
@@ -88,11 +87,13 @@ void MainFrame::InitializeClient()
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
     m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
     m_client.Bind(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
-    m_client.ConfigurationDone();
-    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" }, wxEmptyString, true);
+    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
+    //m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
+    //m_client.Launch({ R"(/home/eran/a.out)" });
 }
 
 void MainFrame::OnNext(wxCommandEvent& event)
@@ -123,26 +124,29 @@ void MainFrame::OnConnect(wxCommandEvent& event)
 /// -- DAP EVENTS START --
 /// ----------------------------------
 
-/// DAP server stopped due to `stopOnEntry` true when called Launch()
-void MainFrame::OnStoppedOnFirstEntry(DAPEvent& event)
+void MainFrame::OnLaunchResponse(DAPEvent& event)
 {
-    dap::StoppedEvent* stopped_data = event.GetDapEvent()->As<dap::StoppedEvent>();
-    if(stopped_data) {
-        AddLog("Stopped on first entry!");
-        AddLog("Placing breakpoint at main...");
-
-        // Set breakpoint on "main"
-        m_client.SetFunctionBreakpoints({ { "main" } });
-
-        // place 3 source breakpoints, for testing purposes
-        std::vector<dap::SourceBreakpoint> bp_list;
-        bp_list.push_back({ 36, "" }); // line 36
-        bp_list.push_back({ 37, "" }); // line 37
-        bp_list.push_back({ 38, "" }); // line 38
-
-        m_client.SetBreakpointsFile("main.cpp", bp_list);
-        m_client.Continue();
+    // Check that the debugee was started successfully
+    dap::LaunchResponse* resp = event.GetDapResponse()->As<dap::LaunchResponse>();
+    if(resp && !resp->success) {
+        // launch failed!
+        wxMessageBox("Failed to launch debuggee: " + resp->message, "DAP",
+                     wxICON_ERROR | wxOK | wxOK_DEFAULT | wxCENTRE);
+        m_client.CallAfter(&dap::Client::Reset);
     }
+}
+
+/// DAP server responded to our `initialize` request
+void MainFrame::OnInitializedEvent(DAPEvent& event)
+{
+    // got initialized event, place breakpoints and continue
+    AddLog("Got Initialized event");
+    AddLog("Placing breakpoint at main...");
+
+    // Set breakpoint on "main"
+    m_client.SetFunctionBreakpoints({ { "main" } });
+    m_client.ConfigurationDone();
+    m_client.Continue();
 }
 
 /// DAP server stopped. This can happen for multiple reasons:
@@ -211,13 +215,6 @@ void MainFrame::OnStackTrace(DAPEvent& event)
                                               << stack.line << "\n");
         }
     }
-}
-
-/// DAP server responded to our `initialize` request
-void MainFrame::OnInitialized(DAPEvent& event)
-{
-    // got initialized event
-    AddLog(wxString() << "Received" << event.GetDapEvent()->event << "event");
 }
 
 /// Debuggee process exited, print the exit code
@@ -293,16 +290,16 @@ void MainFrame::LoadFile(const wxString& filepath, int line_number)
         wxString file_to_load = fp.GetFullPath();
         AddLog(wxString() << "Loading file.." << file_to_load);
         wxFFile f(file_to_load, "rb");
-        if(!f.IsOpened()) {
-            return;
+        if(f.IsOpened()) {
+            m_current_file_loaded = fp;
+            m_stcText->LoadFile(m_current_file_loaded.GetFullPath());
+            m_current_file_loaded.SetVolume("C");
+            wxString path_with_volume = m_current_file_loaded.GetFullPath();
+            m_client.BreakpointLocations(path_with_volume, 1, m_stcText->GetLineCount());
         }
-        m_current_file_loaded = fp;
-        m_stcText->LoadFile(m_current_file_loaded.GetFullPath());
-        m_current_file_loaded.SetVolume("C");
-        wxString path_with_volume = m_current_file_loaded.GetFullPath();
-        m_client.BreakpointLocations(path_with_volume, 1, m_stcText->GetLineCount());
     }
     center_line(m_stcText, line_number, true);
+    AddLog(wxString() << "CURSOR: " << filepath << ":" << line_number);
 }
 
 void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
