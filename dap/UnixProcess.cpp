@@ -1,12 +1,14 @@
 #include "UnixProcess.hpp"
 #if defined(__linux__)
 #include "Log.hpp"
+
 #include <csignal>
 #include <cstring>
 #include <sys/select.h>
 #include <sys/types.h>
+#include <wx/string.h>
 
-UnixProcess::UnixProcess(const vector<string>& args)
+UnixProcess::UnixProcess(const vector<wxString>& args)
 {
     m_goingDown.store(false);
 
@@ -31,7 +33,7 @@ UnixProcess::UnixProcess(const vector<string>& args)
 
         char** argv = new char*[args.size() + 1];
         for(size_t i = 0; i < args.size(); ++i) {
-            const string& arg = args[i];
+            const wxString& arg = args[i];
             argv[i] = new char[arg.length() + 1];
             strcpy(argv[i], arg.c_str());
             argv[i][arg.length()] = 0;
@@ -60,7 +62,7 @@ UnixProcess::~UnixProcess()
 
 #define CHUNK_SIZE 1024
 #define MAX_BUFF_SIZE (1024 * 2048)
-bool UnixProcess::ReadAll(int fd, string& content, int timeoutMilliseconds)
+bool UnixProcess::ReadAll(int fd, wxString& content, int timeoutMilliseconds)
 {
     fd_set rset;
     char buff[CHUNK_SIZE];
@@ -98,10 +100,10 @@ bool UnixProcess::ReadAll(int fd, string& content, int timeoutMilliseconds)
     return false;
 }
 
-bool UnixProcess::Write(int fd, const string& message, atomic_bool& shutdown)
+bool UnixProcess::Write(int fd, const wxString& message, atomic_bool& shutdown)
 {
     int bytes = 0;
-    string tmp = message;
+    wxString tmp = message;
     const int chunkSize = 4096;
     while(!tmp.empty() && !shutdown.load()) {
         errno = 0;
@@ -141,12 +143,12 @@ void UnixProcess::Stop()
     }
 }
 
-bool UnixProcess::Write(const string& message)
+bool UnixProcess::Write(const wxString& message)
 {
     return UnixProcess::Write(m_childStdin.GetWriteFd(), message, m_goingDown);
 }
 
-bool UnixProcess::DoRead(string& str, string& err_buff)
+bool UnixProcess::DoRead(wxString& str, wxString& err_buff)
 {
     if(!IsAlive()) {
         return false;
@@ -164,6 +166,6 @@ void UnixProcess::Terminate()
     Wait();
 }
 
-bool UnixProcess::WriteLn(const string& message) { return Write(message + "\n"); }
+bool UnixProcess::WriteLn(const wxString& message) { return Write(message + "\n"); }
 
 #endif // OSX & GTK

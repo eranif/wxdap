@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(wxdap)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 find_package(wxWidgets COMPONENTS adv base core xml xrc net stc richtext REQUIRED)
 include( "${wxWidgets_USE_FILE}" )
 

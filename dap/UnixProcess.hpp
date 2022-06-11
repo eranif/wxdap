@@ -3,6 +3,7 @@
 #if defined(__linux__)
 #include "Process.hpp"
 #include "Queue.hpp"
+
 #include <atomic>
 #include <exception>
 #include <functional>
@@ -12,6 +13,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <wx/string.h>
 
 // Wrapping pipe in a class makes sure they are closed when we leave scope
 #define CLOSE_FD(fd) \
@@ -58,31 +60,31 @@ private:
     CPipe m_childStdout;
     CPipe m_childStderr;
     atomic_bool m_goingDown;
-    string m_stdout;
-    string m_stderr;
+    wxString m_stdout;
+    wxString m_stderr;
 
 protected:
     // sync operations
-    static bool ReadAll(int fd, string& content, int timeoutMilliseconds);
-    static bool Write(int fd, const string& message, atomic_bool& shutdown);
+    static bool ReadAll(int fd, wxString& content, int timeoutMilliseconds);
+    static bool Write(int fd, const wxString& message, atomic_bool& shutdown);
 
-    bool DoRead(string& str, string& err_buff) override;
+    bool DoRead(wxString& str, wxString& err_buff) override;
 
 public:
     int child_pid = -1;
 
-    UnixProcess(const vector<string>& args);
+    UnixProcess(const vector<wxString>& args);
     virtual ~UnixProcess();
 
     // wait for process termination
     int Wait();
-    
+
     // Write to the process
-    bool Write(const string& message) override;
-    
+    bool Write(const wxString& message) override;
+
     // Same as Write, but add LF at the end of the message
-    bool WriteLn(const string& message) override;
-    
+    bool WriteLn(const wxString& message) override;
+
     // stop the running process
     void Stop();
 

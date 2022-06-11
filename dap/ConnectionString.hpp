@@ -2,7 +2,8 @@
 #define CLCONNECTIONSTRING_H
 
 #include "dap_exports.hpp"
-#include <string>
+
+#include <wx/string.h>
 
 namespace dap
 {
@@ -16,26 +17,26 @@ public:
 
 protected:
     eProtocol m_protocol;
-    std::string m_host;
+    wxString m_host;
     long m_port;
-    std::string m_path;
+    wxString m_path;
     bool m_isOK;
 
 protected:
-    void DoParse(const std::string& connectionString);
+    void DoParse(const wxString& connectionString);
 
 public:
-    ConnectionString(const std::string& connectionString);
+    ConnectionString(const wxString& connectionString);
     ~ConnectionString();
 
-    void SetHost(const std::string& host) { this->m_host = host; }
+    void SetHost(const wxString& host) { this->m_host = host; }
     void SetIsOK(bool isOK) { this->m_isOK = isOK; }
-    void SetPath(const std::string& path) { this->m_path = path; }
+    void SetPath(const wxString& path) { this->m_path = path; }
     void SetPort(long port) { this->m_port = port; }
     void SetProtocol(const eProtocol& protocol) { this->m_protocol = protocol; }
-    const std::string& GetHost() const { return m_host; }
+    const wxString& GetHost() const { return m_host; }
     bool IsOK() const { return m_isOK; }
-    const std::string& GetPath() const { return m_path; }
+    const wxString& GetPath() const { return m_path; }
     long GetPort() const { return m_port; }
     const eProtocol& GetProtocol() const { return m_protocol; }
 };

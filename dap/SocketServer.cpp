@@ -19,7 +19,7 @@ SocketServer::SocketServer() {}
 
 SocketServer::~SocketServer() { DestroySocket(); }
 
-int SocketServer::CreateServer(const string& address, int port)
+int SocketServer::CreateServer(const wxString& address, int port)
 {
     // Create a socket
     if((m_socket = ::socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
@@ -69,7 +69,7 @@ int SocketServer::CreateServer(const string& address, int port)
     return port;
 }
 
-int SocketServer::Start(const string& connectionString)
+int SocketServer::Start(const wxString& connectionString)
 {
     ConnectionString cs(connectionString);
     if(!cs.IsOK()) {

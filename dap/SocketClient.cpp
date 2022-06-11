@@ -1,6 +1,7 @@
+#include "SocketClient.hpp"
+
 #include "ConnectionString.hpp"
 #include "Exception.hpp"
-#include "SocketClient.hpp"
 
 #ifndef _WIN32
 #include <arpa/inet.h>
@@ -24,7 +25,7 @@ SocketClient::SocketClient() {}
 
 SocketClient::~SocketClient() {}
 
-bool SocketClient::ConnectRemote(const string& address, int port)
+bool SocketClient::ConnectRemote(const wxString& address, int port)
 {
     DestroySocket();
     m_socket = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -50,7 +51,7 @@ bool SocketClient::ConnectRemote(const string& address, int port)
     return rc == 0;
 }
 
-bool SocketClient::Connect(const string& connectionString)
+bool SocketClient::Connect(const wxString& connectionString)
 {
     ConnectionString cs(connectionString);
     if(!cs.IsOK()) {

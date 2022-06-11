@@ -3,7 +3,8 @@
 
 #include "Socket.hpp"
 #include "dap_exports.hpp"
-#include <string>
+
+#include <wx/string.h>
 
 using namespace std;
 namespace dap
@@ -19,7 +20,7 @@ protected:
      * @throw clSocketException
      * @return port number
      */
-    int CreateServer(const string& address, int port);
+    int CreateServer(const wxString& address, int port);
 
 public:
     /**
@@ -27,7 +28,7 @@ public:
      * @return port number on success
      * @throw clSocketException
      */
-    int Start(const string& connectionString);
+    int Start(const wxString& connectionString);
     Socket::Ptr_t WaitForNewConnection(long timeout);
     /**
      * @brief same as above, however, return a pointer to the connection that should be freed by the caller

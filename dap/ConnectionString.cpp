@@ -3,7 +3,7 @@
 
 namespace dap
 {
-ConnectionString::ConnectionString(const std::string& connectionString)
+ConnectionString::ConnectionString(const wxString& connectionString)
     : m_port(-1)
     , m_isOK(false)
 {
@@ -12,11 +12,11 @@ ConnectionString::ConnectionString(const std::string& connectionString)
 
 ConnectionString::~ConnectionString() {}
 
-void ConnectionString::DoParse(const std::string& connectionString)
+void ConnectionString::DoParse(const wxString& connectionString)
 {
     m_isOK = false; // default
     // get the protocol part
-    std::string protocol = StringUtils::BeforeFirst(connectionString, ':');
+    wxString protocol = StringUtils::BeforeFirst(connectionString, ':');
     if(protocol == "tcp") {
         m_protocol = kTcp;
     } else if(protocol == "unix") {
@@ -28,7 +28,7 @@ void ConnectionString::DoParse(const std::string& connectionString)
         return;
     }
 
-    std::string address = StringUtils::AfterFirst(connectionString, ':');
+    wxString address = StringUtils::AfterFirst(connectionString, ':');
     address = address.substr(2);
     if(m_protocol == kUnixLocalSocket) {
         // The rest is the file path
@@ -37,7 +37,7 @@ void ConnectionString::DoParse(const std::string& connectionString)
     } else {
         // we now expect host[:port]
         m_host = StringUtils::BeforeFirst(address, ':');
-        std::string port = StringUtils::AfterFirst(address, ':');
+        wxString port = StringUtils::AfterFirst(address, ':');
         if(!port.empty()) {
             m_port = atol(port.c_str());
         }
