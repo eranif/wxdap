@@ -13,9 +13,13 @@
 ///----------------------------------------------
 /// Socket
 ///----------------------------------------------
-dap::SocketTransport::SocketTransport() { m_socket.reset(new SocketClient()); }
+dap::SocketTransport::SocketTransport() { m_socket = new SocketClient(); }
 
-dap::SocketTransport::~SocketTransport() { m_socket.reset(); }
+dap::SocketTransport::~SocketTransport()
+{
+    // delete the socket
+    wxDELETE(m_socket);
+}
 
 bool dap::SocketTransport::Connect(const wxString& connection_string, int timeoutSeconds)
 {
@@ -76,12 +80,17 @@ dap::Client::Client()
     m_terminated.store(false);
 }
 
-dap::Client::~Client() { StopReaderThread(); }
+dap::Client::~Client()
+{
+    StopReaderThread();
+    wxDELETE(m_transport);
+}
 
 void dap::Client::SetTransport(dap::Transport* transport)
 {
     Reset();
-    m_transport.reset(transport);
+    wxDELETE(m_transport);
+    m_transport = transport;
     StartReaderThread();
 }
 
@@ -232,7 +241,7 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
 void dap::Client::Reset()
 {
     StopReaderThread();
-    m_transport.reset();
+    wxDELETE(m_transport);
     m_shutdown.store(false);
     m_terminated.store(false);
     m_rpc = {};
@@ -363,5 +372,13 @@ void dap::Client::GetChildrenVariables(int variablesReference, size_t count, con
     req.seq = GetNextSequence();
     req.arguments.variablesReference = variablesReference;
     req.arguments.count = count;
+    m_rpc.Send(req, m_transport);
+}
+
+void dap::Client::Pause(int threadId)
+{
+    PauseRequest req;
+    req.seq = GetNextSequence();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     m_rpc.Send(req, m_transport);
 }

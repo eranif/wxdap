@@ -258,3 +258,10 @@ void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConne
 void MainFrame::OnStepInUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
 void MainFrame::OnStepOutUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
 void MainFrame::OnConnectUI(wxUpdateUIEvent& event) { event.Enable(!m_client.IsConnected()); }
+void MainFrame::OnPause(wxCommandEvent& event)
+{
+    wxUnusedVar(event);
+    m_client.Pause();
+}
+
+void MainFrame::OnPauseUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && !m_client.CanInteract()); }

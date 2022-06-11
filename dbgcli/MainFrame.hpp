@@ -3,6 +3,7 @@
 
 #include "UI.hpp"
 #include "dap/Client.hpp"
+
 #include <vector>
 #include <wx/filename.h>
 
@@ -22,6 +23,8 @@ protected:
     void LoadFile(const wxString& filepath, int line_number);
 
 protected:
+    void OnPause(wxCommandEvent& event) override;
+    void OnPauseUI(wxUpdateUIEvent& event) override;
     void OnConnectUI(wxUpdateUIEvent& event) override;
     void OnNextUI(wxUpdateUIEvent& event) override;
     void OnStepInUI(wxUpdateUIEvent& event) override;

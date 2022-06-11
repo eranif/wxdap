@@ -934,5 +934,22 @@ struct WXDLLIMPEXP_DAP VariablesResponse : public Response {
     RESPONSE_CLASS(VariablesResponse, "variables");
     JSON_SERIALIZE();
 };
+
+struct WXDLLIMPEXP_DAP PauseArguments : public Any {
+    int threadId = 0;
+    ANY_CLASS(PauseArguments);
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP PauseRequest : public Request {
+    PauseArguments arguments;
+    REQUEST_CLASS(PauseRequest, "pause");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP PauseResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(PauseResponse, "pause");
+};
+
 };     // namespace dap
 #endif // PROTOCOLMESSAGE_HPP

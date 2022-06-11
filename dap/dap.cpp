@@ -44,6 +44,7 @@ void Initialize()
     REGISTER_CLASS(ThreadsRequest);
     REGISTER_CLASS(ScopesRequest);
     REGISTER_CLASS(StackTraceRequest);
+    REGISTER_CLASS(PauseRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -71,6 +72,7 @@ void Initialize()
     REGISTER_CLASS(ScopesResponse);
     REGISTER_CLASS(StackTraceResponse);
     REGISTER_CLASS(VariablesResponse);
+    REGISTER_CLASS(PauseResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -1318,5 +1320,26 @@ void VariablesResponse::From(const JSON& json)
         v.From(arr[i]);
         variables.push_back(v);
     }
+}
+
+void PauseArguments::From(const JSON& json) { threadId = json["threadId"].GetInteger(threadId); }
+JSON PauseArguments::To() const
+{
+    auto json = JSON::CreateObject();
+    json.Add("threadId", threadId);
+    return json;
+}
+
+JSON PauseRequest::To() const
+{
+    auto json = Request::To();
+    json.Add("arguments", arguments.To());
+    return json;
+}
+
+void PauseRequest::From(const JSON& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
 }
 }; // namespace dap

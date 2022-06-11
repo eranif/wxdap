@@ -67,6 +67,8 @@ protected:
     virtual void OnStepInUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnStepOut(wxCommandEvent& event) { event.Skip(); }
     virtual void OnStepOutUI(wxUpdateUIEvent& event) { event.Skip(); }
+    virtual void OnPause(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnPauseUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
     wxStyledTextCtrl* GetStcText() { return m_stcText; }

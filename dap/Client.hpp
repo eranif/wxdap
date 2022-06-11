@@ -19,7 +19,8 @@ namespace dap
 class WXDLLIMPEXP_DAP Transport
 {
 public:
-    typedef std::shared_ptr<Transport> ptr_t;
+    Transport() {}
+    virtual ~Transport() {}
 
     /**
      * @brief return from the network with a given timeout
@@ -38,7 +39,7 @@ public:
 /// simple socket implementation for Socket
 class WXDLLIMPEXP_DAP SocketTransport : public Transport
 {
-    Socket::Ptr_t m_socket = nullptr;
+    Socket* m_socket = nullptr;
 
 public:
     SocketTransport();
@@ -54,7 +55,7 @@ public:
 class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
     enum class eHandshakeState { kNotPerformed, kInProgress, kCompleted };
-    Transport::ptr_t m_transport = nullptr;
+    Transport* m_transport = nullptr;
     dap::JsonRPC m_rpc;
     std::atomic_bool m_shutdown;
     std::atomic_bool m_terminated;
@@ -206,6 +207,12 @@ public:
      * @param count number of children. If count 0, all variables are returned
      */
     void GetChildrenVariables(int variablesReference, size_t count = 10, const wxString& format = wxEmptyString);
+
+    /**
+     * @brief The request suspends the debuggee.
+     * @param threadId
+     */
+    void Pause(int threadId = wxNOT_FOUND);
 };
 
 };     // namespace dap
