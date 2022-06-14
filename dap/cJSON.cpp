@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include "cJSON.hpp"
 
+namespace dap {
 // clang-format on
 static const char* ep;
 #define FMT_WHITESPACE_CHAR ' '
@@ -93,9 +94,9 @@ void cJSON_Delete(cJsonDap* c)
     cJsonDap* next;
     while(c) {
         next = c->next;
-        if(!(c->type & cJSON_IsReference) && c->child)
+        if(!(c->type & cJsonDap_IsReference) && c->child)
             cJSON_Delete(c->child);
-        if(!(c->type & cJSON_IsReference) && c->valuestring)
+        if(!(c->type & cJsonDap_IsReference) && c->valuestring)
             cJSON_free(c->valuestring);
         if(c->string)
             cJSON_free(c->string);
@@ -140,7 +141,7 @@ static const char* parse_number(cJsonDap* item, const char* num)
 
     item->valuedouble = n;
     item->valueint = (int)n;
-    item->type = cJSON_Number;
+    item->type = cJsonDap_Number;
     return num;
 }
 
@@ -265,7 +266,7 @@ static const char* parse_string(cJsonDap* item, const char* str)
     if(*ptr == '\"')
         ptr++;
     item->valuestring = out;
-    item->type = cJSON_String;
+    item->type = cJsonDap_String;
     return ptr;
 }
 
@@ -377,15 +378,15 @@ static const char* parse_value(cJsonDap* item, const char* value)
     if(!value)
         return 0; /* Fail on null. */
     if(!strncmp(value, "null", 4)) {
-        item->type = cJSON_NULL;
+        item->type = cJsonDap_Null;
         return value + 4;
     }
     if(!strncmp(value, "false", 5)) {
-        item->type = cJSON_False;
+        item->type = cJsonDap_False;
         return value + 5;
     }
     if(!strncmp(value, "true", 4)) {
-        item->type = cJSON_True;
+        item->type = cJsonDap_True;
         item->valueint = 1;
         return value + 4;
     }
@@ -413,25 +414,25 @@ static char* print_value(cJsonDap* item, int depth, int fmt)
     if(!item)
         return 0;
     switch((item->type) & 255) {
-    case cJSON_NULL:
+    case cJsonDap_Null:
         out = cJSON_strdup("null");
         break;
-    case cJSON_False:
+    case cJsonDap_False:
         out = cJSON_strdup("false");
         break;
-    case cJSON_True:
+    case cJsonDap_True:
         out = cJSON_strdup("true");
         break;
-    case cJSON_Number:
+    case cJsonDap_Number:
         out = print_number(item);
         break;
-    case cJSON_String:
+    case cJsonDap_String:
         out = print_string(item);
         break;
-    case cJSON_Array:
+    case cJsonDap_Array:
         out = print_array(item, depth, fmt);
         break;
-    case cJSON_Object:
+    case cJsonDap_Object:
         out = print_object(item, depth, fmt);
         break;
     }
@@ -447,7 +448,7 @@ static const char* parse_array(cJsonDap* item, const char* value)
         return 0;
     } /* not an array! */
 
-    item->type = cJSON_Array;
+    item->type = cJsonDap_Array;
     value = skip(value + 1);
     if(*value == ']')
         return value + 1; /* empty array. */
@@ -552,7 +553,7 @@ static const char* parse_object(cJsonDap* item, const char* value)
         return 0;
     } /* not an object! */
 
-    item->type = cJSON_Object;
+    item->type = cJsonDap_Object;
     value = skip(value + 1);
     if(*value == '}')
         return value + 1; /* empty array. */
@@ -731,7 +732,7 @@ static cJsonDap* create_reference(cJsonDap* item)
         return 0;
     memcpy(ref, item, sizeof(cJsonDap));
     ref->string = 0;
-    ref->type |= cJSON_IsReference;
+    ref->type |= cJsonDap_IsReference;
     ref->next = ref->prev = 0;
     return ref;
 }
@@ -836,35 +837,35 @@ cJsonDap* cJSON_CreateNull()
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = cJSON_NULL;
+        item->type = cJsonDap_Null;
     return item;
 }
 cJsonDap* cJSON_CreateTrue()
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = cJSON_True;
+        item->type = cJsonDap_True;
     return item;
 }
 cJsonDap* cJSON_CreateFalse()
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = cJSON_False;
+        item->type = cJsonDap_False;
     return item;
 }
 cJsonDap* cJSON_CreateBool(int b)
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = b ? cJSON_True : cJSON_False;
+        item->type = b ? cJsonDap_True : cJsonDap_False;
     return item;
 }
 cJsonDap* cJSON_CreateNumber(double num)
 {
     cJsonDap* item = cJSON_New_Item();
     if(item) {
-        item->type = cJSON_Number;
+        item->type = cJsonDap_Number;
         item->valuedouble = num;
         item->valueint = (int)num;
     }
@@ -874,7 +875,7 @@ cJsonDap* cJSON_CreateString(const char* string)
 {
     cJsonDap* item = cJSON_New_Item();
     if(item) {
-        item->type = cJSON_String;
+        item->type = cJsonDap_String;
         item->valuestring = cJSON_strdup(string);
     }
     return item;
@@ -883,14 +884,14 @@ cJsonDap* cJSON_CreateArray()
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = cJSON_Array;
+        item->type = cJsonDap_Array;
     return item;
 }
 cJsonDap* cJSON_CreateObject()
 {
     cJsonDap* item = cJSON_New_Item();
     if(item)
-        item->type = cJSON_Object;
+        item->type = cJsonDap_Object;
     return item;
 }
 
@@ -951,3 +952,4 @@ cJsonDap* cJSON_CreateStringArray(const char** strings, int count)
     }
     return a;
 }
+}; // namespace dap

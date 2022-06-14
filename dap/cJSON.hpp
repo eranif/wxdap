@@ -25,16 +25,18 @@
 #include <memory>
 
 /* cJsonDap Types: */
-#define cJSON_False 0
-#define cJSON_True 1
-#define cJSON_NULL 2
-#define cJSON_Number 3
-#define cJSON_String 4
-#define cJSON_Array 5
-#define cJSON_Object 6
+#define cJsonDap_False 0
+#define cJsonDap_True 1
+#define cJsonDap_Null 2
+#define cJsonDap_Number 3
+#define cJsonDap_String 4
+#define cJsonDap_Array 5
+#define cJsonDap_Object 6
 
-#define cJSON_IsReference 256
+#define cJsonDap_IsReference 256
 
+namespace dap
+{
 /* The cJsonDap structure: */
 typedef struct cJsonDap {
     struct cJsonDap *next, *prev; /* next/prev allow you to walk array/object chains. Alternatively, use
@@ -44,9 +46,9 @@ typedef struct cJsonDap {
 
     int type; /* The type of the item, as above. */
 
-    char* valuestring;  /* The item's string, if type==cJSON_String */
-    int valueint;       /* The item's number, if type==cJSON_Number */
-    double valuedouble; /* The item's number, if type==cJSON_Number */
+    char* valuestring;  /* The item's string, if type==cJsonDap_String */
+    int valueint;       /* The item's number, if type==cJsonDap_Number */
+    double valuedouble; /* The item's number, if type==cJsonDap_Number */
 
     char*
         string; /* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
@@ -119,5 +121,5 @@ extern void cJSON_ReplaceItemInObject(cJsonDap* object, const char* string, cJso
 #define cJSON_AddFalseToObject(object, name) cJSON_AddItemToObject(object, name, cJSON_CreateFalse())
 #define cJSON_AddNumberToObject(object, name, n) cJSON_AddItemToObject(object, name, cJSON_CreateNumber(n))
 #define cJSON_AddStringToObject(object, name, s) cJSON_AddItemToObject(object, name, cJSON_CreateString(s))
-
+}; // namespace dap
 #endif

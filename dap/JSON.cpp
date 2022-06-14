@@ -116,11 +116,11 @@ Json Json::AddItem(const wxString& name, cJsonDap* item)
         cJSON_Delete(item);
         return Json(nullptr);
     }
-    if(m_cjson->type != cJSON_Array && m_cjson->type != cJSON_Object) {
+    if(m_cjson->type != cJsonDap_Array && m_cjson->type != cJsonDap_Object) {
         cJSON_Delete(item);
         return Json(nullptr);
     }
-    if(m_cjson->type == cJSON_Array) {
+    if(m_cjson->type == cJsonDap_Array) {
         cJSON_AddItemToArray(m_cjson, item);
     } else {
         cJSON_AddItemToObject(m_cjson, name.c_str(), item);
@@ -202,7 +202,7 @@ Json Json::Add(const char* name, bool value)
 
 wxString Json::GetString(const wxString& defaultVaule) const
 {
-    if(!m_cjson || m_cjson->type != cJSON_String) {
+    if(!m_cjson || m_cjson->type != cJsonDap_String) {
         return defaultVaule;
     }
     return m_cjson->valuestring;
@@ -210,7 +210,7 @@ wxString Json::GetString(const wxString& defaultVaule) const
 
 double Json::GetNumber(double defaultVaule) const
 {
-    if(!m_cjson || m_cjson->type != cJSON_Number) {
+    if(!m_cjson || m_cjson->type != cJsonDap_Number) {
         return defaultVaule;
     }
     return m_cjson->valuedouble;
@@ -218,7 +218,7 @@ double Json::GetNumber(double defaultVaule) const
 
 int Json::GetInteger(int defaultVaule) const
 {
-    if(!m_cjson || m_cjson->type != cJSON_Number) {
+    if(!m_cjson || m_cjson->type != cJsonDap_Number) {
         return defaultVaule;
     }
     return m_cjson->valueint;
@@ -226,10 +226,10 @@ int Json::GetInteger(int defaultVaule) const
 
 bool Json::GetBool(bool defaultVaule) const
 {
-    if(!m_cjson || (m_cjson->type != cJSON_True && m_cjson != cJSON_False)) {
+    if(!m_cjson || (m_cjson->type != cJsonDap_True && m_cjson != cJsonDap_False)) {
         return defaultVaule;
     }
-    return m_cjson->type == cJSON_True ? true : false;
+    return m_cjson->type == cJsonDap_True ? true : false;
 }
 
 Json Json::operator[](size_t index) const
@@ -284,7 +284,7 @@ Json Json::Add(const char* name, const std::vector<wxString>& value)
 
 std::vector<wxString> Json::GetStringArray() const
 {
-    if(!m_cjson || m_cjson->type != cJSON_Array) {
+    if(!m_cjson || m_cjson->type != cJsonDap_Array) {
         return {};
     }
     std::vector<wxString> arr;
