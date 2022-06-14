@@ -32,7 +32,7 @@ namespace dap
         return Json(m_cjson);       \
     }
 
-Json::Json(cJSON* ptr)
+Json::Json(cJsonDap* ptr)
     : m_cjson(ptr)
 {
 }
@@ -100,7 +100,7 @@ Json Json::operator[](const wxString& index) const
         return Json(nullptr);
     }
 
-    cJSON* child = m_cjson->child;
+    cJsonDap* child = m_cjson->child;
     while(child) {
         if(child->string && strcmp(child->string, index.c_str()) == 0) {
             return Json(child);
@@ -110,7 +110,7 @@ Json Json::operator[](const wxString& index) const
     return Json(nullptr);
 }
 
-Json Json::AddItem(const wxString& name, cJSON* item)
+Json Json::AddItem(const wxString& name, cJsonDap* item)
 {
     if(m_cjson == nullptr) {
         cJSON_Delete(item);
@@ -237,7 +237,7 @@ Json Json::operator[](size_t index) const
     if(index >= GetCount()) {
         return Json(nullptr);
     }
-    cJSON* child = m_cjson->child;
+    cJsonDap* child = m_cjson->child;
     size_t where = 0;
     while(where != index) {
         child = child->next;
@@ -252,7 +252,7 @@ size_t Json::GetCount() const
         return 0;
     }
     size_t count(0);
-    cJSON* child = m_cjson->child;
+    cJsonDap* child = m_cjson->child;
     while(child) {
         ++count;
         child = child->next;

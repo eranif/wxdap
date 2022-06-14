@@ -35,12 +35,12 @@
 namespace dap
 {
 struct WXDLLIMPEXP_DAP Json {
-    cJSON* m_cjson = nullptr;
+    cJsonDap* m_cjson = nullptr;
     std::atomic_int* m_refCount = nullptr;
 
 private:
-    Json(cJSON* ptr);
-    Json AddItem(const wxString& name, cJSON* item);
+    Json(cJsonDap* ptr);
+    Json AddItem(const wxString& name, cJsonDap* item);
 
     bool IsArray() const { return m_cjson && m_cjson->type == cJSON_Array; }
     bool IsObject() const { return m_cjson && m_cjson->type == cJSON_Object; }
