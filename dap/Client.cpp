@@ -278,6 +278,8 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json);
         } else if(as_response->command == "launch") {
             SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json);
+        } else if(as_response->command == "threads") {
+            SendDAPEvent(wxEVT_DAP_THREADS_RESPONSE, new dap::ThreadsResponse, json);
         }
     } else {
         // LOG_ERROR() << "Received Json payload:" << endl;
