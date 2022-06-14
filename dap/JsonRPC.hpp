@@ -20,7 +20,7 @@ protected:
 
 protected:
     int ReadHeaders(std::unordered_map<wxString, wxString>& headers);
-    JSON DoProcessBuffer();
+    Json DoProcessBuffer();
 
 public:
     JsonRPC();
@@ -38,13 +38,13 @@ public:
     void AppendBuffer(const wxString& buffer);
 
     /**
-     * @brief Check if we have a complete JSON message in the internal buffer and invoke callback
+     * @brief Check if we have a complete Json message in the internal buffer and invoke callback
      * If successful, callback is called. Note that it will get called as long there are complete messages in the
      * internal buffer
      * @param callback
      * @param o user object that is sent back to the callback
      */
-    void ProcessBuffer(std::function<void(const JSON&, wxObject*)> callback, wxObject* o);
+    void ProcessBuffer(std::function<void(const Json&, wxObject*)> callback, wxObject* o);
 
     /**
      * @brief send protocol message over the network

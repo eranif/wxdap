@@ -23,7 +23,7 @@ void dap::ServerProtocol::Initialize()
 
                 // Try to construct a message and process it
                 m_rpc.ProcessBuffer(
-                    [&](JSON json, wxObject*) {
+                    [&](Json json, wxObject*) {
                         dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
                         if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
                             dap::InitializeResponse initResponse;
@@ -55,7 +55,7 @@ void dap::ServerProtocol::Check()
 
         // Process it
         m_rpc.ProcessBuffer(
-            [&](JSON json, wxObject*) {
+            [&](Json json, wxObject*) {
                 dap::ProtocolMessage::Ptr_t message = ObjGenerator::Get().FromJSON(json);
                 if(message) {
                     return m_onNetworkMessage(message);

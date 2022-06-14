@@ -25,19 +25,22 @@
 
 #include "cJSON.hpp"
 #include "dap_exports.hpp"
+
 #include <atomic>
 #include <cstring>
 #include <memory>
 #include <vector>
 #include <wx/string.h>
 
-struct WXDLLIMPEXP_DAP JSON {
+namespace dap
+{
+struct WXDLLIMPEXP_DAP Json {
     cJSON* m_cjson = nullptr;
     std::atomic_int* m_refCount = nullptr;
 
 private:
-    JSON(cJSON* ptr);
-    JSON AddItem(const wxString& name, cJSON* item);
+    Json(cJSON* ptr);
+    Json AddItem(const wxString& name, cJSON* item);
 
     bool IsArray() const { return m_cjson && m_cjson->type == cJSON_Array; }
     bool IsObject() const { return m_cjson && m_cjson->type == cJSON_Object; }
@@ -50,11 +53,11 @@ private:
     bool IsManaged() const { return m_refCount != nullptr; }
 
 public:
-    ~JSON();
-    JSON() {}
+    ~Json();
+    Json() {}
 
-    JSON& operator=(const JSON& other);
-    JSON(const JSON& other);
+    Json& operator=(const Json& other);
+    Json(const Json& other);
 
     /**
      * @brief return the property name
@@ -74,32 +77,32 @@ public:
 
     /**
      * @brief create new TOP level array
-     * If you need to array to an existing JSON,
+     * If you need to array to an existing Json,
      * call AddArray()
      */
-    static JSON CreateArray();
+    static Json CreateArray();
 
     /**
      * @brief create new TOP level object
-     * If you need to object to an existing JSON,
+     * If you need to object to an existing Json,
      * call AddObject()
      */
-    static JSON CreateObject();
+    static Json CreateObject();
 
     /**
-     * @brief create JSON from wxString buffer
+     * @brief create Json from wxString buffer
      */
-    static JSON Parse(const wxString& source);
+    static Json Parse(const wxString& source);
 
     /**
      * @brief object property access
      */
-    JSON operator[](const wxString& index) const;
+    Json operator[](const wxString& index) const;
 
     /**
      * @brief index access
      */
-    JSON operator[](size_t index) const;
+    Json operator[](size_t index) const;
 
     /**
      * @brief get number of children
@@ -107,27 +110,27 @@ public:
     size_t GetCount() const;
 
     /**
-     * @brief add array to this JSON.
-     * @param name the name of the array. If this JSON is of type array
+     * @brief add array to this Json.
+     * @param name the name of the array. If this Json is of type array
      * the name is ignored
      * @return the newly added array. Check for IsOK()
      */
-    JSON AddArray(const wxString& name = "") { return AddItem(name, cJSON_CreateArray()); }
+    Json AddArray(const wxString& name = "") { return AddItem(name, cJSON_CreateArray()); }
 
     /**
-     * @brief create and add object to this JSON.
-     * @param name the name of the array. If this JSON is of type array
+     * @brief create and add object to this Json.
+     * @param name the name of the array. If this Json is of type array
      * the name is ignored
      * @return the newly added object. Check for IsOK()
      */
-    JSON AddObject(const wxString& name = "") { return AddItem(name, cJSON_CreateObject()); }
+    Json AddObject(const wxString& name = "") { return AddItem(name, cJSON_CreateObject()); }
 
     /**
-     * @brief add object to this JSON.
+     * @brief add object to this Json.
      * @return the newly added object
      */
-    JSON AddObject(const wxString& name, const JSON& obj) { return AddObject(name.mb_str(wxConvUTF8).data(), obj); }
-    JSON AddObject(const char* name, const JSON& obj);
+    Json AddObject(const wxString& name, const Json& obj) { return AddObject(name.mb_str(wxConvUTF8).data(), obj); }
+    Json AddObject(const char* name, const Json& obj);
 
     /**
      * @brief return value as wxString
@@ -160,38 +163,40 @@ public:
     wxString ToString(bool pretty = true) const;
 
     // Add properties to container (can be object or array)
-    JSON Add(const wxString& name, const wxString& value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
-    JSON Add(const wxString& name, const std::vector<wxString>& value)
+    Json Add(const wxString& name, const wxString& value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
+    Json Add(const wxString& name, const std::vector<wxString>& value)
     {
         return Add(name.mb_str(wxConvUTF8).data(), value);
     }
-    JSON Add(const wxString& name, const JSON& value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
-    JSON Add(const wxString& name, const char* value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
-    JSON Add(const wxString& name, double value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
-    JSON Add(const wxString& name, int value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
-    JSON Add(const wxString& name, long value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
-    JSON Add(const wxString& name, size_t value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
-    JSON Add(const wxString& name, bool value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
+    Json Add(const wxString& name, const Json& value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
+    Json Add(const wxString& name, const char* value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
+    Json Add(const wxString& name, double value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
+    Json Add(const wxString& name, int value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
+    Json Add(const wxString& name, long value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
+    Json Add(const wxString& name, size_t value) { return Add(name.mb_str(wxConvUTF8).data(), (double)value); }
+    Json Add(const wxString& name, bool value) { return Add(name.mb_str(wxConvUTF8).data(), value); }
 
-    JSON Add(const char* name, const wxString& value);
-    JSON Add(const char* name, const char* value);
-    JSON Add(const char* name, bool value);
-    JSON Add(const char* name, double value);
-    JSON Add(const char* name, const std::vector<wxString>& value);
-    JSON Add(const char* name, const JSON& value);
-    JSON Add(const char* name, long value) { return Add(name, (double)value); }
-    JSON Add(const char* name, size_t value) { return Add(name, (double)value); }
-    JSON Add(const char* name, int value) { return Add(name, (double)value); }
+    Json Add(const char* name, const wxString& value);
+    Json Add(const char* name, const char* value);
+    Json Add(const char* name, bool value);
+    Json Add(const char* name, double value);
+    Json Add(const char* name, const std::vector<wxString>& value);
+    Json Add(const char* name, const Json& value);
+    Json Add(const char* name, long value) { return Add(name, (double)value); }
+    Json Add(const char* name, size_t value) { return Add(name, (double)value); }
+    Json Add(const char* name, int value) { return Add(name, (double)value); }
 
     // Same as the above but without providing 'name'
     // useful for array
-    JSON Add(const wxString& value) { return Add("", value); }
-    JSON Add(const char* value) { return Add("", value); }
-    JSON Add(double value) { return Add("", value); }
-    JSON Add(long value) { return Add("", (double)value); }
-    JSON Add(int value) { return Add("", (double)value); }
-    JSON Add(size_t value) { return Add("", (double)value); }
-    JSON Add(bool value) { return Add("", value); }
-    JSON Add(const JSON& value) { return Add("", value); }
+    Json Add(const wxString& value) { return Add("", value); }
+    Json Add(const char* value) { return Add("", value); }
+    Json Add(double value) { return Add("", value); }
+    Json Add(long value) { return Add("", (double)value); }
+    Json Add(int value) { return Add("", (double)value); }
+    Json Add(size_t value) { return Add("", (double)value); }
+    Json Add(bool value) { return Add("", value); }
+    Json Add(const Json& value) { return Add("", value); }
 };
+
+} // namespace dap
 #endif // JSON_HPP

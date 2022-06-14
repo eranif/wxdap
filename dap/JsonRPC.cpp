@@ -8,17 +8,17 @@ dap::JsonRPC::JsonRPC() {}
 
 dap::JsonRPC::~JsonRPC() {}
 
-JSON dap::JsonRPC::DoProcessBuffer()
+dap::Json dap::JsonRPC::DoProcessBuffer()
 {
     if(m_buffer.empty()) {
-        return JSON();
+        return Json();
     }
 
     // Find the "Content-Length:" string
     unordered_map<wxString, wxString> headers;
     int headerSize = ReadHeaders(headers);
     if(headerSize == -1) {
-        return JSON();
+        return Json();
     }
     // We got the headers, check to see that we have the "Content-Length" one
     auto iter = headers.find("Content-Length");
@@ -27,32 +27,32 @@ JSON dap::JsonRPC::DoProcessBuffer()
         // we will simply stuck with it again later. So we remove it and return null
         m_buffer.erase(headerSize);
         cerr << "ERROR: Read complete header section. But no Content-Length header was found" << endl;
-        return JSON();
+        return Json();
     }
 
     wxString contentLength = iter->second;
     long msglen = std::atol(contentLength.c_str());
     if(msglen <= 0) {
         cerr << "ERROR: Invalid Content-Length header value: 0 or lower than 0" << endl;
-        return JSON();
+        return Json();
     }
 
     long buflen = m_buffer.length();
     if((headerSize + msglen) > buflen) {
         // not enough buffer
-        return JSON();
+        return Json();
     }
 
     // Read the payload into a separate buffer and remove the full message
     // from the m_buffer member
     wxString payload(m_buffer.begin() + headerSize, m_buffer.begin() + headerSize + msglen);
     m_buffer.erase(0, headerSize + msglen);
-    return JSON::Parse(payload);
+    return Json::Parse(payload);
 }
 
-void dap::JsonRPC::ProcessBuffer(std::function<void(const JSON&, wxObject*)> callback, wxObject* o)
+void dap::JsonRPC::ProcessBuffer(std::function<void(const Json&, wxObject*)> callback, wxObject* o)
 {
-    JSON json = DoProcessBuffer();
+    Json json = DoProcessBuffer();
     while(json.IsOK()) {
         if(json.IsOK()) {
             callback(json, o);

@@ -20,22 +20,24 @@
   THE SOFTWARE.
 */
 
-#include "JSON.hpp"
+#include "Json.hpp"
 
+namespace dap
+{
 #define CHECK_IS_CONTAINER()        \
     if(!m_cjson) {                  \
-        return JSON(nullptr);       \
+        return Json(nullptr);       \
     }                               \
     if(!IsArray() && !IsObject()) { \
-        return JSON(m_cjson);       \
+        return Json(m_cjson);       \
     }
 
-JSON::JSON(cJSON* ptr)
+Json::Json(cJSON* ptr)
     : m_cjson(ptr)
 {
 }
 
-void JSON::DecRef()
+void Json::DecRef()
 {
     if(m_refCount) {
         (*m_refCount)--;
@@ -48,14 +50,14 @@ void JSON::DecRef()
     }
 }
 
-void JSON::IncRef()
+void Json::IncRef()
 {
     if(m_refCount) {
         (*m_refCount)++;
     }
 }
 
-void JSON::Manage()
+void Json::Manage()
 {
     if(!IsManaged()) {
         m_refCount = new std::atomic_int;
@@ -63,7 +65,7 @@ void JSON::Manage()
     }
 }
 
-void JSON::UnManage()
+void Json::UnManage()
 {
     if(m_refCount) {
         delete m_refCount;
@@ -71,7 +73,7 @@ void JSON::UnManage()
     }
 }
 
-JSON& JSON::operator=(const JSON& other)
+Json& Json::operator=(const Json& other)
 {
     if(this == &other) {
         return *this;
@@ -84,49 +86,49 @@ JSON& JSON::operator=(const JSON& other)
     return *this;
 }
 
-JSON::JSON(const JSON& other) { *this = other; }
+Json::Json(const Json& other) { *this = other; }
 
-JSON::~JSON()
+Json::~Json()
 {
     DecRef();
     m_cjson = nullptr;
 }
 
-JSON JSON::operator[](const wxString& index) const
+Json Json::operator[](const wxString& index) const
 {
     if(m_cjson == nullptr) {
-        return JSON(nullptr);
+        return Json(nullptr);
     }
 
     cJSON* child = m_cjson->child;
     while(child) {
         if(child->string && strcmp(child->string, index.c_str()) == 0) {
-            return JSON(child);
+            return Json(child);
         }
         child = child->next;
     }
-    return JSON(nullptr);
+    return Json(nullptr);
 }
 
-JSON JSON::AddItem(const wxString& name, cJSON* item)
+Json Json::AddItem(const wxString& name, cJSON* item)
 {
     if(m_cjson == nullptr) {
         cJSON_Delete(item);
-        return JSON(nullptr);
+        return Json(nullptr);
     }
     if(m_cjson->type != cJSON_Array && m_cjson->type != cJSON_Object) {
         cJSON_Delete(item);
-        return JSON(nullptr);
+        return Json(nullptr);
     }
     if(m_cjson->type == cJSON_Array) {
         cJSON_AddItemToArray(m_cjson, item);
     } else {
         cJSON_AddItemToObject(m_cjson, name.c_str(), item);
     }
-    return JSON(item);
+    return Json(item);
 }
 
-wxString JSON::ToString(bool pretty) const
+wxString Json::ToString(bool pretty) const
 {
     if(m_cjson == nullptr) {
         return "";
@@ -137,21 +139,21 @@ wxString JSON::ToString(bool pretty) const
     return str;
 }
 
-JSON JSON::CreateArray()
+Json Json::CreateArray()
 {
-    JSON arr(cJSON_CreateArray());
+    Json arr(cJSON_CreateArray());
     arr.Manage();
     return arr;
 }
 
-JSON JSON::CreateObject()
+Json Json::CreateObject()
 {
-    JSON obj(cJSON_CreateObject());
+    Json obj(cJSON_CreateObject());
     obj.Manage();
     return obj;
 }
 
-void JSON::Delete()
+void Json::Delete()
 {
     // Delete only when owned
     if(m_cjson) {
@@ -160,9 +162,9 @@ void JSON::Delete()
     }
 }
 
-JSON JSON::Add(const char* name, const wxString& value) { return Add(name, value.mb_str(wxConvUTF8).data()); }
+Json Json::Add(const char* name, const wxString& value) { return Add(name, value.mb_str(wxConvUTF8).data()); }
 
-JSON JSON::Add(const char* name, const char* value)
+Json Json::Add(const char* name, const char* value)
 {
     CHECK_IS_CONTAINER();
     if(IsObject()) {
@@ -171,10 +173,10 @@ JSON JSON::Add(const char* name, const char* value)
         // Array
         cJSON_AddItemToArray(m_cjson, cJSON_CreateString(value));
     }
-    return JSON(m_cjson);
+    return Json(m_cjson);
 }
 
-JSON JSON::Add(const char* name, double value)
+Json Json::Add(const char* name, double value)
 {
     CHECK_IS_CONTAINER();
     if(IsObject()) {
@@ -183,10 +185,10 @@ JSON JSON::Add(const char* name, double value)
         // Array
         cJSON_AddItemToArray(m_cjson, cJSON_CreateNumber(value));
     }
-    return JSON(m_cjson);
+    return Json(m_cjson);
 }
 
-JSON JSON::Add(const char* name, bool value)
+Json Json::Add(const char* name, bool value)
 {
     CHECK_IS_CONTAINER();
     if(IsObject()) {
@@ -195,10 +197,10 @@ JSON JSON::Add(const char* name, bool value)
         // Array
         cJSON_AddItemToArray(m_cjson, cJSON_CreateBool(value ? 1 : 0));
     }
-    return JSON(m_cjson);
+    return Json(m_cjson);
 }
 
-wxString JSON::GetString(const wxString& defaultVaule) const
+wxString Json::GetString(const wxString& defaultVaule) const
 {
     if(!m_cjson || m_cjson->type != cJSON_String) {
         return defaultVaule;
@@ -206,7 +208,7 @@ wxString JSON::GetString(const wxString& defaultVaule) const
     return m_cjson->valuestring;
 }
 
-double JSON::GetNumber(double defaultVaule) const
+double Json::GetNumber(double defaultVaule) const
 {
     if(!m_cjson || m_cjson->type != cJSON_Number) {
         return defaultVaule;
@@ -214,7 +216,7 @@ double JSON::GetNumber(double defaultVaule) const
     return m_cjson->valuedouble;
 }
 
-int JSON::GetInteger(int defaultVaule) const
+int Json::GetInteger(int defaultVaule) const
 {
     if(!m_cjson || m_cjson->type != cJSON_Number) {
         return defaultVaule;
@@ -222,7 +224,7 @@ int JSON::GetInteger(int defaultVaule) const
     return m_cjson->valueint;
 }
 
-bool JSON::GetBool(bool defaultVaule) const
+bool Json::GetBool(bool defaultVaule) const
 {
     if(!m_cjson || (m_cjson->type != cJSON_True && m_cjson != cJSON_False)) {
         return defaultVaule;
@@ -230,10 +232,10 @@ bool JSON::GetBool(bool defaultVaule) const
     return m_cjson->type == cJSON_True ? true : false;
 }
 
-JSON JSON::operator[](size_t index) const
+Json Json::operator[](size_t index) const
 {
     if(index >= GetCount()) {
-        return JSON(nullptr);
+        return Json(nullptr);
     }
     cJSON* child = m_cjson->child;
     size_t where = 0;
@@ -241,10 +243,10 @@ JSON JSON::operator[](size_t index) const
         child = child->next;
         ++where;
     }
-    return JSON(child);
+    return Json(child);
 }
 
-size_t JSON::GetCount() const
+size_t Json::GetCount() const
 {
     if(m_cjson == nullptr) {
         return 0;
@@ -258,20 +260,20 @@ size_t JSON::GetCount() const
     return count;
 }
 
-JSON JSON::AddObject(const char* name, const JSON& obj)
+Json Json::AddObject(const char* name, const Json& obj)
 {
     if(!m_cjson) {
         return obj;
     }
     cJSON_AddItemToObject(m_cjson, name, obj.m_cjson);
     if(obj.IsManaged()) {
-        JSON& o = const_cast<JSON&>(obj);
+        Json& o = const_cast<Json&>(obj);
         o.UnManage(); // We take ownership
     }
     return obj;
 }
 
-JSON JSON::Add(const char* name, const std::vector<wxString>& value)
+Json Json::Add(const char* name, const std::vector<wxString>& value)
 {
     auto a = AddArray(name);
     for(const auto& s : value) {
@@ -280,7 +282,7 @@ JSON JSON::Add(const char* name, const std::vector<wxString>& value)
     return a;
 }
 
-std::vector<wxString> JSON::GetStringArray() const
+std::vector<wxString> Json::GetStringArray() const
 {
     if(!m_cjson || m_cjson->type != cJSON_Array) {
         return {};
@@ -294,14 +296,14 @@ std::vector<wxString> JSON::GetStringArray() const
     return arr;
 }
 
-JSON JSON::Add(const char* name, const JSON& value)
+Json Json::Add(const char* name, const Json& value)
 {
     CHECK_IS_CONTAINER();
     if(IsObject()) {
         return AddObject(name, value);
     } else {
         if(value.IsManaged()) {
-            JSON& o = const_cast<JSON&>(value);
+            Json& o = const_cast<Json&>(value);
             o.UnManage(); // We take ownership
         }
         cJSON_AddItemToArray(m_cjson, value.m_cjson);
@@ -309,9 +311,10 @@ JSON JSON::Add(const char* name, const JSON& value)
     }
 }
 
-JSON JSON::Parse(const wxString& source)
+Json Json::Parse(const wxString& source)
 {
-    JSON json(cJSON_Parse(source.c_str()));
+    Json json(cJSON_Parse(source.c_str()));
     json.Manage();
     return json;
 }
+} // namespace dap

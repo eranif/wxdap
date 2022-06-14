@@ -157,11 +157,11 @@ void dap::Client::OnDataRead(const wxString& buffer)
 
     m_rpc.AppendBuffer(buffer);
 
-    // dap::Client::StaticOnDataRead will get called for every JSON payload that will arrive over the network
+    // dap::Client::StaticOnDataRead will get called for every Json payload that will arrive over the network
     m_rpc.ProcessBuffer(dap::Client::StaticOnDataRead, this);
 }
 
-void dap::Client::StaticOnDataRead(JSON json, wxObject* o)
+void dap::Client::StaticOnDataRead(Json json, wxObject* o)
 {
     dap::Client* This = static_cast<dap::Client*>(o);
     This->OnMessage(json);
@@ -172,10 +172,10 @@ void dap::Client::StaticOnDataRead(JSON json, wxObject* o)
         m_features |= FeatureName;          \
     }
 
-void dap::Client::OnMessage(JSON json)
+void dap::Client::OnMessage(Json json)
 {
     if(m_handshake_state != eHandshakeState::kCompleted) {
-        // construct a message from the JSON
+        // construct a message from the Json
         ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
         if(msg && msg->type == "response" && msg->As<Response>()->command == "initialize") {
             m_handshake_state = eHandshakeState::kCompleted;
@@ -234,7 +234,7 @@ void dap::Client::OnMessage(JSON json)
         } else if(as_event->event == "output") {
             SendDAPEvent(wxEVT_DAP_OUTPUT_EVENT, new dap::OutputEvent, json);
         } else {
-            LOG_ERROR() << "Received JSON Event payload:" << endl;
+            LOG_ERROR() << "Received Json Event payload:" << endl;
             LOG_ERROR() << json.ToString(false) << endl;
         }
     } else if(as_response) {
@@ -280,12 +280,12 @@ void dap::Client::OnMessage(JSON json)
             SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json);
         }
     } else {
-        // LOG_ERROR() << "Received JSON payload:" << endl;
+        // LOG_ERROR() << "Received Json payload:" << endl;
         // LOG_ERROR() << json.ToString(false) << endl;
     }
 }
 
-void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json)
+void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json)
 {
     std::shared_ptr<dap::Any> ptr{ dap_message };
     ptr->From(json);

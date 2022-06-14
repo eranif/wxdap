@@ -1,7 +1,7 @@
 #ifndef PROTOCOLMESSAGE_HPP
 #define PROTOCOLMESSAGE_HPP
 
-#include "JSON.hpp"
+#include "Json.hpp"
 #include "dap_exports.hpp"
 
 #include <functional>
@@ -16,8 +16,8 @@
 /// specifications described here:
 /// https://microsoft.github.io/debug-adapter-protocol/specification
 #define JSON_SERIALIZE()      \
-    JSON To() const override; \
-    void From(const JSON& json) override
+    Json To() const override; \
+    void From(const Json& json) override
 
 #define REQUEST_CLASS(Type, Command)                              \
     Type()                                                        \
@@ -64,8 +64,8 @@ struct WXDLLIMPEXP_DAP Any {
     Any() {}
     virtual ~Any() {}
 
-    virtual JSON To() const = 0;
-    virtual void From(const JSON& json) = 0;
+    virtual Json To() const = 0;
+    virtual void From(const Json& json) = 0;
 
     template <typename T>
     T* As() const
@@ -114,9 +114,9 @@ public:
     ProtocolMessage::Ptr_t New(const wxString& type, const wxString& name);
 
     /**
-     * @brief create new ProtocolMessage from raw JSON object
+     * @brief create new ProtocolMessage from raw Json object
      */
-    ProtocolMessage::Ptr_t FromJSON(JSON json);
+    ProtocolMessage::Ptr_t FromJSON(Json json);
 
     void RegisterResponse(const wxString& name, onNewObject func);
     void RegisterEvent(const wxString& name, onNewObject func);
@@ -177,8 +177,8 @@ struct WXDLLIMPEXP_DAP Response : public ProtocolMessage {
 /// <-
 struct WXDLLIMPEXP_DAP CancelResponse : public Response {
     RESPONSE_CLASS(CancelResponse, "cancel");
-    JSON To() const override { return Response::To(); }
-    void From(const JSON& json) override { Response::From(json); }
+    Json To() const override { return Response::To(); }
+    void From(const Json& json) override { Response::From(json); }
 };
 
 /// This event indicates that the debug adapter is ready to accept configuration

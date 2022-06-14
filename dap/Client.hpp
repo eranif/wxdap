@@ -100,7 +100,7 @@ protected:
     bool SendRequest(dap::ProtocolMessage& request);
 
 protected:
-    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, JSON json);
+    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json);
 
     /**
      * @brief we maintain a reader thread that is responsible for reading
@@ -124,11 +124,11 @@ protected:
     void OnConnectionError();
 
     /**
-     * @brief handle JSON payload received from the DAP server
+     * @brief handle Json payload received from the DAP server
      * @param json
      */
-    void OnMessage(JSON json);
-    static void StaticOnDataRead(JSON json, wxObject* o);
+    void OnMessage(Json json);
+    static void StaticOnDataRead(Json json, wxObject* o);
 
 public:
     Client();

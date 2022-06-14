@@ -21,7 +21,7 @@
 */
 
 /* cJSON */
-/* JSON parser in C. */
+/* Json parser in C. */
 
 // clang-format off
 #include <stdlib.h>
