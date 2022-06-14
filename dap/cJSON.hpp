@@ -20,8 +20,8 @@
   THE SOFTWARE.
 */
 
-#ifndef cJSON__h
-#define cJSON__h
+#ifndef DAP_cJSON__h
+#define DAP_cJSON__h
 #include <memory>
 
 /* cJSON Types: */

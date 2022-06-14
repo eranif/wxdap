@@ -1,5 +1,5 @@
-#ifndef LOG_HPP
-#define LOG_HPP
+#ifndef DAPLOG_HPP
+#define DAPLOG_HPP
 
 #include "dap_exports.hpp"
 #include <string>

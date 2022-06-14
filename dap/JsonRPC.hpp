@@ -1,5 +1,5 @@
-#ifndef JSONRPC_HPP
-#define JSONRPC_HPP
+#ifndef DAPJSONRPC_HPP
+#define DAPJSONRPC_HPP
 
 #include "Exception.hpp"
 #include "Queue.hpp"

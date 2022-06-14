@@ -1,5 +1,5 @@
-#ifndef EXCEPTION_HPP
-#define EXCEPTION_HPP
+#ifndef DAPEXCEPTION_HPP
+#define DAPEXCEPTION_HPP
 
 #include "dap_exports.hpp"
 #include <wx/string.h>

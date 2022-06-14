@@ -20,8 +20,8 @@
   THE SOFTWARE.
 */
 
-#ifndef JSON_HPP
-#define JSON_HPP
+#ifndef DAPJSON_HPP
+#define DAPJSON_HPP
 
 #include "cJSON.hpp"
 #include "dap_exports.hpp"

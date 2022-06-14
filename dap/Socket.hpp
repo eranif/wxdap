@@ -1,5 +1,5 @@
-#ifndef CLSOCKETBASE_H
-#define CLSOCKETBASE_H
+#ifndef DAP_SOCKET_H
+#define DAP_SOCKET_H
 
 #include "dap_exports.hpp"
 
