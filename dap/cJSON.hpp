@@ -52,13 +52,13 @@ typedef struct cJsonDap {
         string; /* The item's name string, if this item is the child of, or is in the list of subitems of an object. */
 } cJsonDap;
 
-typedef struct cJSON_Hooks {
+typedef struct cJSONDap_Hooks {
     void* (*malloc_fn)(size_t sz);
     void (*free_fn)(void* ptr);
-} cJSON_Hooks;
+} cJSONDap_Hooks;
 
 /* Supply malloc, realloc and free functions to cJsonDap */
-extern void cJSON_InitHooks(cJSON_Hooks* hooks);
+extern void cJSON_InitHooks(cJSONDap_Hooks* hooks);
 
 /* Supply a block of Json, and this returns a cJsonDap object you can interrogate. Call cJSON_Delete when finished. */
 extern cJsonDap* cJSON_Parse(const char* value);

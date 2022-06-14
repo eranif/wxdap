@@ -66,7 +66,7 @@ static char* cJSON_strdup(const char* str)
     return copy;
 }
 
-void cJSON_InitHooks(cJSON_Hooks* hooks)
+void cJSON_InitHooks(cJSONDap_Hooks* hooks)
 {
     if(!hooks) { /* Reset hooks */
         cJSON_malloc = malloc;
