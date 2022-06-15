@@ -3,6 +3,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="CMakeLists.txt"/>
     <File Name="dap_exports.hpp"/>
     <File Name="DAPEvent.cpp"/>
     <File Name="DAPEvent.hpp"/>
