@@ -1,7 +1,7 @@
 #ifndef PROTOCOLMESSAGE_HPP
 #define PROTOCOLMESSAGE_HPP
 
-#include "Json.hpp"
+#include "JSON.hpp"
 #include "dap_exports.hpp"
 
 #include <functional>

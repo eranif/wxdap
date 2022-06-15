@@ -172,8 +172,11 @@ int Socket::SelectWriteMS(long milliSeconds)
     if(m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
     }
-
+#ifdef __WXMAC__
+    struct timeval tv = { milliSeconds / 1000, ((int)milliSeconds % 1000) * 1000 };
+#else
     struct timeval tv = { milliSeconds / 1000, (milliSeconds % 1000) * 1000 };
+#endif
     fd_set write_set;
     FD_ZERO(&write_set);
     FD_SET(m_socket, &write_set);

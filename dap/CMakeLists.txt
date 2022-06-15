@@ -3,4 +3,5 @@ project(dapcxx)
 include_directories(${CMAKE_SOURCE_DIR})
 FILE(GLOB SRCS "*.cpp")
 
-add_library(dapcxx STATIC ${SRCS})
+add_library(dapcxx SHARED ${SRCS})
+target_link_libraries(dapcxx ${wxWidgets_LIBRARIES})
