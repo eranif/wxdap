@@ -86,14 +86,15 @@ void MainFrame::InitializeClient()
     m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
     m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
-    m_client.Bind(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
     m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
     m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
-    //m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
-    //m_client.Launch({ R"(/home/eran/a.out)" });
+    // m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
+    // m_client.Launch({ R"(/home/eran/a.out)" });
 }
 
 void MainFrame::OnNext(wxCommandEvent& event)
@@ -272,6 +273,7 @@ void MainFrame::OnSetBreakpoint(DAPEvent& event)
         }
     }
 }
+
 /// ----------------------------------
 /// -- DAP EVENTS END --
 /// ----------------------------------

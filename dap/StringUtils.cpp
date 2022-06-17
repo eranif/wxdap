@@ -1,4 +1,5 @@
 #include "StringUtils.hpp"
+
 #include <codecvt>
 #include <cstring>
 #include <locale>
@@ -46,12 +47,12 @@ wxString StringUtils::ToUpper(const wxString& str) { return str.Upper(); }
 #define ARGV_STATE_SQUOTE 2
 #define ARGV_STATE_ESCAPE 3
 #define ARGV_STATE_BACKTICK 4
-#define PUSH_CURTOKEN()                \
-    {                                  \
-        if(!curstr.str().empty()) {    \
-            A.push_back(curstr.str()); \
-            curstr = {};               \
-        }                              \
+#define PUSH_CURTOKEN()          \
+    {                            \
+        if(!curstr.empty()) {    \
+            A.push_back(curstr); \
+            curstr.clear();      \
+        }                        \
     }
 
 #define CHANGE_STATE(new_state) \
@@ -71,7 +72,7 @@ char** StringUtils::BuildArgv(const wxString& str, int& argc)
     std::vector<wxString> A;
     int state = ARGV_STATE_NORMAL;
     int prev_state = ARGV_STATE_NORMAL;
-    std::stringstream curstr;
+    wxString curstr;
     for(char ch : str) {
         switch(state) {
         case ARGV_STATE_NORMAL: {
@@ -178,8 +179,9 @@ char** StringUtils::BuildArgv(const wxString& str, int& argc)
         }
     }
 
-    if(!curstr.str().empty()) {
-        A.push_back(curstr.str());
+    if(!curstr.empty()) {
+        A.push_back(curstr);
+        curstr.clear();
     }
 
     if(A.empty()) {

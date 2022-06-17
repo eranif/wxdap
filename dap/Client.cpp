@@ -271,9 +271,13 @@ void dap::Client::OnMessage(Json json)
                 m_requestIdToFilepath.erase(as_response->request_seq);
             }
             SendDAPEvent(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, ptr, json);
-        } else if(as_response->command == "setFunctionBreakpoints" || as_response->command == "setBreakpoints") {
-            // respond to "setXXXBreakpoints" command
-            SendDAPEvent(wxEVT_DAP_SET_BREAKPOINT_RESPONSE, new dap::SetBreakpointsResponse, json);
+
+        } else if(as_response->command == "setFunctionBreakpoints") {
+            SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json);
+
+        } else if(as_response->command == "setBreakpoints") {
+            SendDAPEvent(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, new dap::SetBreakpointsResponse, json);
+
         } else if(as_response->command == "configurationDone") {
             SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json);
         } else if(as_response->command == "launch") {
