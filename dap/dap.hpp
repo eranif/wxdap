@@ -897,6 +897,8 @@ struct WXDLLIMPEXP_DAP StackTraceRequest : public Request {
 /// Response to 'stackTrace' request.
 struct WXDLLIMPEXP_DAP StackTraceResponse : public Response {
     std::vector<StackFrame> stackFrames;
+    // extension to the protocol: hold the ID of the thread that owns the frames
+    int threadId = wxNOT_FOUND;
     RESPONSE_CLASS(StackTraceResponse, "stackTrace");
     JSON_SERIALIZE();
 };

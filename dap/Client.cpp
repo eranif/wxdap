@@ -240,7 +240,12 @@ void dap::Client::OnMessage(Json json)
     } else if(as_response) {
         if(as_response->command == "stackTrace") {
             // received a stack trace response
-            SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, new dap::StackTraceResponse, json);
+            auto response = new dap::StackTraceResponse;
+            response->From(json);
+            response->threadId = m_get_frames_queue.front();
+            m_get_frames_queue.erase(m_get_frames_queue.begin());
+
+            SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, response, json);
 
         } else if(as_response->command == "scopes") {
             // Scopes response.
@@ -321,6 +326,7 @@ void dap::Client::Reset()
     m_requestIdToFilepath.clear();
     m_features = 0;
     m_stopOnEntry = true;
+    m_get_frames_queue.clear();
 }
 
 /// API
@@ -388,6 +394,8 @@ void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     req.arguments.levels = frame_count;
     req.arguments.startFrame = starting_frame;
+
+    m_get_frames_queue.push_back(req.arguments.threadId);
     SendRequest(req);
 }
 

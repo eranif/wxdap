@@ -7,6 +7,7 @@
 #include "dap_exports.hpp"
 
 #include <atomic>
+#include <queue>
 #include <wx/event.h>
 #include <wx/string.h>
 
@@ -94,6 +95,9 @@ protected:
     std::unordered_map<size_t, wxString> m_requestIdToFilepath;
     size_t m_features = 0;
     bool m_stopOnEntry = true;
+
+    /// the ID if thread that called GetFrames()
+    std::vector<int> m_get_frames_queue;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }
