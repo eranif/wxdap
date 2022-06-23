@@ -10,11 +10,12 @@
 class MainFrame : public MainFrameBase
 {
     dap::Client m_client;
+    wxString m_ExecutableFileName;
     wxFileName m_current_file_loaded;
     std::vector<wxStyledTextCtrl*> m_ctrls;
 
 public:
-    MainFrame(wxWindow* parent);
+    MainFrame(wxWindow* parent, wxString executableFileName);
     virtual ~MainFrame();
 
 protected:
@@ -35,6 +36,8 @@ protected:
     void OnStepOut(wxCommandEvent& event) override;
     void OnContinue(wxCommandEvent& event) override;
     void OnContinueUI(wxUpdateUIEvent& event) override;
+
+    void OnDebugFileNameChanged(wxFileDirPickerEvent& evt);
 
     /// Dap events
     void OnStopped(DAPEvent& event);
