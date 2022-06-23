@@ -4,8 +4,8 @@
 // Do not modify this file by hand!
 //////////////////////////////////////////////////////////////////////
 
-#ifndef _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
-#define _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
+#ifndef _DBGCLI_UI_BASE_CLASSES_HPP
+#define _DBGCLI_UI_BASE_CLASSES_HPP
 
 // clang-format off
 #include <wx/settings.h>
@@ -15,12 +15,14 @@
 #include <wx/iconbndl.h>
 #include <wx/artprov.h>
 #include <wx/sizer.h>
+#include <wx/toolbar.h>
 #include <wx/panel.h>
+#include <wx/stattext.h>
+#include <wx/filepicker.h>
 #include <wx/splitter.h>
 #include <wx/stc/stc.h>
 #include <wx/notebook.h>
 #include <wx/imaglist.h>
-#include <wx/toolbar.h>
 #if wxVERSION_NUMBER >= 2900
 #include <wx/persist.h>
 #include <wx/persist/toplevel.h>
@@ -42,12 +44,15 @@
 class MainFrameBase : public wxFrame
 {
 protected:
+    wxToolBar* m_toolbar12;
     wxPanel* m_panel2;
+    wxStaticText* m_staticTextSelectDebugFileName;
+    wxFilePickerCtrl* m_filePickerSelectDebugFileName;
     wxSplitterWindow* m_splitter4;
-    wxPanel* m_splitterPage6;
-    wxStyledTextCtrl* m_stcText;
-    wxPanel* m_splitterPage8;
-    wxNotebook* m_notebook17;
+    wxPanel* m_splitterPageSourceFile;
+    wxStyledTextCtrl* m_stcTextSourceFile;
+    wxPanel* m_splitterPageDAPDebugInfo;
+    wxNotebook* m_notebookDAPDebugInfo;
     wxPanel* m_panel18;
     wxStyledTextCtrl* m_stcStack;
     wxPanel* m_panel19;
@@ -56,7 +61,6 @@ protected:
     wxStyledTextCtrl* m_stcLog;
     wxPanel* m_panel30;
     wxStyledTextCtrl* m_stcScopes;
-    wxToolBar* m_toolbar12;
 
 protected:
     virtual void OnConnect(wxCommandEvent& event) { event.Skip(); }
@@ -73,8 +77,11 @@ protected:
     virtual void OnPauseUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
-    wxStyledTextCtrl* GetStcText() { return m_stcText; }
-    wxPanel* GetSplitterPage6() { return m_splitterPage6; }
+    wxToolBar* GetToolbar12() { return m_toolbar12; }
+    wxStaticText* GetStaticTextSelectDebugFileName() { return m_staticTextSelectDebugFileName; }
+    wxFilePickerCtrl* GetFilePickerSelectDebugFileName() { return m_filePickerSelectDebugFileName; }
+    wxStyledTextCtrl* GetStcTextSourceFile() { return m_stcTextSourceFile; }
+    wxPanel* GetSplitterPageSourceFile() { return m_splitterPageSourceFile; }
     wxStyledTextCtrl* GetStcStack() { return m_stcStack; }
     wxPanel* GetPanel18() { return m_panel18; }
     wxStyledTextCtrl* GetStcThreads() { return m_stcThreads; }
@@ -83,14 +90,11 @@ public:
     wxPanel* GetPanel27() { return m_panel27; }
     wxStyledTextCtrl* GetStcScopes() { return m_stcScopes; }
     wxPanel* GetPanel30() { return m_panel30; }
-    wxNotebook* GetNotebook17() { return m_notebook17; }
-    wxPanel* GetSplitterPage8() { return m_splitterPage8; }
+    wxNotebook* GetNotebookDAPDebugInfo() { return m_notebookDAPDebugInfo; }
+    wxPanel* GetSplitterPageDAPDebugInfo() { return m_splitterPageDAPDebugInfo; }
     wxSplitterWindow* GetSplitter4() { return m_splitter4; }
     wxPanel* GetPanel2() { return m_panel2; }
-    wxToolBar* GetToolbar12() { return m_toolbar12; }
-    MainFrameBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("DAP UI"),
-                  const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(800, 600),
-                  long style = wxDEFAULT_FRAME_STYLE);
+    MainFrameBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("DAP UI"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(800,600), long style = wxDEFAULT_FRAME_STYLE);
     virtual ~MainFrameBase();
 };
 

@@ -33,12 +33,15 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker
 }
 } // namespace
 
-MainFrame::MainFrame(wxWindow* parent)
-    : MainFrameBase(parent)
+
+MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
+    : MainFrameBase(parent),
+      m_ExecutableFileName(executableFileName)
 {
+
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
 
-    m_ctrls = { m_stcLog, m_stcText, m_stcThreads, m_stcStack, m_stcScopes };
+    m_ctrls = { m_stcLog, m_stcTextSourceFile, m_stcThreads, m_stcStack, m_stcScopes };
     for(int i = 0; i < wxSTC_STYLE_MAX; ++i) {
         for(auto ctrl : m_ctrls) {
             ctrl->StyleSetFont(i, code_font);
@@ -48,6 +51,13 @@ MainFrame::MainFrame(wxWindow* parent)
     for(auto ctrl : m_ctrls) {
         ctrl->MarkerDefine(MARKER_NUMBER, wxSTC_MARK_ARROW, *wxGREEN, *wxGREEN);
     }
+
+    m_filePickerSelectDebugFileName->SetPath(m_ExecutableFileName);
+    m_filePickerSelectDebugFileName->Connect(   m_filePickerSelectDebugFileName->GetEventType(),
+                                                wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged),
+                                                NULL,
+                                                this
+                                            );
 }
 
 MainFrame::~MainFrame() {}
@@ -76,23 +86,25 @@ void MainFrame::InitializeClient()
     m_client.SetTransport(transport);
 
     // bind the client events
-    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitializedEvent, this);
-    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
-    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
-    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
-    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
-    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT,      &MainFrame::OnStopped,          this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT,  &MainFrame::OnInitializedEvent, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT,       &MainFrame::OnExited,           this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT,   &MainFrame::OnTerminated,       this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace,      this);
+    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE,    &MainFrame::OnScopes,           this);
+    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables,        this);
+    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT,       &MainFrame::OnOutput,           this);
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
-    m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
+    m_client.Bind(wxEVT_DAP_LOST_CONNECTION,    &MainFrame::OnConnectionError, this);
     m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
     m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
-    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
+    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE,    &MainFrame::OnLaunchResponse,   this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
-    m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
+	m_client.Launch({m_ExecutableFileName});
+	// m_client.Launch({R"(D:\Andrew_Development\Z_Testing_Apps\Clang_printf\bin\clang_Printf.exe)" });
+    // m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
     // m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
     // m_client.Launch({ R"(/home/eran/a.out)" });
 }
@@ -294,13 +306,13 @@ void MainFrame::LoadFile(const wxString& filepath, int line_number)
         wxFFile f(file_to_load, "rb");
         if(f.IsOpened()) {
             m_current_file_loaded = fp;
-            m_stcText->LoadFile(m_current_file_loaded.GetFullPath());
+            m_stcTextSourceFile->LoadFile(m_current_file_loaded.GetFullPath());
             m_current_file_loaded.SetVolume("C");
             wxString path_with_volume = m_current_file_loaded.GetFullPath();
-            m_client.BreakpointLocations(path_with_volume, 1, m_stcText->GetLineCount());
+            m_client.BreakpointLocations(path_with_volume, 1, m_stcTextSourceFile->GetLineCount());
         }
     }
-    center_line(m_stcText, line_number, true);
+    center_line(m_stcTextSourceFile, line_number, true);
     AddLog(wxString() << "CURSOR: " << filepath << ":" << line_number);
 }
 
@@ -320,4 +332,13 @@ void MainFrame::OnContinue(wxCommandEvent& event)
 {
     wxUnusedVar(event);
     m_client.Continue();
+}
+
+void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt)
+{
+    if (m_filePickerSelectDebugFileName)
+    {
+        m_ExecutableFileName = evt.GetPath();
+        m_filePickerSelectDebugFileName->SetPath(evt.GetPath());
+    }
 }

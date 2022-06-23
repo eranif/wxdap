@@ -9,6 +9,7 @@
 class DAPCli : public wxApp
 {
     wxCmdLineParser m_parser;
+    wxString m_ExecutableFileName;
 
 protected:
     bool DoParseCommandLine();
