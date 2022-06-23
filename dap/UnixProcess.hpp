@@ -62,6 +62,7 @@ private:
     atomic_bool m_goingDown;
     wxString m_stdout;
     wxString m_stderr;
+    int m_pid = wxNOT_FOUND;
 
 protected:
     // sync operations

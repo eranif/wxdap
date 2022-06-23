@@ -12,9 +12,11 @@ namespace dap
 {
 class WXDLLIMPEXP_DAP Process
 {
+protected:
     Queue<std::pair<wxString, wxString>> m_inQueue;
     std::thread* m_readerThread = nullptr;
     std::atomic_bool m_shutdown;
+    int m_processId = wxNOT_FOUND;
 
 protected:
     /**
@@ -42,6 +44,9 @@ public:
      * @return pair of strings. first is stdout, second is stderr
      */
     std::pair<wxString, wxString> Read();
+
+    void SetProcessId(int processId) { this->m_processId = processId; }
+    int GetProcessId() const { return m_processId; }
 };
 
 /**
@@ -50,8 +55,8 @@ public:
  * @param workingDir process's working directory
  * @return pointer to Process object
  */
-Process* ExecuteProcess(const wxString& cmd, // Command Line
-                        const wxString& workingDir = ".");
+WXDLLIMPEXP_DAP Process* ExecuteProcess(const wxString& cmd, // Command Line
+                                        const wxString& workingDir = ".");
 
 };     // namespace dap
 #endif // PROCESS_H__

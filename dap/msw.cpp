@@ -172,7 +172,9 @@ Process* ExecuteProcess(const wxString& cmd, const wxString& workingDir)
         delete prc;
         return NULL;
     }
+
     prc->StartReaderThread();
+    prc->SetProcessId(prc->m_dwProcessId);
     return prc;
 }
 

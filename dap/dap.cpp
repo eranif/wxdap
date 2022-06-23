@@ -45,6 +45,7 @@ void Initialize()
     REGISTER_CLASS(ScopesRequest);
     REGISTER_CLASS(StackTraceRequest);
     REGISTER_CLASS(PauseRequest);
+    REGISTER_CLASS(RunInTerminalRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -73,6 +74,7 @@ void Initialize()
     REGISTER_CLASS(StackTraceResponse);
     REGISTER_CLASS(VariablesResponse);
     REGISTER_CLASS(PauseResponse);
+    REGISTER_CLASS(RunInTerminalResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -99,7 +101,7 @@ ProtocolMessage::Ptr_t ObjGenerator::New(const wxString& type, const wxString& n
 wxString dap::ProtocolMessage::ToString() const
 {
     Json json = To();
-    return json.ToString();
+    return json.ToString(false);
 }
 
 void ObjGenerator::RegisterResponse(const wxString& name, onNewObject func)
@@ -683,6 +685,7 @@ Json StepArguments::To() const
     Json json = Json::CreateObject();
     json.Add("threadId", threadId);
     json.Add("singleThread", singleThread);
+    json.Add("granularity", granularity);
     return json;
 }
 
@@ -690,6 +693,7 @@ void StepArguments::From(const Json& json)
 {
     threadId = json["threadId"].GetInteger(wxNOT_FOUND);
     singleThread = json["singleThread"].GetBool(false);
+    granularity = json["granularity"].GetString(granularity);
 }
 
 // ----------------------------------------
@@ -909,10 +913,15 @@ Json NextArguments::To() const
 {
     CREATE_JSON();
     ADD_PROP(threadId);
+    ADD_PROP(granularity);
     return json;
 }
 
-void NextArguments::From(const Json& json) { GET_PROP(threadId, Integer); }
+void NextArguments::From(const Json& json)
+{
+    GET_PROP(threadId, Integer);
+    GET_PROP(granularity, String);
+}
 
 // ----------------------------------------
 // ----------------------------------------
@@ -1184,16 +1193,20 @@ Json StackTraceArguments::To() const
 {
     auto json = Json::CreateObject();
     json.Add("threadId", threadId);
+#if 0
     json.Add("startFrame", startFrame);
     json.Add("levels", levels);
+#endif
     return json;
 }
 
 void StackTraceArguments::From(const Json& json)
 {
     threadId = json["threadId"].GetInteger();
+#if 0
     startFrame = json["startFrame"].GetInteger();
     levels = json["levels"].GetInteger();
+#endif
 }
 
 // ----------------------------------------
@@ -1338,4 +1351,48 @@ void PauseRequest::From(const Json& json)
     Request::From(json);
     arguments.From(json["arguments"]);
 }
+
+void RunInTerminalRequestArguments::From(const Json& json)
+{
+    kind = json["kind"].GetString(kind);
+    title = json["title"].GetString(title);
+    args = json["args"].GetStringArray();
+}
+
+Json RunInTerminalRequestArguments::To() const
+{
+    auto json = Json::CreateObject();
+    json.Add("kind", kind);
+    json.Add("title", title);
+    json.Add("args", args);
+    return json;
+}
+Json RunInTerminalRequest::To() const
+{
+    auto json = Request::To();
+    json.Add("arguments", arguments.To());
+    return json;
+}
+
+void RunInTerminalRequest::From(const Json& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
+}
+
+Json RunInTerminalResponse::To() const
+{
+    RESPONSE_TO();
+    ADD_BODY();
+    ADD_BODY_PROP(processId);
+    return json;
+}
+
+void RunInTerminalResponse::From(const Json& json)
+{
+    RESPONSE_FROM();
+    READ_BODY();
+    GET_BODY_PROP(processId, Number);
+}
+
 }; // namespace dap

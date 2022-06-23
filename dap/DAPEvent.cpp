@@ -13,6 +13,8 @@ wxDEFINE_EVENT(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_LAUNCH_RESPONSE, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_THREADS_RESPONSE, DAPEvent);
 
+wxDEFINE_EVENT(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, DAPEvent);
+
 wxDEFINE_EVENT(wxEVT_DAP_STOPPED_EVENT, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_PROCESS_EVENT, DAPEvent);
@@ -48,4 +50,12 @@ dap::Response* DAPEvent::GetDapResponse() const
         return nullptr;
     }
     return m_object->As<dap::Response>();
+}
+
+dap::Request* DAPEvent::GetDapRequest() const
+{
+    if(!m_object) {
+        return nullptr;
+    }
+    return m_object->As<dap::Request>();
 }

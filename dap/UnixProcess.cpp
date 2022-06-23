@@ -51,6 +51,7 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
         m_childStdin.CloseReadFd();
         m_childStdout.CloseWriteFd();
         m_childStderr.CloseWriteFd();
+        m_pid = child_pid;
     }
 }
 
@@ -62,6 +63,7 @@ UnixProcess::~UnixProcess()
 
 #define CHUNK_SIZE 1024
 #define MAX_BUFF_SIZE (1024 * 2048)
+
 bool UnixProcess::ReadAll(int fd, wxString& content, int timeoutMilliseconds)
 {
     fd_set rset;

@@ -136,6 +136,20 @@ public:
     Client();
     virtual ~Client();
 
+    template <typename RequestType>
+    RequestType MakeRequest()
+    {
+        RequestType req;
+        req.seq = GetNextSequence();
+        return req;
+    }
+
+    /**
+     * @brief send back a response to the dap server
+     * should be used when receiving a reverse request from the dap server
+     */
+    bool SendResponse(dap::Response& response);
+
     /**
      * @brief return the next message sequence
      */

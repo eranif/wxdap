@@ -3,6 +3,7 @@
 
 #include "UI.hpp"
 #include "dap/Client.hpp"
+#include "dap/Process.hpp"
 
 #include <vector>
 #include <wx/filename.h>
@@ -13,6 +14,7 @@ class MainFrame : public MainFrameBase
     wxString m_ExecutableFileName;
     wxFileName m_current_file_loaded;
     std::vector<wxStyledTextCtrl*> m_ctrls;
+    dap::Process* m_process = nullptr;
 
 public:
     MainFrame(wxWindow* parent, wxString executableFileName);
@@ -45,6 +47,7 @@ protected:
     void OnScopes(DAPEvent& event);
     void OnVariables(DAPEvent& event);
     void OnInitializedEvent(DAPEvent& event);
+    void OnInitializeResponse(DAPEvent& event);
     void OnExited(DAPEvent& event);
     void OnTerminated(DAPEvent& event);
     void OnOutput(DAPEvent& event);
@@ -52,5 +55,6 @@ protected:
     void OnConnectionError(DAPEvent& event);
     void OnSetBreakpoint(DAPEvent& event);
     void OnLaunchResponse(DAPEvent& event);
+    void OnRunInTerminalRequest(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP

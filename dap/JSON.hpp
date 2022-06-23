@@ -29,6 +29,7 @@
 #include <atomic>
 #include <cstring>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <wx/string.h>
 

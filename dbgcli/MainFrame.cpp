@@ -1,6 +1,7 @@
 #include "MainFrame.hpp"
 
 #include "dap/Log.hpp"
+#include "dap/Process.hpp"
 
 #include <vector>
 #include <wx/ffile.h>
@@ -55,6 +56,23 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     m_filePickerSelectDebugFileName->Connect(m_filePickerSelectDebugFileName->GetEventType(),
                                              wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged), NULL,
                                              this);
+
+    // bind the client events
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitializedEvent, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZE_RESPONSE, &MainFrame::OnInitializeResponse, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
+    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
+    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
+    m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
+    m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
+    m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
+    m_client.Bind(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, &MainFrame::OnRunInTerminalRequest, this);
 }
 
 MainFrame::~MainFrame() {}
@@ -82,28 +100,8 @@ void MainFrame::InitializeClient()
     // construct new client with the transport
     m_client.SetTransport(transport);
 
-    // bind the client events
-    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitializedEvent, this);
-    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
-    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
-    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
-    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
-    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
-    m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
-    m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
-    m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
-    m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
-    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
-
     // This part is done in mode **sync**
     m_client.Initialize();
-    m_client.Launch({ m_ExecutableFileName });
-    // m_client.Launch({R"(D:\Andrew_Development\Z_Testing_Apps\Clang_printf\bin\clang_Printf.exe)" });
-    // m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
-    // m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
-    // m_client.Launch({ R"(/home/eran/a.out)" });
 }
 
 void MainFrame::OnNext(wxCommandEvent& event)
@@ -147,6 +145,13 @@ void MainFrame::OnLaunchResponse(DAPEvent& event)
 }
 
 /// DAP server responded to our `initialize` request
+void MainFrame::OnInitializeResponse(DAPEvent& event)
+{
+    wxUnusedVar(event);
+    AddLog("Got Initialize response");
+    m_client.Launch({ m_ExecutableFileName });
+}
+
 void MainFrame::OnInitializedEvent(DAPEvent& event)
 {
     // got initialized event, place breakpoints and continue
@@ -156,7 +161,6 @@ void MainFrame::OnInitializedEvent(DAPEvent& event)
     // Set breakpoint on "main"
     m_client.SetFunctionBreakpoints({ { "main" } });
     m_client.ConfigurationDone();
-    m_client.Continue();
 }
 
 /// DAP server stopped. This can happen for multiple reasons:
@@ -281,6 +285,32 @@ void MainFrame::OnSetBreakpoint(DAPEvent& event)
             AddLog(message);
         }
     }
+}
+
+void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
+{
+    AddLog("Handling `OnRunInTerminalRequest` event");
+    auto request = event.GetDapRequest()->As<dap::RunInTerminalRequest>();
+    if(!request) {
+        return;
+    }
+    wxString command;
+    for(const wxString& cmd : request->arguments.args) {
+        command << cmd << " ";
+    }
+
+    AddLog("Starting process: " + command);
+    m_process = dap::ExecuteProcess(command);
+    dap::RunInTerminalResponse response = m_client.MakeRequest<dap::RunInTerminalResponse>();
+    response.request_seq = request->seq;
+    if(!m_process) {
+        response.success = false;
+        response.processId = 0;
+    } else {
+        response.success = true;
+        response.processId = m_process->GetProcessId();
+    }
+    m_client.SendResponse(response);
 }
 
 /// ----------------------------------

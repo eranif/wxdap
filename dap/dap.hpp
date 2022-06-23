@@ -516,10 +516,18 @@ struct WXDLLIMPEXP_DAP StepArguments : public Any {
      * the given granularity).
      */
     int threadId = wxNOT_FOUND;
+
     /**
      * If this optional flag is true, all other suspended threads are not resumed.
      */
-    int singleThread = false;
+    bool singleThread = false;
+
+    /**
+     * Optional granularity to step. If no granularity is specified, a granularity
+     * of 'statement' is assumed.
+     */
+    wxString granularity = "line";
+
     ANY_CLASS(StepArguments);
     JSON_SERIALIZE();
 };
@@ -657,6 +665,7 @@ struct WXDLLIMPEXP_DAP NextArguments : public Any {
      * Execute 'next' for this thread.
      */
     int threadId = -1;
+    wxString granularity = "line";
     ANY_CLASS(NextArguments);
     JSON_SERIALIZE();
 };
@@ -935,6 +944,36 @@ struct WXDLLIMPEXP_DAP VariablesResponse : public Response {
 struct WXDLLIMPEXP_DAP PauseArguments : public Any {
     int threadId = 0;
     ANY_CLASS(PauseArguments);
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP RunInTerminalRequestArguments : public Any {
+    /**
+     * What kind of terminal to launch.
+     * Values: 'integrated', 'external', etc.
+     */
+    wxString kind;
+    /**
+     * Optional title of the terminal.
+     */
+    wxString title;
+    /**
+     * List of arguments. The first argument is the command to run.
+     */
+    std::vector<wxString> args;
+    ANY_CLASS(RunInTerminalRequestArguments);
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP RunInTerminalRequest : public Request {
+    RunInTerminalRequestArguments arguments;
+    REQUEST_CLASS(RunInTerminalRequest, "runInTerminal");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP RunInTerminalResponse : public Response {
+    int processId = wxNOT_FOUND;
+    RESPONSE_CLASS(RunInTerminalResponse, "runInTerminal");
     JSON_SERIALIZE();
 };
 
