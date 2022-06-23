@@ -90,11 +90,9 @@ protected:
     size_t m_requestSeuqnce = 0;
     eHandshakeState m_handshake_state = eHandshakeState::kNotPerformed;
     int m_active_thread_id = wxNOT_FOUND;
-    bool m_waiting_for_stopped_on_entry = false;
     bool m_can_interact = false;
     std::unordered_map<size_t, wxString> m_requestIdToFilepath;
     size_t m_features = 0;
-    bool m_stopOnEntry = true;
 
     /// the ID if thread that called GetFrames()
     std::vector<int> m_get_frames_queue;
@@ -137,9 +135,6 @@ protected:
 public:
     Client();
     virtual ~Client();
-
-    void SetStopOnEntry(bool stopOnEntry) { this->m_stopOnEntry = stopOnEntry; }
-    bool IsStopOnEntry() const { return m_stopOnEntry; }
 
     /**
      * @brief return the next message sequence
@@ -196,11 +191,8 @@ public:
      * @brief start the debuggee
      * @param cmd the cmd in [0] is the program, the remainder are the arguments
      * @param workingDirectory working directory, if empty, use `wxGetCwd()`
-     * @param stopOnEntry stop the debugger as soon as the debug session starts
-     * @param env array of strings in the form of `{ "A=B", "C=D", ... }`
      */
-    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString, bool stopOnEntry = false,
-                const std::vector<wxString>& env = {});
+    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString);
 
     /**
      * @brief ask for list of threads

@@ -457,14 +457,8 @@ struct WXDLLIMPEXP_DAP LaunchRequestArguments : public Any {
     /// extra arguments to append to the program
     std::vector<wxString> args;
 
-    /// environment variables (A=B strings)
-    std::vector<wxString> env;
-
     /// working directory
     wxString cwd;
-
-    /// stop on entry?
-    bool stopOnEntry = false;
 
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();

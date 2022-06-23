@@ -217,12 +217,7 @@ void dap::Client::OnMessage(Json json)
         // received an event
         if(as_event->event == "stopped") {
             m_can_interact = true;
-            if(m_waiting_for_stopped_on_entry) {
-                m_waiting_for_stopped_on_entry = false;
-                SendDAPEvent(wxEVT_DAP_STOPPED_ON_ENTRY_EVENT, new dap::StoppedEvent, json);
-            } else {
-                SendDAPEvent(wxEVT_DAP_STOPPED_EVENT, new dap::StoppedEvent, json);
-            }
+            SendDAPEvent(wxEVT_DAP_STOPPED_EVENT, new dap::StoppedEvent, json);
         } else if(as_event->event == "process") {
             SendDAPEvent(wxEVT_DAP_PROCESS_EVENT, new dap::ProcessEvent, json);
         } else if(as_event->event == "exited") {
@@ -321,11 +316,9 @@ void dap::Client::Reset()
     m_requestSeuqnce = 0;
     m_handshake_state = eHandshakeState::kNotPerformed;
     m_active_thread_id = wxNOT_FOUND;
-    m_waiting_for_stopped_on_entry = false;
     m_can_interact = false;
     m_requestIdToFilepath.clear();
     m_features = 0;
-    m_stopOnEntry = true;
     m_get_frames_queue.clear();
 }
 
@@ -356,8 +349,7 @@ void dap::Client::ConfigurationDone()
     SendRequest(req);
 }
 
-void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, bool stopOnEntry,
-                         const std::vector<wxString>& env)
+void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory)
 {
     m_active_thread_id = wxNOT_FOUND;
     LaunchRequest req = create_dap_request<LaunchRequest>(this) = create_dap_request<LaunchRequest>(this);
@@ -365,13 +357,10 @@ void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDir
 
     cmd.erase(cmd.begin());
     req.arguments.args = cmd; // the remainder are the args
-    req.arguments.stopOnEntry = stopOnEntry;
-    req.arguments.env = env;
 
     // set the working directory
     req.arguments.cwd = workingDirectory;
 
-    m_waiting_for_stopped_on_entry = stopOnEntry;
     SendRequest(req);
 }
 

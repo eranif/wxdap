@@ -585,8 +585,6 @@ Json LaunchRequestArguments::To() const
     ADD_PROP(program);
     ADD_PROP(args);
     ADD_PROP(cwd);
-    ADD_PROP(stopOnEntry);
-    ADD_PROP(env);
     return json;
 }
 
@@ -596,8 +594,6 @@ void LaunchRequestArguments::From(const Json& json)
     GET_PROP(program, String);
     GET_PROP(args, StringArray);
     GET_PROP(cwd, String);
-    GET_PROP(stopOnEntry, Bool);
-    GET_PROP(env, StringArray);
 }
 
 // ----------------------------------------
