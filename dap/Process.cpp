@@ -1,5 +1,7 @@
 #include "Process.hpp"
+
 #include "Log.hpp"
+
 #include <iostream>
 
 void dap::Process::StartReaderThread()

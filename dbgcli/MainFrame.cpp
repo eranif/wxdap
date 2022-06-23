@@ -33,10 +33,9 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker
 }
 } // namespace
 
-
 MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
-    : MainFrameBase(parent),
-      m_ExecutableFileName(executableFileName)
+    : MainFrameBase(parent)
+    , m_ExecutableFileName(executableFileName)
 {
 
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
@@ -53,11 +52,9 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     }
 
     m_filePickerSelectDebugFileName->SetPath(m_ExecutableFileName);
-    m_filePickerSelectDebugFileName->Connect(   m_filePickerSelectDebugFileName->GetEventType(),
-                                                wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged),
-                                                NULL,
-                                                this
-                                            );
+    m_filePickerSelectDebugFileName->Connect(m_filePickerSelectDebugFileName->GetEventType(),
+                                             wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged), NULL,
+                                             this);
 }
 
 MainFrame::~MainFrame() {}
@@ -86,24 +83,24 @@ void MainFrame::InitializeClient()
     m_client.SetTransport(transport);
 
     // bind the client events
-    m_client.Bind(wxEVT_DAP_STOPPED_EVENT,      &MainFrame::OnStopped,          this);
-    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT,  &MainFrame::OnInitializedEvent, this);
-    m_client.Bind(wxEVT_DAP_EXITED_EVENT,       &MainFrame::OnExited,           this);
-    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT,   &MainFrame::OnTerminated,       this);
-    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace,      this);
-    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE,    &MainFrame::OnScopes,           this);
-    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables,        this);
-    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT,       &MainFrame::OnOutput,           this);
+    m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
+    m_client.Bind(wxEVT_DAP_INITIALIZED_EVENT, &MainFrame::OnInitializedEvent, this);
+    m_client.Bind(wxEVT_DAP_EXITED_EVENT, &MainFrame::OnExited, this);
+    m_client.Bind(wxEVT_DAP_TERMINATED_EVENT, &MainFrame::OnTerminated, this);
+    m_client.Bind(wxEVT_DAP_STACKTRACE_RESPONSE, &MainFrame::OnStackTrace, this);
+    m_client.Bind(wxEVT_DAP_SCOPES_RESPONSE, &MainFrame::OnScopes, this);
+    m_client.Bind(wxEVT_DAP_VARIABLES_RESPONSE, &MainFrame::OnVariables, this);
+    m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
-    m_client.Bind(wxEVT_DAP_LOST_CONNECTION,    &MainFrame::OnConnectionError, this);
+    m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
     m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
     m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
-    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE,    &MainFrame::OnLaunchResponse,   this);
+    m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
 
     // This part is done in mode **sync**
     m_client.Initialize();
-	m_client.Launch({m_ExecutableFileName});
-	// m_client.Launch({R"(D:\Andrew_Development\Z_Testing_Apps\Clang_printf\bin\clang_Printf.exe)" });
+    m_client.Launch({ m_ExecutableFileName });
+    // m_client.Launch({R"(D:\Andrew_Development\Z_Testing_Apps\Clang_printf\bin\clang_Printf.exe)" });
     // m_client.Launch({ R"(C:\Users\eran\Downloads\testclangd\Debug\testclangd.exe)" });
     // m_client.Launch({ R"(/home/eran/Documents/TestCxx/build-Debug/bin/TestCxx)" });
     // m_client.Launch({ R"(/home/eran/a.out)" });
@@ -336,8 +333,7 @@ void MainFrame::OnContinue(wxCommandEvent& event)
 
 void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt)
 {
-    if (m_filePickerSelectDebugFileName)
-    {
+    if(m_filePickerSelectDebugFileName) {
         m_ExecutableFileName = evt.GetPath();
         m_filePickerSelectDebugFileName->SetPath(evt.GetPath());
     }

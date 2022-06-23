@@ -1,5 +1,7 @@
 #include "Socket.hpp"
+
 #include "Exception.hpp"
+
 #include <cerrno>
 #include <cstdio>
 #include <memory>

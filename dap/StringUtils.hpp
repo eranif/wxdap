@@ -2,6 +2,7 @@
 #define STRINGUTILS_H
 
 #include "dap_exports.hpp"
+
 #include <sstream>
 #include <string>
 #include <vector>

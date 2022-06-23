@@ -1,4 +1,5 @@
 #include "Exception.hpp"
+
 #include "StringUtils.hpp"
 
 dap::Exception::Exception(const wxString& what)

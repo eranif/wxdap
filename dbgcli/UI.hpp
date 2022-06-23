@@ -94,7 +94,9 @@ public:
     wxPanel* GetSplitterPageDAPDebugInfo() { return m_splitterPageDAPDebugInfo; }
     wxSplitterWindow* GetSplitter4() { return m_splitter4; }
     wxPanel* GetPanel2() { return m_panel2; }
-    MainFrameBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("DAP UI"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(800,600), long style = wxDEFAULT_FRAME_STYLE);
+    MainFrameBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("DAP UI"),
+                  const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(800, 600),
+                  long style = wxDEFAULT_FRAME_STYLE);
     virtual ~MainFrameBase();
 };
 

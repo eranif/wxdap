@@ -1,7 +1,9 @@
 #include "JsonRPC.hpp"
+
 #include "Exception.hpp"
 #include "SocketServer.hpp"
 #include "StringUtils.hpp"
+
 #include <iostream>
 
 dap::JsonRPC::JsonRPC() {}

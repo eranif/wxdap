@@ -1,4 +1,5 @@
 #include "ServerProtocol.hpp"
+
 #include "Log.hpp"
 
 dap::ServerProtocol::ServerProtocol(Socket::Ptr_t conn)

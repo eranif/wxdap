@@ -1,6 +1,7 @@
+#include "SocketServer.hpp"
+
 #include "ConnectionString.hpp"
 #include "Exception.hpp"
-#include "SocketServer.hpp"
 
 #ifndef _WIN32
 #include <arpa/inet.h>

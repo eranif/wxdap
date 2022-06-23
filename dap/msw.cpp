@@ -1,6 +1,7 @@
 #ifdef __WIN32__
 #include "Process.hpp"
 #include "StringUtils.hpp"
+
 #include <chrono>
 #include <memory>
 #include <thread>

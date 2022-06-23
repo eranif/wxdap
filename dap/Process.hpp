@@ -3,6 +3,7 @@
 
 #include "Queue.hpp"
 #include "dap_exports.hpp"
+
 #include <atomic>
 #include <thread>
 #include <wx/string.h>

@@ -1,5 +1,7 @@
 #include "Log.hpp"
+
 #include "StringUtils.hpp"
+
 #include <chrono>
 #include <sstream>
 #include <sys/time.h>

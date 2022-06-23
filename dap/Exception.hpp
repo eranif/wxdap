@@ -2,6 +2,7 @@
 #define DAPEXCEPTION_HPP
 
 #include "dap_exports.hpp"
+
 #include <wx/string.h>
 
 namespace dap

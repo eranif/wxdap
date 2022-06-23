@@ -3,6 +3,7 @@
 
 #include "dap.hpp"
 #include "dap_exports.hpp"
+
 #include <wx/event.h>
 
 class WXDLLIMPEXP_DAP DAPEvent : public wxCommandEvent

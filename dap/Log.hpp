@@ -2,6 +2,7 @@
 #define DAPLOG_HPP
 
 #include "dap_exports.hpp"
+
 #include <string>
 #include <vector>
 #include <wx/string.h>
