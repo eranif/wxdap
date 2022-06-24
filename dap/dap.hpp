@@ -1005,7 +1005,9 @@ template <>
 struct hash<dap::Breakpoint> {
     std::size_t operator()(const dap::Breakpoint& b) const
     {
-        return hash<std::wstring>{}(b.source.path + b.source.name + std::to_string(b.line));
+        wxString s;
+        s << b.source.path << b.source.name << b.line;
+        return hash<std::wstring>{}(s.ToStdWstring());
     }
 };
 } // namespace std
