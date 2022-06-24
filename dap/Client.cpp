@@ -226,9 +226,12 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_INITIALIZED_EVENT, new dap::InitializedEvent, json);
         } else if(as_event->event == "output") {
             SendDAPEvent(wxEVT_DAP_OUTPUT_EVENT, new dap::OutputEvent, json);
+        } else if(as_event->event == "breakpoint") {
+            SendDAPEvent(wxEVT_DAP_BREAKPOINT_EVENT, new dap::BreakpointEvent, json);
+        } else if(as_event->event == "continued") {
+            SendDAPEvent(wxEVT_DAP_CONTINUED_EVENT, new dap::ContinuedEvent, json);
         } else {
-            LOG_ERROR() << "Received Json Event payload:" << endl;
-            LOG_ERROR() << json.ToString(false) << endl;
+            // TODO implement here the rest of the event
         }
     } else if(as_response) {
         if(as_response->command == "stackTrace") {
