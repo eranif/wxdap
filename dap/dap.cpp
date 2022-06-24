@@ -139,9 +139,11 @@ ProtocolMessage::Ptr_t dap::ObjGenerator::FromJSON(Json json)
     wxString type = json["type"].GetString();
     wxString command = (type == "event") ? json["event"].GetString() : json["command"].GetString();
     ProtocolMessage::Ptr_t msg = New(type, command);
-    if(msg) {
-        msg->From(json);
+    if(!msg) {
+        return nullptr;
     }
+
+    msg->From(json);
     return msg;
 }
 

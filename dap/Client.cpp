@@ -207,6 +207,10 @@ void dap::Client::OnMessage(Json json)
 
     // Other messages, convert the DAP message into wxEvent and fire it here
     auto msg = dap::ObjGenerator::Get().FromJSON(json);
+    if(!msg) {
+        // unsupported event type
+        return;
+    }
 
     auto as_event = msg->AsEvent();
     auto as_response = msg->AsResponse();

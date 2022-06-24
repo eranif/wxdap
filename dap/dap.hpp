@@ -85,9 +85,31 @@ struct WXDLLIMPEXP_DAP ProtocolMessage : public Any {
     wxString type;
     typedef std::shared_ptr<ProtocolMessage> Ptr_t;
 
-    dap::Event* AsEvent() const { return As<dap::Event>(); }
-    dap::Request* AsRequest() const { return As<dap::Request>(); }
-    dap::Response* AsResponse() const { return As<dap::Response>(); }
+    dap::Event* AsEvent() const
+    {
+        if(type != "event") {
+            return nullptr;
+        } else {
+            return As<dap::Event>();
+        }
+    }
+    dap::Request* AsRequest() const
+    {
+        if(type != "request") {
+            return nullptr;
+        } else {
+            return As<dap::Request>();
+        }
+    }
+
+    dap::Response* AsResponse() const
+    {
+        if(type != "response") {
+            return nullptr;
+        } else {
+            return As<dap::Response>();
+        }
+    }
 
     wxString ToString() const;
     ANY_CLASS(ProtocolMessage);
