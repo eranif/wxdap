@@ -15,7 +15,7 @@ Process* ExecuteProcess(const wxString& cmd, const wxString& workingDir)
     LOG_DEBUG() << "Starting process:" << args;
     UnixProcess* process = new UnixProcess(args);
     process->StartReaderThread();
-    process->SetProcessId(process->m_pid);
+    process->SetProcessId(process->child_pid);
     return process;
 }
 

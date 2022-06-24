@@ -51,7 +51,6 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
         m_childStdin.CloseReadFd();
         m_childStdout.CloseWriteFd();
         m_childStderr.CloseWriteFd();
-        m_pid = child_pid;
     }
 }
 

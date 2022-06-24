@@ -394,7 +394,7 @@ void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
 
         long line = wxNOT_FOUND;
         location.AfterLast(':').ToCLong(&line);
-        m_client.SetBreakpointsFile(file, { { line, wxEmptyString } });
+        m_client.SetBreakpointsFile(file, { { static_cast<int>(line), wxEmptyString } });
 
     } else {
         // function
