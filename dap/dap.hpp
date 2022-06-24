@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <wx/string.h>
 
@@ -314,6 +315,14 @@ struct WXDLLIMPEXP_DAP Breakpoint : public Any {
     int column = -1;
     int endLine = -1;
     int endColumn = -1;
+
+    /// implement simple operator==
+    bool operator==(const Breakpoint& other) const
+    {
+        return (!source.path.empty() && source.path == other.source.path && line == other.line) ||
+               (!source.name.empty() && source.name == other.source.name);
+    }
+
     ANY_CLASS(Breakpoint);
     JSON_SERIALIZE();
 };
@@ -987,5 +996,17 @@ struct WXDLLIMPEXP_DAP PauseResponse : public EmptyAckResponse {
     RESPONSE_CLASS(PauseResponse, "pause");
 };
 
-};     // namespace dap
+}; // namespace dap
+
+namespace std
+{
+// allow placing dap::Breakpoint in set/map as keys
+template <>
+struct hash<dap::Breakpoint> {
+    std::size_t operator()(const dap::Breakpoint& b) const
+    {
+        return hash<std::wstring>{}(b.source.path + b.source.name + std::to_string(b.line));
+    }
+};
+} // namespace std
 #endif // PROTOCOLMESSAGE_HPP
