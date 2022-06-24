@@ -94,6 +94,11 @@ protected:
     std::unordered_map<size_t, wxString> m_requestIdToFilepath;
     size_t m_features = 0;
 
+    /// set this to true if you wish to receive (in addition to the regular events)
+    /// logging events that can be used to trace the protocol exchange between
+    /// wxdap and the dap-server
+    bool m_wants_log_events = false;
+
     /// the ID if thread that called GetFrames()
     std::vector<int> m_get_frames_queue;
 
@@ -135,6 +140,11 @@ protected:
 public:
     Client();
     virtual ~Client();
+
+    /**
+     * @brief enable/disable logging events
+     */
+    void SetWantsLogEvents(bool b) { m_wants_log_events = b; }
 
     template <typename RequestType>
     RequestType MakeRequest()

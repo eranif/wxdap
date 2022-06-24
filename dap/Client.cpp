@@ -164,6 +164,12 @@ void dap::Client::StaticOnDataRead(Json json, wxObject* o)
 
 void dap::Client::OnMessage(Json json)
 {
+    if(m_wants_log_events) {
+        DAPEvent log_event{ wxEVT_DAP_LOG_EVENT };
+        log_event.SetString("<-- " + json.ToString(false));
+        ProcessEvent(log_event);
+    }
+
     if(m_handshake_state != eHandshakeState::kCompleted) {
         // construct a message from the Json
         ProtocolMessage::Ptr_t msg = ObjGenerator::Get().FromJSON(json);
@@ -451,6 +457,12 @@ bool dap::Client::SendRequest(dap::ProtocolMessage& request)
 {
     try {
         m_rpc.Send(request, m_transport);
+        if(m_wants_log_events) {
+            DAPEvent log_event{ wxEVT_DAP_LOG_EVENT };
+            log_event.SetString("--> " + request.To().ToString(false));
+            ProcessEvent(log_event);
+        }
+
     } catch(Exception& e) {
         // an error occured
         OnConnectionError();
@@ -463,6 +475,11 @@ bool dap::Client::SendResponse(dap::Response& response)
 {
     try {
         m_rpc.Send(response, m_transport);
+        if(m_wants_log_events) {
+            DAPEvent log_event{ wxEVT_DAP_LOG_EVENT };
+            log_event.SetString("--> " + response.To().ToString(false));
+            ProcessEvent(log_event);
+        }
     } catch(Exception& e) {
         // an error occured
         OnConnectionError();

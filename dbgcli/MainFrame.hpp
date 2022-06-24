@@ -56,5 +56,6 @@ protected:
     void OnSetBreakpoint(DAPEvent& event);
     void OnLaunchResponse(DAPEvent& event);
     void OnRunInTerminalRequest(DAPEvent& event);
+    void OnDapLog(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP

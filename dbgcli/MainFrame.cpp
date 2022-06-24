@@ -73,6 +73,8 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
     m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
     m_client.Bind(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, &MainFrame::OnRunInTerminalRequest, this);
+    m_client.Bind(wxEVT_DAP_LOG_EVENT, &MainFrame::OnDapLog, this);
+    m_client.SetWantsLogEvents(true); // send use log events
 }
 
 MainFrame::~MainFrame() {}
@@ -286,6 +288,8 @@ void MainFrame::OnSetBreakpoint(DAPEvent& event)
         }
     }
 }
+
+void MainFrame::OnDapLog(DAPEvent& event) { AddLog(event.GetString()); }
 
 void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
 {
