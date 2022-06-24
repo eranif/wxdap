@@ -47,6 +47,11 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     m_toolbar12->AddSeparator();
 
     m_toolbar12->AddTool(wxID_ABORT, _("Pause"), wxNullBitmap, wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""), NULL);
+
+    m_toolbar12->AddSeparator();
+
+    m_toolbar12->AddTool(wxID_STOP, _("Set Breakpoint..."), wxNullBitmap, wxNullBitmap, wxITEM_NORMAL, wxT(""), wxT(""),
+                         NULL);
     m_toolbar12->Realize();
 
     wxBoxSizer* boxSizer1 = new wxBoxSizer(wxVERTICAL);
@@ -366,6 +371,8 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnContinueUI, this, wxID_EXECUTE);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnPause, this, wxID_ABORT);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnPauseUI, this, wxID_ABORT);
+    this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnSetBreakpoint, this, wxID_STOP);
+    this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnSetBreakpointUI, this, wxID_STOP);
 }
 
 MainFrameBase::~MainFrameBase()
@@ -382,4 +389,6 @@ MainFrameBase::~MainFrameBase()
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnContinueUI, this, wxID_EXECUTE);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnPause, this, wxID_ABORT);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnPauseUI, this, wxID_ABORT);
+    this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnSetBreakpoint, this, wxID_STOP);
+    this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnSetBreakpointUI, this, wxID_STOP);
 }

@@ -26,6 +26,8 @@ protected:
     void LoadFile(const wxString& filepath, int line_number);
 
 protected:
+    void OnSetBreakpoint(wxCommandEvent& event) override;
+    void OnSetBreakpointUI(wxUpdateUIEvent& event) override;
     void OnPause(wxCommandEvent& event) override;
     void OnPauseUI(wxUpdateUIEvent& event) override;
     void OnConnectUI(wxUpdateUIEvent& event) override;
@@ -53,7 +55,7 @@ protected:
     void OnOutput(DAPEvent& event);
     void OnBreakpointLocations(DAPEvent& event);
     void OnConnectionError(DAPEvent& event);
-    void OnSetBreakpoint(DAPEvent& event);
+    void OnBreakpointSet(DAPEvent& event);
     void OnLaunchResponse(DAPEvent& event);
     void OnRunInTerminalRequest(DAPEvent& event);
     void OnDapLog(DAPEvent& event);

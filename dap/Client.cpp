@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <thread>
+#include <wx/filename.h>
 #include <wx/msgdlg.h>
 
 ///----------------------------------------------
@@ -341,6 +342,7 @@ void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap
     SetBreakpointsRequest req = MakeRequest<SetBreakpointsRequest>() = MakeRequest<SetBreakpointsRequest>();
     req.arguments.breakpoints = lines;
     req.arguments.source.path = file;
+    req.arguments.source.name = wxFileName(file).GetFullName();
     SendRequest(req);
 }
 

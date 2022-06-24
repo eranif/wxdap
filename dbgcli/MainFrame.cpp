@@ -6,6 +6,7 @@
 #include <vector>
 #include <wx/ffile.h>
 #include <wx/msgdlg.h>
+#include <wx/textdlg.h>
 
 namespace
 {
@@ -69,8 +70,8 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     m_client.Bind(wxEVT_DAP_OUTPUT_EVENT, &MainFrame::OnOutput, this);
     m_client.Bind(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, &MainFrame::OnBreakpointLocations, this);
     m_client.Bind(wxEVT_DAP_LOST_CONNECTION, &MainFrame::OnConnectionError, this);
-    m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
-    m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnSetBreakpoint, this);
+    m_client.Bind(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, &MainFrame::OnBreakpointSet, this);
+    m_client.Bind(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, &MainFrame::OnBreakpointSet, this);
     m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
     m_client.Bind(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, &MainFrame::OnRunInTerminalRequest, this);
     m_client.Bind(wxEVT_DAP_LOG_EVENT, &MainFrame::OnDapLog, this);
@@ -276,7 +277,7 @@ void MainFrame::OnConnectionError(DAPEvent& event)
     wxMessageBox(_("Lost connection to dap server"));
 }
 
-void MainFrame::OnSetBreakpoint(DAPEvent& event)
+void MainFrame::OnBreakpointSet(DAPEvent& event)
 {
     dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
     if(resp) {
@@ -370,5 +371,33 @@ void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt)
     if(m_filePickerSelectDebugFileName) {
         m_ExecutableFileName = evt.GetPath();
         m_filePickerSelectDebugFileName->SetPath(evt.GetPath());
+    }
+}
+void MainFrame::OnSetBreakpointUI(wxUpdateUIEvent& event)
+{
+    event.Enable(m_client.IsConnected() && m_client.CanInteract());
+}
+
+void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
+{
+    wxString location = wxGetTextFromUser("Set breakpoint", "Location",
+                                          wxString() << m_current_file_loaded.GetFullPath() << ":"
+                                                     << (m_stcTextSourceFile->GetCurrentLine() + 1));
+    if(location.empty()) {
+        return;
+    }
+
+    if(location.Contains(":")) {
+        // file:line
+        wxString file = location.BeforeLast(':');
+        file.Trim().Trim(false);
+
+        long line = wxNOT_FOUND;
+        location.AfterLast(':').ToCLong(&line);
+        m_client.SetBreakpointsFile(file, { { line, wxEmptyString } });
+
+    } else {
+        // function
+        m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
     }
 }

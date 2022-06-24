@@ -4,8 +4,8 @@
 // Do not modify this file by hand!
 //////////////////////////////////////////////////////////////////////
 
-#ifndef _DBGCLI_UI_BASE_CLASSES_HPP
-#define _DBGCLI_UI_BASE_CLASSES_HPP
+#ifndef _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
+#define _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
 
 // clang-format off
 #include <wx/settings.h>
@@ -75,6 +75,8 @@ protected:
     virtual void OnContinueUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnPause(wxCommandEvent& event) { event.Skip(); }
     virtual void OnPauseUI(wxUpdateUIEvent& event) { event.Skip(); }
+    virtual void OnSetBreakpoint(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnSetBreakpointUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
     wxToolBar* GetToolbar12() { return m_toolbar12; }
