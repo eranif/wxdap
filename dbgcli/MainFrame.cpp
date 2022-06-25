@@ -219,9 +219,8 @@ void MainFrame::OnStackTrace(DAPEvent& event)
         m_stcStack->ClearAll();
         AddLog("Received stack trace event");
         if(!stack_trace_data->stackFrames.empty()) {
-            wxString file = stack_trace_data->stackFrames[0].source.path;
-            int line = stack_trace_data->stackFrames[0].line - 1; // 0 based lines
-            LoadFile(file, line);
+            LoadFile(stack_trace_data->stackFrames[0].source,
+                     stack_trace_data->stackFrames[0].line - 1 /* 0 based lines*/);
 
             // request the scopes for the first stack
             m_client.GetScopes(stack_trace_data->stackFrames[0].id);
@@ -249,7 +248,7 @@ void MainFrame::OnTerminated(DAPEvent& event)
     for(auto ctrl : m_ctrls) {
         ctrl->ClearAll();
     }
-    m_current_file_loaded.Clear();
+    m_current_source = {};
 }
 
 void MainFrame::OnOutput(DAPEvent& event)
@@ -328,24 +327,36 @@ void MainFrame::AddLog(const wxString& log)
     center_line(m_stcLog);
 }
 
-void MainFrame::LoadFile(const wxString& filepath, int line_number)
+void MainFrame::LoadFile(const dap::Source& sourceId, int line_number)
 {
-    wxFileName fp(filepath);
-    if(fp != m_current_file_loaded) {
+    // easy path
+    if(sourceId == m_current_source) {
+        center_line(m_stcTextSourceFile, line_number, true);
+        return;
+    }
+
+    if(!m_client.LoadSource(
+           sourceId, [this, sourceId, line_number](bool success, const wxString& content, const wxString& mimeType) {
+               if(!success) {
+                   return;
+               }
+               m_current_source = sourceId;
+               m_stcTextSourceFile->SetText(content);
+               center_line(m_stcTextSourceFile, line_number, true);
+           })) {
+        // not a server file, load it locally
+        wxFileName fp(sourceId.path);
+
         // the is already loaded
         wxString file_to_load = fp.GetFullPath();
         AddLog(wxString() << "Loading file.." << file_to_load);
-        wxFFile f(file_to_load, "rb");
-        if(f.IsOpened()) {
-            m_current_file_loaded = fp;
-            m_stcTextSourceFile->LoadFile(m_current_file_loaded.GetFullPath());
-            m_current_file_loaded.SetVolume("C");
-            wxString path_with_volume = m_current_file_loaded.GetFullPath();
-            m_client.BreakpointLocations(path_with_volume, 1, m_stcTextSourceFile->GetLineCount());
+        wxFileName fn(file_to_load);
+        if(fn.FileExists()) {
+            m_current_source = sourceId;
+            m_stcTextSourceFile->LoadFile(fn.GetFullPath());
+            center_line(m_stcTextSourceFile, line_number, true);
         }
     }
-    center_line(m_stcTextSourceFile, line_number, true);
-    AddLog(wxString() << "CURSOR: " << filepath << ":" << line_number);
 }
 
 void MainFrame::OnNextUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
@@ -380,24 +391,24 @@ void MainFrame::OnSetBreakpointUI(wxUpdateUIEvent& event)
 
 void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
 {
-    wxString location = wxGetTextFromUser("Set breakpoint", "Location",
-                                          wxString() << m_current_file_loaded.GetFullPath() << ":"
-                                                     << (m_stcTextSourceFile->GetCurrentLine() + 1));
-    if(location.empty()) {
-        return;
-    }
-
-    if(location.Contains(":")) {
-        // file:line
-        wxString file = location.BeforeLast(':');
-        file.Trim().Trim(false);
-
-        long line = wxNOT_FOUND;
-        location.AfterLast(':').ToCLong(&line);
-        m_client.SetBreakpointsFile(file, { { static_cast<int>(line), wxEmptyString } });
-
-    } else {
-        // function
-        m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
-    }
+    //    wxString location = wxGetTextFromUser("Set breakpoint", "Location",
+    //                                          wxString() << m_current_file_loaded.GetFullPath() << ":"
+    //                                                     << (m_stcTextSourceFile->GetCurrentLine() + 1));
+    //    if(location.empty()) {
+    //        return;
+    //    }
+    //
+    //    if(location.Contains(":")) {
+    //        // file:line
+    //        wxString file = location.BeforeLast(':');
+    //        file.Trim().Trim(false);
+    //
+    //        long line = wxNOT_FOUND;
+    //        location.AfterLast(':').ToCLong(&line);
+    //        m_client.SetBreakpointsFile(file, { { static_cast<int>(line), wxEmptyString } });
+    //
+    //    } else {
+    //        // function
+    //        m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
+    //    }
 }

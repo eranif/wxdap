@@ -322,6 +322,20 @@ struct WXDLLIMPEXP_DAP Source : public Any {
      * its value is 0).
      */
     wxString path;
+    /**
+     * If sourceReference > 0 the contents of the source must be retrieved through
+     * the SourceRequest (even if a path is specified).
+     * A sourceReference is only valid for a session, so it must not be used to
+     * persist a source.
+     * The value should be less than or equal to 2147483647 (2^31-1).
+     */
+    int sourceReference = 0;
+
+    bool operator==(const Source& other) const
+    {
+        return name == other.name && path == other.path && sourceReference == other.sourceReference;
+    }
+
     ANY_CLASS(Source);
     JSON_SERIALIZE();
 };
@@ -1016,6 +1030,44 @@ struct WXDLLIMPEXP_DAP PauseRequest : public Request {
 
 struct WXDLLIMPEXP_DAP PauseResponse : public EmptyAckResponse {
     RESPONSE_CLASS(PauseResponse, "pause");
+};
+
+/// Arguments for SourceRequest
+struct WXDLLIMPEXP_DAP SourceArguments : public Any {
+    /**
+     * Specifies the source content to load. Either source.path or
+     * source.sourceReference must be specified.
+     */
+    dap::Source source;
+    /**
+     * The reference to the source. This is the same as source.sourceReference.
+     * This is provided for backward compatibility since old backends do not
+     * understand the 'source' attribute.
+     */
+    int sourceReference = 0;
+    ANY_CLASS(SourceArguments);
+    JSON_SERIALIZE();
+};
+
+// source request
+struct WXDLLIMPEXP_DAP SourceRequest : public Request {
+    SourceArguments arguments;
+    REQUEST_CLASS(SourceRequest, "source");
+    JSON_SERIALIZE();
+};
+
+// source response
+struct WXDLLIMPEXP_DAP SourceResponse : public Response {
+    /**
+     * Content of the source reference.
+     */
+    wxString content;
+    /**
+     * Optional content type (mime type) of the source.
+     */
+    wxString mimeType;
+    RESPONSE_CLASS(SourceResponse, "source");
+    JSON_SERIALIZE();
 };
 
 }; // namespace dap

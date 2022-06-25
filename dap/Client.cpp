@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <thread>
+#include <wx/ffile.h>
 #include <wx/filename.h>
 #include <wx/msgdlg.h>
 
@@ -290,16 +291,30 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json);
         } else if(as_response->command == "threads") {
             SendDAPEvent(wxEVT_DAP_THREADS_RESPONSE, new dap::ThreadsResponse, json);
+        } else if(as_response->command == "source") {
+            HandleSourceResponse(json);
         }
     } else if(as_request) {
         // reverse requests: request arriving from the dap server to the IDE
         if(as_request->command == "runInTerminal") {
             SendDAPEvent(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, new dap::RunInTerminalRequest, json);
         }
-    } else {
-        // LOG_ERROR() << "Received Json payload:" << endl;
-        // LOG_ERROR() << json.ToString(false) << endl;
     }
+}
+
+void dap::Client::HandleSourceResponse(Json json)
+{
+    if(m_load_sources_queue.empty()) {
+        // something bad happened..
+        return;
+    }
+
+    SourceResponse response;
+    response.From(json);
+
+    auto callback = std::move(m_load_sources_queue.front());
+    m_load_sources_queue.erase(m_load_sources_queue.begin());
+    callback(response.success, response.content, response.mimeType);
 }
 
 void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json)
@@ -331,6 +346,7 @@ void dap::Client::Reset()
     m_requestIdToFilepath.clear();
     m_features = 0;
     m_get_frames_queue.clear();
+    m_load_sources_queue.clear();
 }
 
 /// API
@@ -495,4 +511,20 @@ bool dap::Client::SendResponse(dap::Response& response)
         return false;
     }
     return true;
+}
+
+bool dap::Client::LoadSource(const dap::Source& source, source_loaded_cb callback)
+{
+    if(source.sourceReference > 0) {
+        // queue request
+        m_load_sources_queue.emplace_back(std::move(callback));
+        SourceRequest req = MakeRequest<SourceRequest>();
+        req.arguments.source = source;
+        req.arguments.sourceReference = source.sourceReference;
+        SendRequest(req);
+        return true;
+
+    } else {
+        return false;
+    }
 }

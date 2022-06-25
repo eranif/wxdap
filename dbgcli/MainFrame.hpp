@@ -6,13 +6,14 @@
 #include "dap/Process.hpp"
 
 #include <vector>
+#include <wx/any.h>
 #include <wx/filename.h>
 
 class MainFrame : public MainFrameBase
 {
     dap::Client m_client;
     wxString m_ExecutableFileName;
-    wxFileName m_current_file_loaded;
+    dap::Source m_current_source;
     std::vector<wxStyledTextCtrl*> m_ctrls;
     dap::Process* m_process = nullptr;
 
@@ -23,7 +24,7 @@ public:
 protected:
     void InitializeClient();
     void AddLog(const wxString& log);
-    void LoadFile(const wxString& filepath, int line_number);
+    void LoadFile(const dap::Source& sourceId, int line_number);
 
 protected:
     void OnSetBreakpoint(wxCommandEvent& event) override;

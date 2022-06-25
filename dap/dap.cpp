@@ -46,6 +46,7 @@ void Initialize()
     REGISTER_CLASS(StackTraceRequest);
     REGISTER_CLASS(PauseRequest);
     REGISTER_CLASS(RunInTerminalRequest);
+    REGISTER_CLASS(SourceRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -75,6 +76,7 @@ void Initialize()
     REGISTER_CLASS(VariablesResponse);
     REGISTER_CLASS(PauseResponse);
     REGISTER_CLASS(RunInTerminalResponse);
+    REGISTER_CLASS(SourceResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -387,8 +389,16 @@ void OutputEvent::From(const Json& json)
 Json Source::To() const
 {
     CREATE_JSON();
-    json.Add("name", this->name);
-    ADD_PROP(path);
+    ADD_PROP(name);
+
+    // serialise these properties only if they contain values
+    if(!path.empty()) {
+        ADD_PROP(path);
+    }
+
+    if(sourceReference > 0) {
+        ADD_PROP(sourceReference);
+    }
     return json;
 }
 
@@ -396,6 +406,7 @@ void Source::From(const Json& json)
 {
     GET_PROP(name, String);
     GET_PROP(path, String);
+    sourceReference = json["sourceReference"].GetNumber(0);
 }
 
 // ----------------------------------------
@@ -1395,6 +1406,55 @@ void RunInTerminalResponse::From(const Json& json)
     RESPONSE_FROM();
     READ_BODY();
     GET_BODY_PROP(processId, Number);
+}
+
+///
+/// source request + args
+///
+void SourceArguments::From(const Json& json)
+{
+    source.From(json["source"]);
+    sourceReference = json["sourceReference"].GetInteger(0);
+}
+
+Json SourceArguments::To() const
+{
+    Json json = Json::CreateObject();
+    json.Add("source", source.To());
+    if(sourceReference > 0) {
+        json.Add("sourceReference", sourceReference);
+    }
+    return json;
+}
+
+void SourceRequest::From(const Json& json)
+{
+    REQUEST_FROM();
+    READ_OBJ(arguments);
+}
+
+Json SourceRequest::To() const
+{
+    REQUEST_TO();
+    ADD_OBJ(arguments);
+    return json;
+}
+
+Json SourceResponse::To() const
+{
+    RESPONSE_TO();
+    ADD_BODY();
+    ADD_BODY_PROP(content);
+    ADD_BODY_PROP(mimeType);
+    return json;
+}
+
+void SourceResponse::From(const Json& json)
+{
+    RESPONSE_FROM();
+    READ_BODY();
+    GET_BODY_PROP(content, String);
+    GET_BODY_PROP(mimeType, String);
 }
 
 }; // namespace dap

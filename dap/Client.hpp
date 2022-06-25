@@ -7,6 +7,7 @@
 #include "dap_exports.hpp"
 
 #include <atomic>
+#include <functional>
 #include <queue>
 #include <wx/event.h>
 #include <wx/string.h>
@@ -52,6 +53,9 @@ public:
     // socket specific
     bool Connect(const wxString& connection_string, int timeoutSeconds);
 };
+
+typedef std::function<void(bool, const wxString&, const wxString&)> source_loaded_cb;
+typedef std::function<const wxString&(const wxString&)> path_conversion_cb;
 
 class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
@@ -101,10 +105,12 @@ protected:
 
     /// the ID if thread that called GetFrames()
     std::vector<int> m_get_frames_queue;
+    std::vector<source_loaded_cb> m_load_sources_queue;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }
     bool SendRequest(dap::ProtocolMessage& request);
+    void HandleSourceResponse(Json json);
 
 protected:
     void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json);
@@ -282,6 +288,14 @@ public:
      * @brief request list of all breakpoints in a file
      */
     void BreakpointLocations(const wxString& filepath, int start_line, int end_line);
+
+    /**
+     * @brief request to load a source and execute callback once the source is loaded. If the `source` contains
+     * a local path, the callback is called immediately without accessing the server, if the `source` contains
+     * sourceReference, then this function queues a load source request to the server and executes the callback once
+     * the source is loaded
+     */
+    bool LoadSource(const dap::Source& source, source_loaded_cb callback);
 };
 
 };     // namespace dap
