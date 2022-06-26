@@ -22,6 +22,8 @@
 
 #ifndef DAP_cJSON__h
 #define DAP_cJSON__h
+#include "dap_exports.hpp"
+
 #include <memory>
 
 /* cJsonDap Types: */
@@ -60,61 +62,61 @@ typedef struct cJSONDap_Hooks {
 } cJSONDap_Hooks;
 
 /* Supply malloc, realloc and free functions to cJsonDap */
-extern void cJSON_InitHooks(cJSONDap_Hooks* hooks);
+WXDLLIMPEXP_DAP void cJSON_InitHooks(cJSONDap_Hooks* hooks);
 
 /* Supply a block of Json, and this returns a cJsonDap object you can interrogate. Call cJSON_Delete when finished. */
-extern cJsonDap* cJSON_Parse(const char* value);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_Parse(const char* value);
 /* Render a cJsonDap entity to text for transfer/storage. Free the char* when finished. */
-extern char* cJSON_Print(cJsonDap* item);
+WXDLLIMPEXP_DAP char* cJSON_Print(cJsonDap* item);
 /* Render a cJsonDap entity to text for transfer/storage without any formatting. Free the char* when finished. */
-extern char* cJSON_PrintUnformatted(cJsonDap* item);
+WXDLLIMPEXP_DAP char* cJSON_PrintUnformatted(cJsonDap* item);
 /* Delete a cJsonDap entity and all subentities. */
-extern void cJSON_Delete(cJsonDap* c);
+WXDLLIMPEXP_DAP void cJSON_Delete(cJsonDap* c);
 
 /* Returns the number of items in an array (or object). */
-extern int cJSON_GetArraySize(cJsonDap* array);
+WXDLLIMPEXP_DAP int cJSON_GetArraySize(cJsonDap* array);
 /* Retrieve item number "item" from array "array". Returns NULL if unsuccessful. */
-extern cJsonDap* cJSON_GetArrayItem(cJsonDap* array, int item);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_GetArrayItem(cJsonDap* array, int item);
 /* Get item "string" from object. Case insensitive. */
-extern cJsonDap* cJSON_GetObjectItem(cJsonDap* object, const char* string);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_GetObjectItem(cJsonDap* object, const char* string);
 
 /* For analysing failed parses. This returns a pointer to the parse error. You'll probably need to look a few chars back
  * to make sense of it. Defined when cJSON_Parse() returns 0. 0 when cJSON_Parse() succeeds. */
-extern const char* cJSON_GetErrorPtr();
+WXDLLIMPEXP_DAP const char* cJSON_GetErrorPtr();
 
 /* These calls create a cJsonDap item of the appropriate type. */
-extern cJsonDap* cJSON_CreateNull();
-extern cJsonDap* cJSON_CreateTrue();
-extern cJsonDap* cJSON_CreateFalse();
-extern cJsonDap* cJSON_CreateBool(int b);
-extern cJsonDap* cJSON_CreateNumber(double num);
-extern cJsonDap* cJSON_CreateString(const char* string);
-extern cJsonDap* cJSON_CreateArray();
-extern cJsonDap* cJSON_CreateObject();
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateNull();
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateTrue();
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateFalse();
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateBool(int b);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateNumber(double num);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateString(const char* string);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateArray();
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateObject();
 
 /* These utilities create an Array of count items. */
-extern cJsonDap* cJSON_CreateIntArray(int* numbers, int count);
-extern cJsonDap* cJSON_CreateFloatArray(float* numbers, int count);
-extern cJsonDap* cJSON_CreateDoubleArray(double* numbers, int count);
-extern cJsonDap* cJSON_CreateStringArray(const char** strings, int count);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateIntArray(int* numbers, int count);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateFloatArray(float* numbers, int count);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateDoubleArray(double* numbers, int count);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_CreateStringArray(const char** strings, int count);
 
 /* Append item to the specified array/object. */
-extern void cJSON_AddItemToArray(cJsonDap* array, cJsonDap* item);
-extern void cJSON_AddItemToObject(cJsonDap* object, const char* string, cJsonDap* item);
+WXDLLIMPEXP_DAP void cJSON_AddItemToArray(cJsonDap* array, cJsonDap* item);
+WXDLLIMPEXP_DAP void cJSON_AddItemToObject(cJsonDap* object, const char* string, cJsonDap* item);
 /* Append reference to item to the specified array/object. Use this when you want to add an existing cJsonDap to a new
  * cJsonDap, but don't want to corrupt your existing cJsonDap. */
-extern void cJSON_AddItemReferenceToArray(cJsonDap* array, cJsonDap* item);
-extern void cJSON_AddItemReferenceToObject(cJsonDap* object, const char* string, cJsonDap* item);
+WXDLLIMPEXP_DAP void cJSON_AddItemReferenceToArray(cJsonDap* array, cJsonDap* item);
+WXDLLIMPEXP_DAP void cJSON_AddItemReferenceToObject(cJsonDap* object, const char* string, cJsonDap* item);
 
 /* Remove/Detatch items from Arrays/Objects. */
-extern cJsonDap* cJSON_DetachItemFromArray(cJsonDap* array, int which);
-extern void cJSON_DeleteItemFromArray(cJsonDap* array, int which);
-extern cJsonDap* cJSON_DetachItemFromObject(cJsonDap* object, const char* string);
-extern void cJSON_DeleteItemFromObject(cJsonDap* object, const char* string);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_DetachItemFromArray(cJsonDap* array, int which);
+WXDLLIMPEXP_DAP void cJSON_DeleteItemFromArray(cJsonDap* array, int which);
+WXDLLIMPEXP_DAP cJsonDap* cJSON_DetachItemFromObject(cJsonDap* object, const char* string);
+WXDLLIMPEXP_DAP void cJSON_DeleteItemFromObject(cJsonDap* object, const char* string);
 
 /* Update array items. */
-extern void cJSON_ReplaceItemInArray(cJsonDap* array, int which, cJsonDap* newitem);
-extern void cJSON_ReplaceItemInObject(cJsonDap* object, const char* string, cJsonDap* newitem);
+WXDLLIMPEXP_DAP void cJSON_ReplaceItemInArray(cJsonDap* array, int which, cJsonDap* newitem);
+WXDLLIMPEXP_DAP void cJSON_ReplaceItemInObject(cJsonDap* object, const char* string, cJsonDap* newitem);
 
 #define cJSON_AddNullToObject(object, name) cJSON_AddItemToObject(object, name, cJSON_CreateNull())
 #define cJSON_AddTrueToObject(object, name) cJSON_AddItemToObject(object, name, cJSON_CreateTrue())
