@@ -621,6 +621,12 @@ struct WXDLLIMPEXP_DAP SourceBreakpoint : public Any {
         this->line = line;
         this->condition = cond;
     }
+
+    bool operator==(const SourceBreakpoint& other) const
+    {
+        /// source breakpoint are considered the same if they are on the same line number
+        return line == other.line;
+    }
     JSON_SERIALIZE();
 };
 
@@ -641,6 +647,12 @@ struct WXDLLIMPEXP_DAP FunctionBreakpoint : public Any {
     {
         this->name = name;
         this->condition = cond;
+    }
+
+    bool operator==(const FunctionBreakpoint& other) const
+    {
+        /// function breakpoint are considered the same if they have the same method name
+        return name == other.name;
     }
     JSON_SERIALIZE();
 };
@@ -1074,7 +1086,7 @@ struct WXDLLIMPEXP_DAP SourceResponse : public Response {
 
 namespace std
 {
-// allow placing dap::Breakpoint in set/map as keys
+// custom hash functions for some of the dap structures
 template <>
 struct hash<dap::Breakpoint> {
     std::size_t operator()(const dap::Breakpoint& b) const
@@ -1082,6 +1094,18 @@ struct hash<dap::Breakpoint> {
         wxString s;
         s << b.source.path << b.source.name << b.line;
         return hash<std::wstring>{}(s.ToStdWstring());
+    }
+};
+template <>
+struct hash<dap::SourceBreakpoint> {
+    std::size_t operator()(const dap::SourceBreakpoint& b) const { return hash<size_t>{}(b.line); }
+};
+
+template <>
+struct hash<dap::FunctionBreakpoint> {
+    std::size_t operator()(const dap::FunctionBreakpoint& b) const
+    {
+        return hash<std::wstring>{}(b.name.ToStdWstring());
     }
 };
 } // namespace std
