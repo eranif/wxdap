@@ -358,7 +358,7 @@ void dap::Client::Initialize(const dap::InitializeRequestArguments* initArgs)
         req.arguments = *initArgs;
 
     } else {
-        // use the defauls
+        // use the defaults
         req.arguments.clientID = "wxdap";
         req.arguments.clientName = "wxdap";
     }
