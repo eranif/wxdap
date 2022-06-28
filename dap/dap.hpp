@@ -925,6 +925,8 @@ struct WXDLLIMPEXP_DAP Scope : public Any {
 
 struct WXDLLIMPEXP_DAP ScopesResponse : public Response {
     std::vector<Scope> scopes;
+    // extension to the protocol: holds the ID of the thread that owns the scopes
+    int refId = wxNOT_FOUND;
     RESPONSE_CLASS(ScopesResponse, "scopes");
     JSON_SERIALIZE();
 };
@@ -957,8 +959,8 @@ struct WXDLLIMPEXP_DAP StackTraceRequest : public Request {
 /// Response to 'stackTrace' request.
 struct WXDLLIMPEXP_DAP StackTraceResponse : public Response {
     std::vector<StackFrame> stackFrames;
-    // extension to the protocol: hold the ID of the thread that owns the frames
-    int threadId = wxNOT_FOUND;
+    // extension to the protocol: holds the ID of the thread that owns the frames
+    int refId = wxNOT_FOUND;
     RESPONSE_CLASS(StackTraceResponse, "stackTrace");
     JSON_SERIALIZE();
 };
@@ -994,6 +996,8 @@ struct WXDLLIMPEXP_DAP VariablesResponse : public Response {
      * All (or a range) of variables for the given variable reference.
      */
     std::vector<Variable> variables;
+    // extension to the protocol: holds the parent of these variables
+    int refId = wxNOT_FOUND;
     RESPONSE_CLASS(VariablesResponse, "variables");
     JSON_SERIALIZE();
 };

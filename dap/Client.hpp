@@ -105,6 +105,8 @@ protected:
 
     /// the ID if thread that called GetFrames()
     std::vector<int> m_get_frames_queue;
+    std::vector<int> m_get_scopes_queue;
+    std::vector<int> m_get_variables_queue;
     std::vector<source_loaded_cb> m_load_sources_queue;
 
 protected:

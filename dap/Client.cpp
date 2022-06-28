@@ -242,25 +242,23 @@ void dap::Client::OnMessage(Json json)
         if(as_response->command == "stackTrace") {
             // received a stack trace response
             auto response = new dap::StackTraceResponse;
-            response->From(json);
-
-            response->threadId = m_get_frames_queue.front();
+            response->refId = m_get_frames_queue.front();
             m_get_frames_queue.erase(m_get_frames_queue.begin());
 
             SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, response, json);
 
         } else if(as_response->command == "scopes") {
-            // Scopes response.
-            // Usually contains top level items to display in the tree view of the variables
-            // example:
-            //
-            // > Locals
-            // > Registers
-            // > Globals
-            //
-            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, new dap::ScopesResponse, json);
+            auto response = new dap::ScopesResponse;
+            response->refId = m_get_scopes_queue.front();
+            m_get_scopes_queue.erase(m_get_scopes_queue.begin());
+
+            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response,json);
         } else if(as_response->command == "variables") {
-            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, new dap::VariablesResponse, json);
+            auto response = new dap::VariablesResponse;
+            response->refId = m_get_variables_queue.front();
+            m_get_variables_queue.erase(m_get_variables_queue.begin());
+            
+            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json);
 
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
                   as_response->command == "next" || as_response->command == "continue") {
@@ -345,8 +343,10 @@ void dap::Client::Reset()
     m_can_interact = false;
     m_requestIdToFilepath.clear();
     m_features = 0;
-    m_get_frames_queue.clear();
     m_load_sources_queue.clear();
+    m_get_frames_queue.clear();
+    m_get_scopes_queue.clear();
+    m_get_variables_queue.clear();
 }
 
 /// API
@@ -407,6 +407,7 @@ void dap::Client::GetScopes(int frameId)
 {
     ScopesRequest req = MakeRequest<ScopesRequest>() = MakeRequest<ScopesRequest>();
     req.arguments.frameId = frameId;
+    m_get_scopes_queue.push_back(frameId);
     SendRequest(req);
 }
 
@@ -461,6 +462,7 @@ void dap::Client::GetChildrenVariables(int variablesReference, size_t count, con
     VariablesRequest req = MakeRequest<VariablesRequest>();
     req.arguments.variablesReference = variablesReference;
     req.arguments.count = count;
+    m_get_variables_queue.push_back(variablesReference);
     SendRequest(req);
 }
 

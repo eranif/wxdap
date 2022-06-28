@@ -192,9 +192,14 @@ void MainFrame::OnScopes(DAPEvent& event)
     m_stcScopes->AppendText("-- Requesting variables for scopes --\n");
     dap::ScopesResponse* resp = event.GetDapResponse()->As<dap::ScopesResponse>();
     if(resp) {
+        wxString scopes_display = "[";
         for(const auto& scope : resp->scopes) {
+            scopes_display << scope.name << " id: " << scope.variablesReference << ", ";
             m_client.GetChildrenVariables(scope.variablesReference);
         }
+        scopes_display.RemoveLast(2);
+        scopes_display << "]\n";
+        m_stcScopes->AppendText(scopes_display);
     }
     center_line(m_stcScopes);
 }
@@ -206,6 +211,7 @@ void MainFrame::OnVariables(DAPEvent& event)
         for(const auto& var : resp->variables) {
             wxString button = (var.variablesReference > 0 ? "> " : "  ");
             wxString value = var.value.empty() ? "\"\"" : var.value;
+            button << " [ref: " << resp->refId << "] ";
             m_stcScopes->AppendText(wxString() << button << "(" << var.variablesReference << ") " << var.name << " = "
                                                << value << "\n");
         }
