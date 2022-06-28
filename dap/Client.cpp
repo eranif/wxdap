@@ -350,11 +350,18 @@ void dap::Client::Reset()
 }
 
 /// API
-void dap::Client::Initialize()
+void dap::Client::Initialize(const dap::InitializeRequestArguments* initArgs)
 {
     // Send initialize request
     InitializeRequest req = MakeRequest<InitializeRequest>();
-    req.arguments.clientID = "dbgcli";
+    if(initArgs) {
+        req.arguments = *initArgs;
+
+    } else {
+        // use the defauls
+        req.arguments.clientID = "wxdap";
+        req.arguments.clientName = "wxdap";
+    }
     SendRequest(req);
     m_handshake_state = eHandshakeState::kInProgress;
 }

@@ -195,7 +195,7 @@ public:
     /**
      * @brief initiate the handshake between the server and the client
      */
-    void Initialize();
+    void Initialize(const dap::InitializeRequestArguments* initArgs = nullptr);
 
     /**
      * @brief are we still connected?

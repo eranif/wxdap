@@ -103,8 +103,10 @@ void MainFrame::InitializeClient()
     // construct new client with the transport
     m_client.SetTransport(transport);
 
-    // This part is done in mode **sync**
-    m_client.Initialize();
+    // The protocol starts by us sending an initialize request
+    dap::InitializeRequestArguments args;
+    args.linesStartAt1 = true;
+    m_client.Initialize(&args);
 }
 
 void MainFrame::OnNext(wxCommandEvent& event)
