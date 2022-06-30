@@ -353,11 +353,7 @@ struct WXDLLIMPEXP_DAP Breakpoint : public Any {
     int endColumn = -1;
 
     /// implement simple operator==
-    bool operator==(const Breakpoint& other) const
-    {
-        return (!source.path.empty() && source.path == other.source.path && line == other.line) ||
-               (!source.name.empty() && source.name == other.source.name);
-    }
+    bool operator==(const Breakpoint& other) const;
 
     ANY_CLASS(Breakpoint);
     JSON_SERIALIZE();

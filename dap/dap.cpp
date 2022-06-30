@@ -461,6 +461,13 @@ void Breakpoint::From(const Json& json)
     READ_OBJ(source);
 }
 
+bool Breakpoint::operator==(const Breakpoint& other) const
+{
+    return (!source.path.empty() && source.path == other.source.path && line == other.line) ||
+           (!source.name.empty() && source.name == other.source.name) ||
+           (source.sourceReference == other.source.sourceReference);
+}
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
