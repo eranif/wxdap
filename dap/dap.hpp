@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <vector>
 #include <wx/string.h>
+#include "wxStringHash.h"
 
 /// C++ Implementation of Debug Adapter Protocol (DAP)
 /// The Debug Adapter Protocol defines the protocol used between an editor or
@@ -127,6 +128,8 @@ protected:
     ProtocolMessage::Ptr_t New(const wxString& name, const std::unordered_map<wxString, onNewObject>& pool);
 
 public:
+    ObjGenerator() {};
+
     static ObjGenerator& Get();
     /**
      * @brief create new ProtocolMessage.
