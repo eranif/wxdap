@@ -222,9 +222,11 @@ public:
     /**
      * @brief start the debuggee
      * @param cmd the cmd in [0] is the program, the remainder are the arguments
-     * @param workingDirectory working directory, if empty, use `wxGetCwd()`
+     * @param workingDirectory the debuggee working directory
+     * @param env extra environment variable to pass to the debuggee
      */
-    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString);
+    void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString,
+                const dap::Environment& env = {});
 
     /**
      * @brief ask for list of threads

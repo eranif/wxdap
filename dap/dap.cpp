@@ -597,6 +597,50 @@ Json EmptyAckResponse::To() const
 
 void EmptyAckResponse::From(const Json& json) { Response::From(json); }
 
+// dap::Environment
+Json Environment::To() const
+{
+    switch(format) {
+    case EnvFormat::DICTIONARY: {
+        auto env_dict = Json::CreateObject();
+        for(const auto& vt : vars) {
+            env_dict.Add(vt.first, vt.second);
+        }
+        return env_dict;
+    } break;
+    case EnvFormat::LIST: {
+        auto env_arr = Json::CreateArray();
+        for(const auto& vt : vars) {
+            env_arr.Add(vt.first + "=" + vt.second);
+        }
+        return env_arr;
+    } break;
+    case EnvFormat::NONE:
+        return {};
+    }
+    return {};
+}
+
+void Environment::From(const Json& json)
+{
+    vars.clear();
+    // From() is called when in server mode, i.e. we get to choose which format we accept
+    // and we choose to support the LIST format
+    if(!json.IsOK() || !json.IsArray()) {
+        return;
+    }
+
+    size_t count = json.GetCount();
+    for(size_t i = 0; i < count; ++i) {
+        wxString str = json[i].GetString();
+        if(str.Index('=') == wxNOT_FOUND)
+            continue;
+        wxString key = str.BeforeFirst('=');
+        wxString value = str.AfterFirst('=');
+        vars.insert({ key, value });
+    }
+}
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -607,6 +651,10 @@ Json LaunchRequestArguments::To() const
     ADD_PROP(program);
     ADD_PROP(args);
     ADD_PROP(cwd);
+    auto env_obj = env.To();
+    if(env_obj.IsOK()) {
+        json.Add("env", env.To());
+    }
     return json;
 }
 
@@ -616,6 +664,7 @@ void LaunchRequestArguments::From(const Json& json)
     GET_PROP(program, String);
     GET_PROP(args, StringArray);
     GET_PROP(cwd, String);
+    env.From(json["env"]);
 }
 
 // ----------------------------------------

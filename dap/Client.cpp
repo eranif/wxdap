@@ -252,12 +252,12 @@ void dap::Client::OnMessage(Json json)
             response->refId = m_get_scopes_queue.front();
             m_get_scopes_queue.erase(m_get_scopes_queue.begin());
 
-            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response,json);
+            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response, json);
         } else if(as_response->command == "variables") {
             auto response = new dap::VariablesResponse;
             response->refId = m_get_variables_queue.front();
             m_get_variables_queue.erase(m_get_variables_queue.begin());
-            
+
             SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json);
 
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
@@ -382,7 +382,7 @@ void dap::Client::ConfigurationDone()
     SendRequest(req);
 }
 
-void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory)
+void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, const dap::Environment& env)
 {
     m_active_thread_id = wxNOT_FOUND;
     LaunchRequest req = MakeRequest<LaunchRequest>() = MakeRequest<LaunchRequest>();
@@ -391,8 +391,9 @@ void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDir
     cmd.erase(cmd.begin());
     req.arguments.args = cmd; // the remainder are the args
 
-    // set the working directory
+    // set the working directory & env vars
     req.arguments.cwd = workingDirectory;
+    req.arguments.env = env;
 
     SendRequest(req);
 }

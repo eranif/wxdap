@@ -11,6 +11,16 @@
 #include <vector>
 #include <wx/string.h>
 
+#if wxVERSION_NUMBER < 3100
+namespace std
+{
+template <>
+struct hash<wxString> {
+    std::size_t operator()(const wxString& s) const { return hash<std::wstring>{}(s.ToStdWstring()); }
+};
+} // namespace std
+#endif
+
 /// C++ Implementation of Debug Adapter Protocol (DAP)
 /// The Debug Adapter Protocol defines the protocol used between an editor or
 /// IDE and a debugger or runtime The implementation is based on the
@@ -59,6 +69,26 @@
 namespace dap
 {
 void WXDLLIMPEXP_DAP Initialize();
+
+/// Enviroment format
+/// some adapters (e.g. codelldb) accpets the environment in the form of:
+/// {"ENV_1": "value", "ENV_2": 1}
+/// and others (e.g. lldb-vscode) uses this format:
+/// ["ENV_1=value", "ENV_2=1]
+enum class EnvFormat {
+    DICTIONARY,
+    LIST,
+    NONE, // the adapter does not accept env
+};
+
+struct WXDLLIMPEXP_DAP Environment {
+    EnvFormat format = EnvFormat::DICTIONARY;
+    std::unordered_map<wxString, wxString> vars;
+
+    Json To() const;
+    void From(const Json& json);
+};
+
 // base class representing anything
 
 struct WXDLLIMPEXP_DAP Any {
@@ -500,6 +530,9 @@ struct WXDLLIMPEXP_DAP LaunchRequestArguments : public Any {
 
     /// working directory
     wxString cwd;
+
+    /// environment variables
+    Environment env;
 
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();

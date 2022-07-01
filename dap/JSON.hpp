@@ -43,9 +43,6 @@ private:
     Json(cJsonDap* ptr);
     Json AddItem(const wxString& name, cJsonDap* item);
 
-    bool IsArray() const { return m_cjson && m_cjson->type == cJsonDap_Array; }
-    bool IsObject() const { return m_cjson && m_cjson->type == cJsonDap_Object; }
-
     void DecRef();
     void IncRef();
     void Manage();
@@ -56,6 +53,9 @@ private:
 public:
     ~Json();
     Json() {}
+
+    bool IsArray() const { return m_cjson && m_cjson->type == cJsonDap_Array; }
+    bool IsObject() const { return m_cjson && m_cjson->type == cJsonDap_Object; }
 
     Json& operator=(const Json& other);
     Json(const Json& other);
