@@ -234,6 +234,7 @@ void dap::Client::OnMessage(Json json)
         } else if(as_event->event == "breakpoint") {
             SendDAPEvent(wxEVT_DAP_BREAKPOINT_EVENT, new dap::BreakpointEvent, json);
         } else if(as_event->event == "continued") {
+            m_can_interact = false;
             SendDAPEvent(wxEVT_DAP_CONTINUED_EVENT, new dap::ContinuedEvent, json);
         } else {
             // TODO implement here the rest of the event

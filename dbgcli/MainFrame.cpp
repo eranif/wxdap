@@ -399,24 +399,24 @@ void MainFrame::OnSetBreakpointUI(wxUpdateUIEvent& event)
 
 void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
 {
-    //    wxString location = wxGetTextFromUser("Set breakpoint", "Location",
-    //                                          wxString() << m_current_file_loaded.GetFullPath() << ":"
-    //                                                     << (m_stcTextSourceFile->GetCurrentLine() + 1));
-    //    if(location.empty()) {
-    //        return;
-    //    }
-    //
-    //    if(location.Contains(":")) {
-    //        // file:line
-    //        wxString file = location.BeforeLast(':');
-    //        file.Trim().Trim(false);
-    //
-    //        long line = wxNOT_FOUND;
-    //        location.AfterLast(':').ToCLong(&line);
-    //        m_client.SetBreakpointsFile(file, { { static_cast<int>(line), wxEmptyString } });
-    //
-    //    } else {
-    //        // function
-    //        m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
-    //    }
+    wxString location =
+        wxGetTextFromUser("Set breakpoint", "Location",
+                          wxString() << m_current_source.path << ":" << (m_stcTextSourceFile->GetCurrentLine() + 1));
+    if(location.empty()) {
+        return;
+    }
+
+    if(location.Contains(":")) {
+        // file:line
+        wxString file = location.BeforeLast(':');
+        file.Trim().Trim(false);
+
+        long line = wxNOT_FOUND;
+        location.AfterLast(':').ToCLong(&line);
+        m_client.SetBreakpointsFile(file, { { static_cast<int>(line), wxEmptyString } });
+
+    } else {
+        // function
+        m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
+    }
 }
