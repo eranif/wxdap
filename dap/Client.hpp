@@ -252,7 +252,7 @@ public:
      * @param threadId execute one step for this thread. If wxNOT_FOUND is passed, use the thread returned by
      * GetActiveThreadId()
      */
-    void Next(int threadId = wxNOT_FOUND);
+    void Next(int threadId = wxNOT_FOUND, SteppingGranularity granularity = SteppingGranularity::LINE);
 
     /**
      * @brief return the variable scopes for a given frame

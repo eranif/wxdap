@@ -81,6 +81,12 @@ enum class EnvFormat {
     NONE, // the adapter does not accept env
 };
 
+enum class SteppingGranularity {
+    LINE,
+    STATEMENT,
+    INSTRUCTION,
+};
+
 struct WXDLLIMPEXP_DAP Environment {
     EnvFormat format = EnvFormat::DICTIONARY;
     std::unordered_map<wxString, wxString> vars;

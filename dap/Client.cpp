@@ -424,10 +424,21 @@ void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
     SendRequest(req);
 }
 
-void dap::Client::Next(int threadId)
+void dap::Client::Next(int threadId, SteppingGranularity granularity)
 {
     NextRequest req = MakeRequest<NextRequest>();
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    switch(granularity) {
+    case SteppingGranularity::LINE:
+        req.arguments.granularity = "line";
+        break;
+    case SteppingGranularity::STATEMENT:
+        req.arguments.granularity = "statement";
+        break;
+    case SteppingGranularity::INSTRUCTION:
+        req.arguments.granularity = "instruction";
+        break;
+    }
     SendRequest(req);
 }
 
