@@ -77,6 +77,8 @@ protected:
     virtual void OnPauseUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnSetBreakpoint(wxCommandEvent& event) { event.Skip(); }
     virtual void OnSetBreakpointUI(wxUpdateUIEvent& event) { event.Skip(); }
+    virtual void OnEval(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnEvalUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
     wxToolBar* GetToolbar12() { return m_toolbar12; }

@@ -87,6 +87,19 @@ enum class SteppingGranularity {
     INSTRUCTION,
 };
 
+enum class ValueDisplayFormat {
+    NATIVE,
+    HEX,
+};
+
+enum class EvaluateContext {
+    VARIABLES,
+    WATCH,
+    REPL,
+    HOVER,
+    CLIPBOARD,
+};
+
 struct WXDLLIMPEXP_DAP Environment {
     EnvFormat format = EnvFormat::DICTIONARY;
     std::unordered_map<wxString, wxString> vars;
@@ -1121,6 +1134,75 @@ struct WXDLLIMPEXP_DAP SourceResponse : public Response {
     JSON_SERIALIZE();
 };
 
+struct WXDLLIMPEXP_DAP EvaluateArguments : public Any {
+    /**
+     * The expression to evaluate.
+     */
+    wxString expression;
+
+    /**
+     * Evaluate the expression in the scope of this stack frame. If not specified,
+     * the expression is evaluated in the global scope.
+     */
+    int frameId = wxNOT_FOUND;
+
+    /**
+     * The context in which the evaluate request is used.
+     * Values:
+     * 'variables': evaluate is called from a variables view context.
+     * 'watch': evaluate is called from a watch view context.
+     * 'repl': evaluate is called from a REPL context.
+     * 'hover': evaluate is called to generate the debug hover contents.
+     * This value should only be used if the capability
+     * 'supportsEvaluateForHovers' is true.
+     * 'clipboard': evaluate is called to generate clipboard contents.
+     * This value should only be used if the capability 'supportsClipboardContext'
+     * is true.
+     * etc.
+     */
+    wxString context = "hover";
+
+    /**
+     * Specifies details on how to format the result.
+     * The attribute is only honored by a debug adapter if the capability
+     * 'supportsValueFormattingOptions' is true.
+     */
+    ValueFormat format;
+    ANY_CLASS(EvaluateArguments);
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP EvaluateRequest : public Request {
+    EvaluateArguments arguments;
+    REQUEST_CLASS(EvaluateRequest, "evaluate");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP EvaluateResponse : public Response {
+    /**
+     * The result of the evaluate request.
+     */
+    wxString result;
+
+    /**
+     * The optional type of the evaluate result.
+     * This attribute should only be returned by a debug adapter if the client
+     * has passed the value true for the 'supportsVariableType' capability of
+     * the 'initialize' request.
+     */
+    wxString type;
+
+    /**
+     * The number of named child variables.
+     * The client can use this optional information to present the variables in
+     * a paged UI and fetch them in chunks.
+     * The value should be less than or equal to 2147483647 (2^31-1).
+     */
+    int variablesReference = 0;
+
+    RESPONSE_CLASS(EvaluateResponse, "evaluate");
+    JSON_SERIALIZE();
+};
 }; // namespace dap
 
 namespace std

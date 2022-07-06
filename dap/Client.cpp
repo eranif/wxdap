@@ -292,6 +292,8 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_THREADS_RESPONSE, new dap::ThreadsResponse, json);
         } else if(as_response->command == "source") {
             HandleSourceResponse(json);
+        } else if(as_response->command == "evaluate") {
+            HandleEvaluateResponse(json);
         }
     } else if(as_request) {
         // reverse requests: request arriving from the dap server to the IDE
@@ -299,6 +301,21 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, new dap::RunInTerminalRequest, json);
         }
     }
+}
+
+void dap::Client::HandleEvaluateResponse(Json json)
+{
+    if(m_evaluate_queue.empty()) {
+        // something bad happened..
+        return;
+    }
+
+    EvaluateResponse response;
+    response.From(json);
+
+    auto callback = std::move(m_evaluate_queue.front());
+    m_evaluate_queue.erase(m_evaluate_queue.begin());
+    callback(response.success, response.result, response.type, response.variablesReference);
 }
 
 void dap::Client::HandleSourceResponse(Json json)
@@ -470,11 +487,12 @@ void dap::Client::StepOut(int threadId)
     SendRequest(req);
 }
 
-void dap::Client::GetChildrenVariables(int variablesReference, size_t count, const wxString& format)
+void dap::Client::GetChildrenVariables(int variablesReference, size_t count, ValueDisplayFormat format)
 {
     VariablesRequest req = MakeRequest<VariablesRequest>();
     req.arguments.variablesReference = variablesReference;
     req.arguments.count = count;
+    req.arguments.format.hex = (format == ValueDisplayFormat::HEX);
     m_get_variables_queue.push_back(variablesReference);
     SendRequest(req);
 }
@@ -549,4 +567,32 @@ bool dap::Client::LoadSource(const dap::Source& source, source_loaded_cb callbac
     } else {
         return false;
     }
+}
+
+void dap::Client::EvaluateExpression(const wxString& expression, int frameId, EvaluateContext context,
+                                     evaluate_cb callback, ValueDisplayFormat format)
+{
+    m_evaluate_queue.emplace_back(std::move(callback));
+    EvaluateRequest req = MakeRequest<EvaluateRequest>();
+    req.arguments.frameId = frameId;
+    req.arguments.expression = expression;
+    req.arguments.format.hex = (format == ValueDisplayFormat::HEX);
+    switch(context) {
+    case EvaluateContext::CLIPBOARD:
+        req.arguments.context = "clipboard";
+        break;
+    case EvaluateContext::HOVER:
+        req.arguments.context = "hover";
+        break;
+    case EvaluateContext::REPL:
+        req.arguments.context = "repl";
+        break;
+    case EvaluateContext::VARIABLES:
+        req.arguments.context = "variables";
+        break;
+    case EvaluateContext::WATCH:
+        req.arguments.context = "watch";
+        break;
+    }
+    SendRequest(req);
 }

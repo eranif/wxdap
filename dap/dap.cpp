@@ -47,6 +47,7 @@ void Initialize()
     REGISTER_CLASS(PauseRequest);
     REGISTER_CLASS(RunInTerminalRequest);
     REGISTER_CLASS(SourceRequest);
+    REGISTER_CLASS(EvaluateRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -77,6 +78,7 @@ void Initialize()
     REGISTER_CLASS(PauseResponse);
     REGISTER_CLASS(RunInTerminalResponse);
     REGISTER_CLASS(SourceResponse);
+    REGISTER_CLASS(EvaluateResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -1511,6 +1513,58 @@ void SourceResponse::From(const Json& json)
     READ_BODY();
     GET_BODY_PROP(content, String);
     GET_BODY_PROP(mimeType, String);
+}
+
+Json EvaluateArguments::To() const
+{
+    Json json = Json::CreateObject();
+    json.Add("expression", expression);
+    if(frameId > 0) {
+        json.Add("frameId", frameId);
+    }
+    json.Add("context", context);
+    json.Add("format", format.To());
+    return json;
+}
+
+void EvaluateArguments::From(const Json& json)
+{
+    expression = json["expression"].GetString(expression);
+    frameId = json["frameId"].GetInteger(wxNOT_FOUND);
+    context = json["context"].GetString(context);
+    format.From(json["format"]);
+}
+
+Json EvaluateRequest::To() const
+{
+    REQUEST_TO();
+    ADD_OBJ(arguments);
+    return json;
+}
+
+void EvaluateRequest::From(const Json& json)
+{
+    REQUEST_FROM();
+    READ_OBJ(arguments);
+}
+
+Json EvaluateResponse::To() const
+{
+    RESPONSE_TO();
+    ADD_BODY();
+    ADD_BODY_PROP(result);
+    ADD_BODY_PROP(type);
+    ADD_BODY_PROP(variablesReference);
+    return json;
+}
+
+void EvaluateResponse::From(const Json& json)
+{
+    RESPONSE_FROM();
+    READ_BODY();
+    GET_BODY_PROP(result, String);
+    GET_BODY_PROP(type, String);
+    GET_BODY_PROP(variablesReference, Number);
 }
 
 }; // namespace dap

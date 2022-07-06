@@ -55,7 +55,7 @@ public:
 };
 
 typedef std::function<void(bool, const wxString&, const wxString&)> source_loaded_cb;
-typedef std::function<const wxString&(const wxString&)> path_conversion_cb;
+typedef std::function<void(bool, const wxString&, const wxString&, int)> evaluate_cb;
 
 class WXDLLIMPEXP_DAP Client : public wxEvtHandler
 {
@@ -108,11 +108,13 @@ protected:
     std::vector<int> m_get_scopes_queue;
     std::vector<int> m_get_variables_queue;
     std::vector<source_loaded_cb> m_load_sources_queue;
+    std::vector<evaluate_cb> m_evaluate_queue;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }
     bool SendRequest(dap::ProtocolMessage& request);
     void HandleSourceResponse(Json json);
+    void HandleEvaluateResponse(Json json);
 
 protected:
     void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json);
@@ -280,7 +282,8 @@ public:
      * @param variablesReference the parent ID
      * @param count number of children. If count 0, all variables are returned
      */
-    void GetChildrenVariables(int variablesReference, size_t count = 10, const wxString& format = wxEmptyString);
+    void GetChildrenVariables(int variablesReference, size_t count = 10,
+                              ValueDisplayFormat format = ValueDisplayFormat::NATIVE);
 
     /**
      * @brief The request suspends the debuggee.
@@ -300,6 +303,21 @@ public:
      * the source is loaded
      */
     bool LoadSource(const dap::Source& source, source_loaded_cb callback);
+
+    /**
+     * @brief evaluate an expression. This method uses callback instead of event since a context is required
+     * (e.g. the caller want to associate the evaluated expression with the expression)
+     *
+     * evaluate_cb(bool success, const wxString& result, const wxString& type, int variablesReference):
+     * - success: the evaluate succeeded
+     * - result: The result of the evaluate request
+     * - type: The type of the evaluate result
+     * - variablesReference: If variablesReference is > 0, the evaluate result is structured and its
+     *   children can be retrieved by passing variablesReference to the
+     *   VariablesRequest
+     */
+    void EvaluateExpression(const wxString& expression, int frameId, EvaluateContext context, evaluate_cb callback,
+                            ValueDisplayFormat format = ValueDisplayFormat::NATIVE);
 };
 
 };     // namespace dap

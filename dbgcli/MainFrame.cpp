@@ -106,6 +106,9 @@ void MainFrame::InitializeClient()
     // The protocol starts by us sending an initialize request
     dap::InitializeRequestArguments args;
     args.linesStartAt1 = true;
+
+    m_frame_id = wxNOT_FOUND;
+    m_current_source = {};
     m_client.Initialize(&args);
 }
 
@@ -230,6 +233,8 @@ void MainFrame::OnStackTrace(DAPEvent& event)
             LoadFile(stack_trace_data->stackFrames[0].source,
                      stack_trace_data->stackFrames[0].line - 1 /* 0 based lines*/);
 
+            m_frame_id = stack_trace_data->stackFrames[0].id;
+
             // request the scopes for the first stack
             m_client.GetScopes(stack_trace_data->stackFrames[0].id);
         }
@@ -257,6 +262,7 @@ void MainFrame::OnTerminated(DAPEvent& event)
         ctrl->ClearAll();
     }
     m_current_source = {};
+    m_frame_id = wxNOT_FOUND;
 }
 
 void MainFrame::OnOutput(DAPEvent& event)
@@ -420,3 +426,26 @@ void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
         m_client.SetFunctionBreakpoints({ { location, wxEmptyString } });
     }
 }
+void MainFrame::OnEval(wxCommandEvent& event)
+{
+    wxString text = wxGetTextFromUser("Expression", "Evaluate expression", m_stcTextSourceFile->GetSelectedText());
+    if(text.empty()) {
+        return;
+    }
+
+    m_client.EvaluateExpression(
+        text, m_frame_id, dap::EvaluateContext::HOVER,
+        [this, text](bool success, const wxString& result, const wxString& type, int variablesReference) {
+            wxString output;
+            if(!success) {
+                output << "ERROR: failed to evaluate expression: `" << text << "`";
+                AddLog(output);
+                return;
+            }
+
+            output << text << " = " << result << " [" << type << "]. variablesReference: " << variablesReference;
+            AddLog(output);
+        });
+}
+
+void MainFrame::OnEvalUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
