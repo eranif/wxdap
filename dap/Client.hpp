@@ -246,7 +246,7 @@ public:
     /**
      * @brief continue execution
      */
-    void Continue();
+    void Continue(int threadId = wxNOT_FOUND, bool all_threads = true);
 
     /**
      * @brief The request executes one step (in the given granularity) for the specified thread and allows all other

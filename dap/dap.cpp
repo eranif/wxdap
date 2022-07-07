@@ -972,10 +972,15 @@ Json ContinueArguments::To() const
 {
     CREATE_JSON();
     ADD_PROP(threadId);
+    ADD_PROP(singleThread);
     return json;
 }
 
-void ContinueArguments::From(const Json& json) { GET_PROP(threadId, Integer); }
+void ContinueArguments::From(const Json& json)
+{
+    GET_PROP(threadId, Integer);
+    GET_PROP(singleThread, Bool);
+}
 
 // ----------------------------------------
 // ----------------------------------------

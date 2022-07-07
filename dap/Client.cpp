@@ -468,9 +468,11 @@ void dap::Client::Next(int threadId, bool singleThread, SteppingGranularity gran
     SendRequest(req);
 }
 
-void dap::Client::Continue()
+void dap::Client::Continue(int threadId, bool all_threads)
 {
     ContinueRequest req = MakeRequest<ContinueRequest>();
+    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req.arguments.singleThread = !all_threads || (req.arguments.threadId == wxNOT_FOUND);
     SendRequest(req);
 }
 

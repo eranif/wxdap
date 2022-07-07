@@ -822,6 +822,12 @@ struct WXDLLIMPEXP_DAP ContinueArguments : public Any {
      * should set the 'allThreadsContinued' attribute in the response to true.
      */
     int threadId = -1;
+    /**
+     * If this optional flag is true, execution is resumed only for the thread
+     * with given 'threadId'.
+     */
+    bool singleThread = false;
+
     ANY_CLASS(ContinueArguments);
     JSON_SERIALIZE();
 };
