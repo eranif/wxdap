@@ -797,6 +797,10 @@ struct WXDLLIMPEXP_DAP SetBreakpointsRequest : public Request {
 ///(or the deprecated 'lines') array in the arguments
 struct WXDLLIMPEXP_DAP SetBreakpointsResponse : public Response {
     std::vector<Breakpoint> breakpoints;
+
+    /// protocol extension: keep the originating source
+    wxString originSource;
+
     RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
     JSON_SERIALIZE();
 };

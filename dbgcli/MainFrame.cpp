@@ -295,6 +295,7 @@ void MainFrame::OnBreakpointSet(DAPEvent& event)
 {
     dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
     if(resp) {
+        AddLog("Got reply for setBreakpoint command for file: " + resp->originSource);
         for(const auto& bp : resp->breakpoints) {
             wxString message;
             message << "ID: " << bp.id << ". Verified: " << bp.verified << ". File: " << bp.source.path

@@ -109,6 +109,7 @@ protected:
     std::vector<std::pair<int, EvaluateContext>> m_get_variables_queue;
     std::vector<source_loaded_cb> m_load_sources_queue;
     std::vector<evaluate_cb> m_evaluate_queue;
+    std::vector<wxString> m_source_breakpoints_queue;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }

@@ -245,23 +245,27 @@ void dap::Client::OnMessage(Json json)
         if(as_response->command == "stackTrace") {
             // received a stack trace response
             auto response = new dap::StackTraceResponse;
-            response->refId = m_get_frames_queue.front();
-            m_get_frames_queue.erase(m_get_frames_queue.begin());
-
+            if(!m_get_frames_queue.empty()) {
+                response->refId = m_get_frames_queue.front();
+                m_get_frames_queue.erase(m_get_frames_queue.begin());
+            }
             SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, response, json);
 
         } else if(as_response->command == "scopes") {
             auto response = new dap::ScopesResponse;
-            response->refId = m_get_scopes_queue.front();
-            m_get_scopes_queue.erase(m_get_scopes_queue.begin());
-
+            if(!m_get_scopes_queue.empty()) {
+                response->refId = m_get_scopes_queue.front();
+                m_get_scopes_queue.erase(m_get_scopes_queue.begin());
+            }
             SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response, json);
         } else if(as_response->command == "variables") {
             auto response = new dap::VariablesResponse;
-            response->refId = m_get_variables_queue.front().first;
-            response->context = m_get_variables_queue.front().second;
+            if(!m_get_variables_queue.empty()) {
+                response->refId = m_get_variables_queue.front().first;
+                response->context = m_get_variables_queue.front().second;
+                m_get_variables_queue.erase(m_get_variables_queue.begin());
+            }
 
-            m_get_variables_queue.erase(m_get_variables_queue.begin());
             SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json);
 
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
@@ -285,7 +289,12 @@ void dap::Client::OnMessage(Json json)
             SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json);
 
         } else if(as_response->command == "setBreakpoints") {
-            SendDAPEvent(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, new dap::SetBreakpointsResponse, json);
+            auto ptr = new dap::SetBreakpointsResponse;
+            if(!m_source_breakpoints_queue.empty()) {
+                ptr->originSource = m_source_breakpoints_queue.front();
+                m_source_breakpoints_queue.erase(m_source_breakpoints_queue.begin());
+            }
+            SendDAPEvent(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, ptr, json);
 
         } else if(as_response->command == "configurationDone") {
             SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json);
@@ -372,6 +381,8 @@ void dap::Client::Reset()
     m_get_frames_queue.clear();
     m_get_scopes_queue.clear();
     m_get_variables_queue.clear();
+    m_source_breakpoints_queue.clear();
+    m_evaluate_queue.clear();
 }
 
 /// API
@@ -398,6 +409,9 @@ void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap
     req.arguments.breakpoints = lines;
     req.arguments.source.path = file;
     req.arguments.source.name = wxFileName(file).GetFullName();
+
+    // keep the originating source file
+    m_source_breakpoints_queue.push_back(file);
     SendRequest(req);
 }
 
