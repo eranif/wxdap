@@ -675,7 +675,7 @@ struct WXDLLIMPEXP_DAP StepArguments : public Any {
     /**
      * If this optional flag is true, all other suspended threads are not resumed.
      */
-    bool singleThread = false;
+    bool singleThread = true;
 
     /**
      * Optional granularity to step. If no granularity is specified, a granularity
@@ -833,6 +833,8 @@ struct WXDLLIMPEXP_DAP NextArguments : public Any {
      */
     int threadId = -1;
     wxString granularity = "line";
+    bool singleThread = true;
+
     ANY_CLASS(NextArguments);
     JSON_SERIALIZE();
 };

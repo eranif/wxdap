@@ -448,10 +448,12 @@ void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
     SendRequest(req);
 }
 
-void dap::Client::Next(int threadId, SteppingGranularity granularity)
+void dap::Client::Next(int threadId, bool singleThread, SteppingGranularity granularity)
 {
     NextRequest req = MakeRequest<NextRequest>();
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req.arguments.singleThread = singleThread;
+
     switch(granularity) {
     case SteppingGranularity::LINE:
         req.arguments.granularity = "line";
@@ -480,17 +482,19 @@ void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoi
     SendRequest(req);
 }
 
-void dap::Client::StepIn(int threadId)
+void dap::Client::StepIn(int threadId, bool singleThread)
 {
     StepInRequest req = MakeRequest<StepInRequest>();
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req.arguments.singleThread = singleThread;
     SendRequest(req);
 }
 
-void dap::Client::StepOut(int threadId)
+void dap::Client::StepOut(int threadId, bool singleThread)
 {
     StepOutRequest req = MakeRequest<StepOutRequest>();
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req.arguments.singleThread = singleThread;
     SendRequest(req);
 }
 

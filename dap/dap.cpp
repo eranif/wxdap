@@ -764,7 +764,7 @@ Json StepArguments::To() const
 void StepArguments::From(const Json& json)
 {
     threadId = json["threadId"].GetInteger(wxNOT_FOUND);
-    singleThread = json["singleThread"].GetBool(false);
+    singleThread = json["singleThread"].GetBool(singleThread);
     granularity = json["granularity"].GetString(granularity);
 }
 
@@ -986,6 +986,7 @@ Json NextArguments::To() const
     CREATE_JSON();
     ADD_PROP(threadId);
     ADD_PROP(granularity);
+    ADD_PROP(singleThread);
     return json;
 }
 
@@ -993,6 +994,7 @@ void NextArguments::From(const Json& json)
 {
     GET_PROP(threadId, Integer);
     GET_PROP(granularity, String);
+    GET_PROP(singleThread, Bool);
 }
 
 // ----------------------------------------

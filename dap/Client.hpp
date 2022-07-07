@@ -253,8 +253,10 @@ public:
      * threads to run freely by resuming them
      * @param threadId execute one step for this thread. If wxNOT_FOUND is passed, use the thread returned by
      * GetActiveThreadId()
+     * @param singleThread If this optional flag is true, execution is resumed only for the thread
      */
-    void Next(int threadId = wxNOT_FOUND, SteppingGranularity granularity = SteppingGranularity::LINE);
+    void Next(int threadId = wxNOT_FOUND, bool singleThread = true,
+              SteppingGranularity granularity = SteppingGranularity::LINE);
 
     /**
      * @brief return the variable scopes for a given frame
@@ -270,12 +272,12 @@ public:
     /**
      * @brief step into function
      */
-    void StepIn(int threadId = wxNOT_FOUND);
+    void StepIn(int threadId = wxNOT_FOUND, bool singleThread = true);
 
     /**
      * @brief step out of a function
      */
-    void StepOut(int threadId = wxNOT_FOUND);
+    void StepOut(int threadId = wxNOT_FOUND, bool singleThread = true);
 
     /**
      * @brief return the list of all children variables for `variablesReference`
