@@ -636,7 +636,7 @@ void Environment::From(const Json& json)
     size_t count = json.GetCount();
     for(size_t i = 0; i < count; ++i) {
         wxString str = json[i].GetString();
-        if(str.Index('=') == wxNOT_FOUND)
+        if(str.Index('=') == wxString::npos)
             continue;
         wxString key = str.BeforeFirst('=');
         wxString value = str.AfterFirst('=');
