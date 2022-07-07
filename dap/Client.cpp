@@ -257,10 +257,10 @@ void dap::Client::OnMessage(Json json)
         } else if(as_response->command == "variables") {
             auto response = new dap::VariablesResponse;
             response->refId = m_get_variables_queue.front().first;
-            auto owner = m_get_variables_queue.front().second;
-            m_get_variables_queue.erase(m_get_variables_queue.begin());
+            response->context = m_get_variables_queue.front().second;
 
-            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json, owner);
+            m_get_variables_queue.erase(m_get_variables_queue.begin());
+            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json);
 
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
                   as_response->command == "next" || as_response->command == "continue") {
@@ -492,14 +492,14 @@ void dap::Client::StepOut(int threadId)
     SendRequest(req);
 }
 
-void dap::Client::GetChildrenVariables(int variablesReference, wxEvtHandler* owner, size_t count,
+void dap::Client::GetChildrenVariables(int variablesReference, EvaluateContext context, size_t count,
                                        ValueDisplayFormat format)
 {
     VariablesRequest req = MakeRequest<VariablesRequest>();
     req.arguments.variablesReference = variablesReference;
     req.arguments.count = count;
     req.arguments.format.hex = (format == ValueDisplayFormat::HEX);
-    m_get_variables_queue.push_back({ variablesReference, owner == nullptr ? this : owner });
+    m_get_variables_queue.push_back({ variablesReference, context });
     SendRequest(req);
 }
 

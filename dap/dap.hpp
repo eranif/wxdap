@@ -1046,6 +1046,10 @@ struct WXDLLIMPEXP_DAP VariablesResponse : public Response {
     std::vector<Variable> variables;
     // extension to the protocol: holds the parent of these variables
     int refId = wxNOT_FOUND;
+
+    // extension to the protocol: the context for this variable
+    EvaluateContext context = EvaluateContext::VARIABLES;
+
     RESPONSE_CLASS(VariablesResponse, "variables");
     JSON_SERIALIZE();
 };
