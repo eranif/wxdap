@@ -408,6 +408,68 @@ struct WXDLLIMPEXP_DAP Breakpoint : public Any {
     JSON_SERIALIZE();
 };
 
+/// A Module object represents a row in the modules view
+struct WXDLLIMPEXP_DAP Module : public Any {
+    /**
+     * Unique identifier for the module.
+     */
+    wxString id;
+    /**
+     * A name of the module.
+     */
+    wxString name;
+    /**
+     * optional but recommended attributes.
+     * always try to use these first before introducing additional attributes.
+     *
+     * Logical full path to the module. The exact definition is implementation
+     * defined, but usually this would be a full path to the on-disk file for the
+     * module.
+     */
+    wxString path;
+    /**
+     * True if the module is optimized.
+     */
+    bool isOptimized = false;
+    /**
+     * True if the module is considered 'user code' by a debugger that supports
+     * 'Just My Code'.
+     */
+    bool isUserCode = false;
+    /**
+     * Version of Module.
+     */
+    wxString version;
+    /**
+     * User understandable description of if symbols were found for the module
+     * (ex: 'Symbols Loaded', 'Symbols not found', etc.
+     */
+    wxString symbolStatus;
+    /**
+     * Logical full path to the symbol file. The exact definition is
+     * implementation defined.
+     */
+    wxString symbolFilePath;
+    /**
+     * Module created or modified.
+     */
+    wxString dateTimeStamp;
+    /**
+     * Address range covered by this module.
+     */
+    wxString addressRange;
+    ANY_CLASS(Module);
+    JSON_SERIALIZE();
+};
+
+/// The event indicates that some information about a module has changed
+struct WXDLLIMPEXP_DAP ModuleEvent : public Event {
+    wxString reason;
+    Module module;
+    EVENT_CLASS(ModuleEvent, "module");
+    JSON_SERIALIZE();
+};
+
 /// The event indicates that some information about a breakpoint has changed.
 // <-
 struct WXDLLIMPEXP_DAP BreakpointEvent : public Event {

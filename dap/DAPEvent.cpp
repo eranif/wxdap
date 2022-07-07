@@ -26,6 +26,7 @@ wxDEFINE_EVENT(wxEVT_DAP_INITIALIZED_EVENT, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_OUTPUT_EVENT, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_BREAKPOINT_EVENT, DAPEvent);
 wxDEFINE_EVENT(wxEVT_DAP_CONTINUED_EVENT, DAPEvent);
+wxDEFINE_EVENT(wxEVT_DAP_MODULE_EVENT, DAPEvent);
 
 DAPEvent::DAPEvent(wxEventType commandType, int winid)
     : wxCommandEvent(commandType, winid)

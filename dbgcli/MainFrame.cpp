@@ -75,6 +75,7 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     m_client.Bind(wxEVT_DAP_LAUNCH_RESPONSE, &MainFrame::OnLaunchResponse, this);
     m_client.Bind(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, &MainFrame::OnRunInTerminalRequest, this);
     m_client.Bind(wxEVT_DAP_LOG_EVENT, &MainFrame::OnDapLog, this);
+    m_client.Bind(wxEVT_DAP_MODULE_EVENT, &MainFrame::OnDapModuleEvent, this);
     m_client.SetWantsLogEvents(true); // send use log events
 }
 
@@ -304,6 +305,18 @@ void MainFrame::OnBreakpointSet(DAPEvent& event)
 }
 
 void MainFrame::OnDapLog(DAPEvent& event) { AddLog(event.GetString()); }
+void MainFrame::OnDapModuleEvent(DAPEvent& event)
+{
+    AddLog("Got MODULE event!");
+    auto event_data = event.GetDapEvent()->As<dap::ModuleEvent>();
+    if(!event_data)
+        return;
+
+    wxString log_entry;
+    log_entry << event_data->module.id << ": " << event_data->module.name << " " << event_data->module.symbolStatus
+              << event_data->module.version << " " << event_data->module.path;
+    AddLog(log_entry);
+}
 
 void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
 {

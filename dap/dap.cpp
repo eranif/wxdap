@@ -58,6 +58,7 @@ void Initialize()
     REGISTER_CLASS(OutputEvent);
     REGISTER_CLASS(BreakpointEvent);
     REGISTER_CLASS(ProcessEvent);
+    REGISTER_CLASS(ModuleEvent);
 
     REGISTER_CLASS(InitializeResponse);
     REGISTER_CLASS(CancelResponse);
@@ -1567,4 +1568,56 @@ void EvaluateResponse::From(const Json& json)
     GET_BODY_PROP(variablesReference, Number);
 }
 
+void Module::From(const Json& json)
+{
+    // ID can be number or string
+    int nId = json["id"].GetNumber(wxNOT_FOUND);
+    if(nId == wxNOT_FOUND) {
+        id = json["id"].GetString();
+    } else {
+        id << nId;
+    }
+    GET_PROP(name, String);
+    GET_PROP(path, String);
+    GET_PROP(version, String);
+    GET_PROP(symbolStatus, String);
+    GET_PROP(symbolFilePath, String);
+    GET_PROP(dateTimeStamp, String);
+    GET_PROP(addressRange, String);
+    GET_PROP(isOptimized, Bool);
+    GET_PROP(isUserCode, Bool);
+}
+
+Json Module::To() const
+{
+    CREATE_JSON();
+    ADD_PROP(id);
+    ADD_PROP(name);
+    ADD_PROP(path);
+    ADD_PROP(version);
+    ADD_PROP(symbolStatus);
+    ADD_PROP(symbolFilePath);
+    ADD_PROP(dateTimeStamp);
+    ADD_PROP(addressRange);
+    ADD_PROP(isOptimized);
+    ADD_PROP(isUserCode);
+    return json;
+}
+
+Json ModuleEvent::To() const
+{
+    Json json = Event::To();
+    Json body = json.AddObject("body");
+    body.Add("reason", reason);
+    body.AddObject("module", module.To());
+    return json;
+}
+
+void ModuleEvent::From(const Json& json)
+{
+    Event::From(json);
+    Json body = json["body"];
+    reason = body["reason"].GetString();
+    module.From(body["module"]);
+}
 }; // namespace dap

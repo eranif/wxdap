@@ -63,5 +63,6 @@ protected:
     void OnLaunchResponse(DAPEvent& event);
     void OnRunInTerminalRequest(DAPEvent& event);
     void OnDapLog(DAPEvent& event);
+    void OnDapModuleEvent(DAPEvent& event);
 };
 #endif // MAINFRAME_HPP

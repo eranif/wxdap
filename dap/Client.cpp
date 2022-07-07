@@ -236,6 +236,8 @@ void dap::Client::OnMessage(Json json)
         } else if(as_event->event == "continued") {
             m_can_interact = false;
             SendDAPEvent(wxEVT_DAP_CONTINUED_EVENT, new dap::ContinuedEvent, json);
+        } else if(as_event->event == "module") {
+            SendDAPEvent(wxEVT_DAP_MODULE_EVENT, new dap::ModuleEvent, json);
         } else {
             // TODO implement here the rest of the event
         }
