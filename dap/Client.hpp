@@ -106,7 +106,7 @@ protected:
     /// the ID if thread that called GetFrames()
     std::vector<int> m_get_frames_queue;
     std::vector<int> m_get_scopes_queue;
-    std::vector<int> m_get_variables_queue;
+    std::vector<std::pair<int, wxEvtHandler*>> m_get_variables_queue;
     std::vector<source_loaded_cb> m_load_sources_queue;
     std::vector<evaluate_cb> m_evaluate_queue;
 
@@ -117,7 +117,7 @@ protected:
     void HandleEvaluateResponse(Json json);
 
 protected:
-    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json);
+    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json, wxEvtHandler* owner = nullptr);
 
     /**
      * @brief we maintain a reader thread that is responsible for reading
@@ -280,9 +280,11 @@ public:
     /**
      * @brief return the list of all children variables for `variablesReference`
      * @param variablesReference the parent ID
+     * @param owner if provided, the callback event will be passed to this handler. Otherwise, the default handler (this
+     * object) is used
      * @param count number of children. If count 0, all variables are returned
      */
-    void GetChildrenVariables(int variablesReference, size_t count = 10,
+    void GetChildrenVariables(int variablesReference, wxEvtHandler* owner = nullptr, size_t count = 10,
                               ValueDisplayFormat format = ValueDisplayFormat::NATIVE);
 
     /**
