@@ -15,18 +15,20 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] Scopes - The request returns the variable scopes for a given stackframe ID (this does not return the variables themselves, but only their groups, like "Locals", "Registers" etc)
 - [x] GetFrames - return list of frames for a given thread ID
 - [x] Continue - continue the execution
-- [x] Next - executes one step for the specified thread
+- [x] Next - executes one step for the specified thread (with custom granularity: line/statement/instruction)
 - [X] StepIn - resumes the given thread to step into a function/method and allows all other threads to run freely by resuming them
 - [X] StepOut - The request resumes the given thread to step out (return) from a function/method and allows all other threads to run freely by resuming them
 - [X] Pause - pause the debugger execution
 - [X] BreakpointLocations - returns all possible locations for source breakpoints in a given range
 - [X] SetFunctionBreakpoints - Replaces all existing function breakpoints with new function breakpoints
 - [X] Variables - return list of variables
+- [X] EvaluateExpression - asks the debugger to evaluate an expression
 
 #### Lower priority requests
 
-- [ ] NextInstruction - executes one instruction for the specified thread
-- [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of code or to execute code again
+- [X] NextInstruction - executes one instruction for the specified thread
+- [ ] Goto - sets the location where the debuggee will continue to run. his makes it possible to skip the execution of
+      code or to execute code again
 - [ ] ReadMemory - Reads bytes from memory at the provided location
 - [ ] Disassemble - Disassembles code stored at the provided location
 
@@ -38,3 +40,5 @@ Provide a wxWidgets library for implementing DAP (Debug Adapter Protocol) client
 - [x] Initialized - dap server is initialized
 - [x] Process - the debuggee process started
 - [x] Output - The event indicates that the target has produced some output
+- [x] Continued - The debugger continued
+- [x] Breakpoint - a breakpoint state changed
