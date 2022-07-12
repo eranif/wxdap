@@ -230,6 +230,10 @@ public:
      */
     void Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory = wxEmptyString,
                 const dap::Environment& env = {});
+    /**
+     * @brief attach to dap server
+     */
+    void Attach(int pid = wxNOT_FOUND, const std::vector<wxString>& arguments = {});
 
     /**
      * @brief ask for list of threads

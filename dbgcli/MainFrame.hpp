@@ -17,12 +17,15 @@ class MainFrame : public MainFrameBase
     std::vector<wxStyledTextCtrl*> m_ctrls;
     dap::Process* m_process = nullptr;
     int m_frame_id = wxNOT_FOUND;
+    bool m_attaching = false;
 
 public:
     MainFrame(wxWindow* parent, wxString executableFileName);
     virtual ~MainFrame();
 
 protected:
+    void OnAttach(wxCommandEvent& event) override;
+    void OnAttachUI(wxUpdateUIEvent& event) override;
     void OnEval(wxCommandEvent& event) override;
     void OnEvalUI(wxUpdateUIEvent& event) override;
     void InitializeClient();

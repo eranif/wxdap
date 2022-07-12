@@ -43,6 +43,11 @@
 
 class MainFrameBase : public wxFrame
 {
+public:
+    enum {
+        ID_ATTACH = 10001,
+    };
+
 protected:
     wxToolBar* m_toolbar12;
     wxPanel* m_panel2;
@@ -65,6 +70,8 @@ protected:
 protected:
     virtual void OnConnect(wxCommandEvent& event) { event.Skip(); }
     virtual void OnConnectUI(wxUpdateUIEvent& event) { event.Skip(); }
+    virtual void OnAttach(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnAttachUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnNext(wxCommandEvent& event) { event.Skip(); }
     virtual void OnNextUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnStepIn(wxCommandEvent& event) { event.Skip(); }

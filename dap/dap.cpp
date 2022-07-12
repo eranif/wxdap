@@ -48,6 +48,7 @@ void Initialize()
     REGISTER_CLASS(RunInTerminalRequest);
     REGISTER_CLASS(SourceRequest);
     REGISTER_CLASS(EvaluateRequest);
+    REGISTER_CLASS(AttachRequest);
 
     REGISTER_CLASS(InitializedEvent);
     REGISTER_CLASS(StoppedEvent);
@@ -59,6 +60,7 @@ void Initialize()
     REGISTER_CLASS(BreakpointEvent);
     REGISTER_CLASS(ProcessEvent);
     REGISTER_CLASS(ModuleEvent);
+    REGISTER_CLASS(DebugpyWaitingForServerEvent);
 
     REGISTER_CLASS(InitializeResponse);
     REGISTER_CLASS(CancelResponse);
@@ -80,6 +82,7 @@ void Initialize()
     REGISTER_CLASS(RunInTerminalResponse);
     REGISTER_CLASS(SourceResponse);
     REGISTER_CLASS(EvaluateResponse);
+    REGISTER_CLASS(AttachResponse);
 
     // Needed for windows socket library
     Socket::Initialize();
@@ -682,6 +685,40 @@ Json LaunchRequest::To() const
 }
 
 void LaunchRequest::From(const Json& json)
+{
+    Request::From(json);
+    arguments.From(json["arguments"]);
+}
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+Json AttachRequestArguments::To() const
+{
+    CREATE_JSON();
+    json.Add("arguments", arguments);
+    json.Add("pid", pid);
+    return json;
+}
+
+void AttachRequestArguments::From(const Json& json)
+{
+    arguments = json["arguments"].GetStringArray();
+    pid = json["pid"].GetInteger();
+}
+
+// ----------------------------------------
+// ----------------------------------------
+// ----------------------------------------
+
+Json AttachRequest::To() const
+{
+    Json json = Request::To();
+    json.AddObject("arguments", arguments.To());
+    return json;
+}
+
+void AttachRequest::From(const Json& json)
 {
     Request::From(json);
     arguments.From(json["arguments"]);
@@ -1626,5 +1663,22 @@ void ModuleEvent::From(const Json& json)
     Json body = json["body"];
     reason = body["reason"].GetString();
     module.From(body["module"]);
+}
+
+Json DebugpyWaitingForServerEvent::To() const
+{
+    Json json = Event::To();
+    Json body = json.AddObject("body");
+    body.Add("host", host);
+    body.Add("port", port);
+    return json;
+}
+
+void DebugpyWaitingForServerEvent::From(const Json& json)
+{
+    Event::From(json);
+    Json body = json["body"];
+    host = body["host"].GetString();
+    port = body["port"].GetInteger();
 }
 }; // namespace dap

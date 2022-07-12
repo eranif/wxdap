@@ -636,6 +636,27 @@ struct WXDLLIMPEXP_DAP LaunchResponse : public EmptyAckResponse {
     RESPONSE_CLASS(LaunchResponse, "launch");
 };
 
+/// Arguments for 'launch' request. Additional attributes are implementation
+/// specific.
+struct WXDLLIMPEXP_DAP AttachRequestArguments : public Any {
+    int pid = wxNOT_FOUND;
+    std::vector<wxString> arguments;
+    ANY_CLASS(AttachRequestArguments);
+    JSON_SERIALIZE();
+};
+
+/// The attach request is sent from the client to the debug adapter to attach to a debuggee that is already running.
+struct WXDLLIMPEXP_DAP AttachRequest : public Request {
+    AttachRequestArguments arguments;
+    REQUEST_CLASS(AttachRequest, "attach");
+    JSON_SERIALIZE();
+};
+
+/// Response to ‘attach’ request. This is just an acknowledgement, so no body field is required
+struct WXDLLIMPEXP_DAP AttachResponse : public EmptyAckResponse {
+    RESPONSE_CLASS(AttachResponse, "attach");
+};
+
 /// The 'disconnect' request is sent from the client to the debug adapter in
 /// order to stop debugging. It asks the debug adapter to disconnect from the
 /// debuggee and to terminate the debug adapter. If the debuggee has been
@@ -1279,6 +1300,13 @@ struct WXDLLIMPEXP_DAP EvaluateResponse : public Response {
     int variablesReference = 0;
 
     RESPONSE_CLASS(EvaluateResponse, "evaluate");
+    JSON_SERIALIZE();
+};
+
+struct WXDLLIMPEXP_DAP DebugpyWaitingForServerEvent : public Event {
+    wxString host;
+    int port;
+    EVENT_CLASS(DebugpyWaitingForServerEvent, wxEmptyString);
     JSON_SERIALIZE();
 };
 }; // namespace dap
