@@ -216,7 +216,7 @@ bool ProcessMSW::DoWrite(const wxString& buff, bool appendLf)
     DWORD dwTimeout;
 
     wxString tmpCmd = buff;
-    StringUtils::Rtrim(tmpCmd);
+    DapStringUtils::Rtrim(tmpCmd);
     if(appendLf) {
         tmpCmd += "\n";
     }
