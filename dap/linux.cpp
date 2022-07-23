@@ -12,7 +12,7 @@ namespace dap
 {
 Process* ExecuteProcess(const wxString& cmd, const wxString& workingDir)
 {
-    std::vector<wxString> args = StringUtils::BuildArgv(cmd);
+    std::vector<wxString> args = DapStringUtils::BuildArgv(cmd);
     LOG_DEBUG() << "Starting process:" << args;
     UnixProcess* process = new UnixProcess(args);
     process->StartReaderThread();

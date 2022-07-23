@@ -70,12 +70,12 @@ int dap::JsonRPC::ReadHeaders(unordered_map<wxString, wxString>& headers)
         return -1;
     }
     wxString headerSection = m_buffer.substr(0, where); // excluding the "\r\n\r\n"
-    std::vector<wxString> lines = StringUtils::Split(headerSection, '\n');
+    std::vector<wxString> lines = DapStringUtils::Split(headerSection, '\n');
     for(wxString& header : lines) {
-        StringUtils::Trim(header);
-        wxString name = StringUtils::BeforeFirst(header, ':');
-        wxString value = StringUtils::AfterFirst(header, ':');
-        headers.insert({ StringUtils::Trim(name), StringUtils::Trim(value) });
+        DapStringUtils::Trim(header);
+        wxString name = DapStringUtils::BeforeFirst(header, ':');
+        wxString value = DapStringUtils::AfterFirst(header, ':');
+        headers.insert({ DapStringUtils::Trim(name), DapStringUtils::Trim(value) });
     }
     // return the headers section + the separator
     return (where + 4);

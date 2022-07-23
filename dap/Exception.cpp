@@ -5,7 +5,7 @@
 dap::Exception::Exception(const wxString& what)
     : m_what(what)
 {
-    StringUtils::Trim(m_what);
+    DapStringUtils::Trim(m_what);
 }
 
 dap::Exception::~Exception() {}

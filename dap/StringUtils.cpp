@@ -7,13 +7,13 @@
 #include <wx/arrstr.h>
 #include <wx/tokenzr.h>
 
-wxString& StringUtils::Rtrim(wxString& str) { return str.Trim(); }
+wxString& DapStringUtils::Rtrim(wxString& str) { return str.Trim(); }
 
-wxString& StringUtils::Ltrim(wxString& str) { return str.Trim(false); }
+wxString& DapStringUtils::Ltrim(wxString& str) { return str.Trim(false); }
 
-wxString& StringUtils::Trim(wxString& str) { return str.Trim().Trim(false); }
+wxString& DapStringUtils::Trim(wxString& str) { return str.Trim().Trim(false); }
 
-wxString StringUtils::BeforeFirst(const wxString& str, char ch)
+wxString DapStringUtils::BeforeFirst(const wxString& str, char ch)
 {
     size_t where = str.find(ch);
     if(where == wxString::npos) {
@@ -22,7 +22,7 @@ wxString StringUtils::BeforeFirst(const wxString& str, char ch)
     return str.substr(0, where);
 }
 
-wxString StringUtils::AfterFirst(const wxString& str, char ch)
+wxString DapStringUtils::AfterFirst(const wxString& str, char ch)
 {
     size_t where = str.find(ch);
     if(where == wxString::npos) {
@@ -31,7 +31,7 @@ wxString StringUtils::AfterFirst(const wxString& str, char ch)
     return str.substr(where + 1);
 }
 
-std::vector<wxString> StringUtils::Split(const wxString& str, char ch)
+std::vector<wxString> DapStringUtils::Split(const wxString& str, char ch)
 {
     std::vector<wxString> v;
     auto arr = ::wxStringTokenize(str, wxString() << ch, wxTOKEN_STRTOK);
@@ -40,7 +40,7 @@ std::vector<wxString> StringUtils::Split(const wxString& str, char ch)
     return v;
 }
 
-wxString StringUtils::ToUpper(const wxString& str) { return str.Upper(); }
+wxString DapStringUtils::ToUpper(const wxString& str) { return str.Upper(); }
 
 #define ARGV_STATE_NORMAL 0
 #define ARGV_STATE_DQUOTE 1
@@ -67,7 +67,7 @@ wxString StringUtils::ToUpper(const wxString& str) { return str.Upper(); }
         prev_state = ARGV_STATE_NORMAL; \
     }
 
-char** StringUtils::BuildArgv(const wxString& str, int& argc)
+char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
 {
     std::vector<wxString> A;
     int state = ARGV_STATE_NORMAL;
@@ -197,7 +197,7 @@ char** StringUtils::BuildArgv(const wxString& str, int& argc)
     return argv;
 }
 
-void StringUtils::FreeArgv(char** argv, int argc)
+void DapStringUtils::FreeArgv(char** argv, int argc)
 {
     for(int i = 0; i < argc; ++i) {
         free(argv[i]);
@@ -205,7 +205,7 @@ void StringUtils::FreeArgv(char** argv, int argc)
     delete[] argv;
 }
 
-std::vector<wxString> StringUtils::BuildArgv(const wxString& str)
+std::vector<wxString> DapStringUtils::BuildArgv(const wxString& str)
 {
     int argc = 0;
     char** argv = BuildArgv(str, argc);
@@ -253,25 +253,25 @@ static wxString& ConvertSlashes(wxString& path, char source, char target)
 }
 const wxString& std::to_string(const wxString& str) { return str; }
 
-wxString& StringUtils::ToNativePath(wxString& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
+wxString& DapStringUtils::ToNativePath(wxString& path) { return ConvertSlashes(path, SOURCE_SEP, PATH_SEP); }
 
-wxString& StringUtils::ToUnixPath(wxString& path) { return ConvertSlashes(path, '\\', '/'); }
+wxString& DapStringUtils::ToUnixPath(wxString& path) { return ConvertSlashes(path, '\\', '/'); }
 
-wxString StringUtils::ToUnixPath(const wxString& path)
+wxString DapStringUtils::ToUnixPath(const wxString& path)
 {
     wxString tmppath = path;
     tmppath = ConvertSlashes(tmppath, '\\', '/');
     return tmppath;
 }
 
-wxString StringUtils::ToNativePath(const wxString& path)
+wxString DapStringUtils::ToNativePath(const wxString& path)
 {
     wxString tmppath = path;
     tmppath = ConvertSlashes(tmppath, SOURCE_SEP, PATH_SEP);
     return tmppath;
 }
 
-wxString& StringUtils::WrapWithQuotes(wxString& str)
+wxString& DapStringUtils::WrapWithQuotes(wxString& str)
 {
     if(str.empty()) {
         return str;
@@ -284,7 +284,7 @@ wxString& StringUtils::WrapWithQuotes(wxString& str)
     return str;
 }
 
-wxString StringUtils::WrapWithQuotes(const wxString& str)
+wxString DapStringUtils::WrapWithQuotes(const wxString& str)
 {
     if(str.empty()) {
         return str;
@@ -298,7 +298,7 @@ wxString StringUtils::WrapWithQuotes(const wxString& str)
     return tmpstr;
 }
 
-bool StringUtils::StartsWith(const wxString& str, const wxString& prefix)
+bool DapStringUtils::StartsWith(const wxString& str, const wxString& prefix)
 {
     if(str.length() < prefix.length()) {
         return false;

@@ -17,7 +17,7 @@ WXDLLIMPEXP_DAP const wxString& to_string(const wxString& str);
 
 #define UNUSED(x) ((void)x)
 
-class WXDLLIMPEXP_DAP StringUtils
+class WXDLLIMPEXP_DAP DapStringUtils
 {
 protected:
     static char** BuildArgv(const wxString& str, int& argc);

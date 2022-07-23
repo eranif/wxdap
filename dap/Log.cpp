@@ -195,7 +195,7 @@ wxString Log::Prefix(int verbosity)
         auto start = std::chrono::system_clock::now();
         auto as_time_t = std::chrono::system_clock::to_time_t(start);
         wxString timeString = ctime(&as_time_t);
-        StringUtils::Trim(timeString);
+        DapStringUtils::Trim(timeString);
 
         std::stringstream prefix;
         switch(verbosity) {

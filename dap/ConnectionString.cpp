@@ -17,7 +17,7 @@ void ConnectionString::DoParse(const wxString& connectionString)
 {
     m_isOK = false; // default
     // get the protocol part
-    wxString protocol = StringUtils::BeforeFirst(connectionString, ':');
+    wxString protocol = DapStringUtils::BeforeFirst(connectionString, ':');
     if(protocol == "tcp") {
         m_protocol = kTcp;
     } else if(protocol == "unix") {
@@ -29,7 +29,7 @@ void ConnectionString::DoParse(const wxString& connectionString)
         return;
     }
 
-    wxString address = StringUtils::AfterFirst(connectionString, ':');
+    wxString address = DapStringUtils::AfterFirst(connectionString, ':');
     address = address.substr(2);
     if(m_protocol == kUnixLocalSocket) {
         // The rest is the file path
@@ -37,8 +37,8 @@ void ConnectionString::DoParse(const wxString& connectionString)
         m_isOK = !m_path.empty();
     } else {
         // we now expect host[:port]
-        m_host = StringUtils::BeforeFirst(address, ':');
-        wxString port = StringUtils::AfterFirst(address, ':');
+        m_host = DapStringUtils::BeforeFirst(address, ':');
+        wxString port = DapStringUtils::AfterFirst(address, ':');
         if(!port.empty()) {
             m_port = atol(port.c_str());
         }
