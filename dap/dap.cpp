@@ -24,6 +24,11 @@
 #define READ_BODY() Json body = json["body"]
 
 #define GET_BODY_PROP(prop, Type) prop = body[#prop].Get##Type()
+#define CAPABILITIES_BODY_PROCESS(Type, sType)  \
+    if(body[sType].IsOK()) {                    \
+        Type = body[sType].GetBool(false);      \
+    }
+
 
 namespace dap
 {
@@ -69,6 +74,7 @@ void Initialize()
     REGISTER_CLASS(DisconnectResponse);
     REGISTER_CLASS(BreakpointLocationsResponse);
     REGISTER_CLASS(SetBreakpointsResponse);
+    REGISTER_CLASS(SetExceptionBreakpointsResponse);
     REGISTER_CLASS(SetFunctionBreakpointsResponse);
     REGISTER_CLASS(ContinueResponse);
     REGISTER_CLASS(NextResponse);
@@ -266,7 +272,10 @@ Json InitializedEvent::To() const
     return json;
 }
 
-void InitializedEvent::From(const Json& json) { Event::From(json); }
+void InitializedEvent::From(const Json& json)
+{
+    Event::From(json);
+}
 
 // ----------------------------------------
 // ----------------------------------------
@@ -568,6 +577,7 @@ void InitializeRequest::From(const Json& json)
     Request::From(json);
     arguments.From(json["arguments"]);
 }
+
 // ----------------------------------------
 // ----------------------------------------
 // ----------------------------------------
@@ -578,7 +588,49 @@ Json InitializeResponse::To() const
     return json;
 }
 
-void InitializeResponse::From(const Json& json) { Response::From(json); }
+void InitializeResponse::From(const Json& json)
+{
+    Response::From(json);
+
+    if (json["body"].IsOK()) {
+        Json body = json["body"];
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsBreakpointLocationsRequest, "supportsBreakpointLocationsRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsCancelRequest, "supportsCancelRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsClipboardContext, "supportsClipboardContext")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsCompletionsRequest, "supportsCompletionsRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsConditionalBreakpoints, "supportsConditionalBreakpoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsConfigurationDoneRequest, "supportsConfigurationDoneRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsDataBreakpoints, "supportsDataBreakpoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsDelayedStackTraceLoading, "supportsDelayedStackTraceLoading")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsDisassembleRequest, "supportsDisassembleRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsEvaluateForHovers, "supportsEvaluateForHovers")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsExceptionFilterOptions, "supportsExceptionFilterOptions")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsExceptionInfoRequest, "supportsExceptionInfoRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsExceptionOptions, "supportsExceptionOptions")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsFunctionBreakpoints, "supportsFunctionBreakpoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsGotoTargetsRequest, "supportsGotoTargetsRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsHitConditionalBreakpoints, "supportsHitConditionalBreakpoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsInstructionBreakpoints, "supportsInstructionBreakpoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsLoadedSourcesRequest, "supportsLoadedSourcesRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsLogPoints, "supportsLogPoints")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsModulesRequest, "supportsModulesRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsReadMemoryRequest, "supportsReadMemoryRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsRestartFrame, "supportsRestartFrame")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsRestartRequest, "supportsRestartRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsSetExpression, "supportsSetExpression")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsSetVariable, "supportsSetVariable")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsSingleThreadExecutionRequests, "supportsSingleThreadExecutionRequests")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsStepBack, "supportsStepBack")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsStepInTargetsRequest, "supportsStepInTargetsRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsSteppingGranularity, "supportsSteppingGranularity")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsTerminateRequest, "supportsTerminateRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsTerminateThreadsRequest, "supportsTerminateThreadsRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportSuspendDebuggee, "supportSuspendDebuggee")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsValueFormattingOptions, "supportsValueFormattingOptions")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportsWriteMemoryRequest, "supportsWriteMemoryRequest")
+        CAPABILITIES_BODY_PROCESS(capabilities.supportTerminateDebuggee, "supportTerminateDebuggee")
+    }
+}
 
 // ----------------------------------------
 // ----------------------------------------

@@ -288,6 +288,9 @@ void dap::Client::OnMessage(Json json)
         } else if(as_response->command == "setFunctionBreakpoints") {
             SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json);
 
+        } else if(as_response->command == "setExceptionBreakpoints") {
+            SendDAPEvent(wxEVT_DAP_SET_EXCEPTION_BREAKPOINT_RESPONSE, new dap::SetExceptionBreakpointsResponse, json);
+
         } else if(as_response->command == "setBreakpoints") {
             auto ptr = new dap::SetBreakpointsResponse;
             if(!m_source_breakpoints_queue.empty()) {
