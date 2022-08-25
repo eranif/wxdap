@@ -287,10 +287,8 @@ void dap::Client::OnMessage(Json json)
 
         } else if(as_response->command == "setFunctionBreakpoints") {
             SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json);
-
         } else if(as_response->command == "setExceptionBreakpoints") {
             SendDAPEvent(wxEVT_DAP_SET_EXCEPTION_BREAKPOINT_RESPONSE, new dap::SetExceptionBreakpointsResponse, json);
-
         } else if(as_response->command == "setBreakpoints") {
             auto ptr = new dap::SetBreakpointsResponse;
             if(!m_source_breakpoints_queue.empty()) {
@@ -490,6 +488,14 @@ void dap::Client::Continue(int threadId, bool all_threads)
     ContinueRequest req = MakeRequest<ContinueRequest>();
     req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     req.arguments.singleThread = !all_threads || (req.arguments.threadId == wxNOT_FOUND);
+    SendRequest(req);
+}
+
+void dap::Client::SetExceptionBreakpoints(const std::vector<wxString>& exceptionFilters)
+{
+    // place breakpoint based on function name
+    SetExceptionBreakpointsRequest req = MakeRequest<SetExceptionBreakpointsRequest>();
+    req.arguments.filters = exceptionFilters;
     SendRequest(req);
 }
 

@@ -42,6 +42,7 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
         argv[args.size()] = 0;
         int result = execvp(argv[0], const_cast<char* const*>(argv));
         int errNo = errno;
+
         if(result == -1) {
             // Note: no point writing to stdout here, it has been redirected
             LOG_ERROR() << "Error: Failed to launch program:" << args;
