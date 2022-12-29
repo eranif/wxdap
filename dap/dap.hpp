@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <wx/any.h>
 #include <wx/string.h>
 
 #if wxVERSION_NUMBER < 3100
@@ -566,9 +568,216 @@ struct WXDLLIMPEXP_DAP InitializeRequest : public Request {
     JSON_SERIALIZE();
 };
 
+/// A ColumnDescriptor specifies what module attribute to show in a column of the ModulesView,
+/// how to format it, and what the column’s label should be.
+/// It is only used if the underlying UI actually supports this level of customization.
+struct WXDLLIMPEXP_DAP ColumnDescriptor : public Any  {
+    // Name of the attribute rendered in this column.
+    wxString attributeName;
+
+    // Header UI label of column.
+    wxString label;
+
+    // Format to use for the rendered values in this column. TBD how the format
+    // strings looks like.
+    wxAny wxformat;     // wxString
+
+    // Datatype of values in this column.  Defaults to 'string' if not specified.
+    //
+    // Must be one of the following enumeration values:
+    // 'string', 'number', 'boolean', 'unixTimestampUTC'
+    wxAny type;         // wxString
+
+    // Width of this column in characters (hint only).
+    wxAny number;       // int
+
+    ANY_CLASS(ColumnDescriptor);
+    JSON_SERIALIZE();
+};
+
+/// An ExceptionBreakpointsFilter is shown in the UI as an filter option for
+/// configuring how exceptions are dealt with.
+struct WXDLLIMPEXP_DAP ExceptionBreakpointsFilter : public Any  {
+    // The internal ID of the filter option. This value is passed to the
+    // 'setExceptionBreakpoints' request.
+    wxString filter;
+
+    // The name of the filter option. This will be shown in the UI.
+    wxString label;
+
+    // An optional help text providing additional information about the exception
+    // filter. This string is typically shown as a hover and must be translated.
+    wxAny description;      // wxString
+
+    // Initial value of the filter option. If not specified a value 'false' is assumed.
+    wxAny default_value;        // bool
+
+    // Controls whether a condition can be specified for this filter option. If
+    // false or missing, a condition can not be set.
+    wxAny supportsCondition;        // bool
+
+    // An optional help text providing information about the condition. This
+    // string is shown as the placeholder text for a text box and must be
+    // translated.
+    wxAny conditionDescription;     // wxString
+
+    ANY_CLASS(ExceptionBreakpointsFilter);
+    JSON_SERIALIZE();
+};
+
+// Names of checksum algorithms that may be supported by a debug adapter.
+//
+// Must be one of the following enumeration values:
+// 'MD5', 'SHA1', 'SHA256', 'timestamp'
+using ChecksumAlgorithm = wxString;
+
+/// Information about the capabilities of a debug adapter.
+struct WXDLLIMPEXP_DAP Capabilities {
+    // The debug adapter supports the 'configurationDone' request.
+    wxAny supportsConfigurationDoneRequest;     // bool
+
+    // The debug adapter supports function breakpoints.
+    wxAny supportsFunctionBreakpoints;          // bool
+
+    // The debug adapter supports conditional breakpoints.
+    wxAny supportsConditionalBreakpoints;       // bool
+
+    // The debug adapter supports breakpoints that break execution after a
+    // specified number of hits.
+    wxAny supportsHitConditionalBreakpoints;    // bool
+
+    // The debug adapter supports a (side effect free) evaluate request for data
+    // hovers.
+    wxAny supportsEvaluateForHovers;            // bool
+
+    // Available exception filter options for the 'setExceptionBreakpoints'
+    // request.
+    wxAny exceptionBreakpointFilters;           // std::vector<ExceptionBreakpointsFilter>
+
+    // The debug adapter supports stepping back via the 'stepBack' and
+    // 'reverseContinue' requests.
+    wxAny supportsStepBack;                     // bool
+
+    // The debug adapter supports setting a variable to a value.
+    wxAny supportsSetVariable;                  // bool
+
+    // The debug adapter supports restarting a frame.
+    wxAny supportsRestartFrame;                 // bool
+
+    // The debug adapter supports the 'gotoTargets' request.
+    wxAny supportsGotoTargetsRequest;           // bool
+
+    // The debug adapter supports the 'stepInTargets' request.
+    wxAny supportsStepInTargetsRequest;         // bool
+
+    // The debug adapter supports the 'completions' request.
+    wxAny supportsCompletionsRequest;           // bool
+
+    // The set of characters that should trigger completion in a REPL. If not
+    // specified, the UI should assume the '.' character.
+    wxAny completionTriggerCharacters;          // std::vector<wxString>
+
+    // The debug adapter supports the 'modules' request.
+    wxAny supportsModulesRequest;               // bool
+
+    // The set of additional module information exposed by the debug adapter.
+    wxAny additionalModuleColumns;              // std::vector<ColumnDescriptor>
+
+    // Checksum algorithms supported by the debug adapter.
+    wxAny  supportedChecksumAlgorithms;         // std::vector<ChecksumAlgorithm>
+
+    // The debug adapter supports the 'restart' request. In this case a client
+    // should not implement 'restart' by terminating and relaunching the adapter
+    // but by calling the RestartRequest.
+    wxAny supportsRestartRequest;               // bool
+
+    // The debug adapter supports 'exceptionOptions' on the
+    // setExceptionBreakpoints request.
+    wxAny supportsExceptionOptions;             // bool
+
+    // The debug adapter supports a 'format' attribute on the stackTraceRequest,
+    // variablesRequest, and evaluateRequest.
+    wxAny supportsValueFormattingOptions;       // bool
+
+    // The debug adapter supports the 'exceptionInfo' request.
+    wxAny supportsExceptionInfoRequest;         // bool
+
+    // The debug adapter supports the 'terminateDebuggee' attribute on the
+    // 'disconnect' request.
+    wxAny supportTerminateDebuggee;             // bool
+
+    // The debug adapter supports the `suspendDebuggee` attribute on the
+    // `disconnect` request.
+    wxAny supportSuspendDebuggee;               // bool
+
+    // The debug adapter supports the delayed loading of parts of the stack, which
+    // requires that both the 'startFrame' and 'levels' arguments and an optional
+    // 'totalFrames' result of the 'StackTrace' request are supported.
+    wxAny supportsDelayedStackTraceLoading;     // bool
+
+    // The debug adapter supports the 'loadedSources' request.
+    wxAny supportsLoadedSourcesRequest;         // bool
+
+    // The debug adapter supports logpoints by interpreting the 'logMessage'
+    // attribute of the SourceBreakpoint.
+    wxAny supportsLogPoints;                    // bool
+
+    // The debug adapter supports the 'terminateThreads' request.
+    wxAny supportsTerminateThreadsRequest;      // bool
+
+    // The debug adapter supports the 'setExpression' request.
+    wxAny supportsSetExpression;                // bool
+
+    // The debug adapter supports the 'terminate' request.
+    wxAny supportsTerminateRequest;             // bool
+
+    // The debug adapter supports data breakpoints.
+    wxAny supportsDataBreakpoints;              // bool
+
+    // The debug adapter supports the 'readMemory' request.
+    wxAny supportsReadMemoryRequest;            // bool
+
+    // The debug adapter supports the `writeMemory` request.
+    wxAny supportsWriteMemoryRequest;           // bool
+
+    // The debug adapter supports the 'disassemble' request.
+    wxAny supportsDisassembleRequest;           // bool
+
+    // The debug adapter supports the 'cancel' request.
+    wxAny supportsCancelRequest;                // bool
+
+    // The debug adapter supports the 'breakpointLocations' request.
+    wxAny supportsBreakpointLocationsRequest;   // bool
+
+    // The debug adapter supports the 'clipboard' context value in the 'evaluate'
+    // request.
+    wxAny supportsClipboardContext;             // bool
+
+    // The debug adapter supports stepping granularities (argument 'granularity')
+    // for the stepping requests.
+    wxAny supportsSteppingGranularity;          // bool
+
+    // The debug adapter supports adding breakpoints based on instruction
+    // references.
+    wxAny supportsInstructionBreakpoints;       // bool
+
+    // The debug adapter supports 'filterOptions' as an argument on the
+    // 'setExceptionBreakpoints' request.
+    wxAny supportsExceptionFilterOptions;       // bool
+
+    // The debug adapter supports the `singleThread` property on the execution
+    // requests (`continue`, `next`, `stepIn`, `stepOut`, `reverseContinue`,
+    // `stepBack`).
+    wxAny supportsSingleThreadExecutionRequests;// bool
+};
+
 /// Response to 'initialize' request.
 /// <-
 struct WXDLLIMPEXP_DAP InitializeResponse : public Response {
+
+    // The set of updated capabilities.
+    Capabilities capabilities;
+
     RESPONSE_CLASS(InitializeResponse, "initialize");
     JSON_SERIALIZE();
 };
@@ -815,7 +1024,7 @@ struct WXDLLIMPEXP_DAP SetBreakpointsRequest : public Request {
 /// Returned is information about each breakpoint created by this request.
 /// This includes the actual code location and whether the breakpoint could be verified.
 /// The breakpoints returned are in the same order as the elements of the 'breakpoints'
-///(or the deprecated 'lines') array in the arguments
+/// (or the deprecated 'lines') array in the arguments
 struct WXDLLIMPEXP_DAP SetBreakpointsResponse : public Response {
     std::vector<Breakpoint> breakpoints;
 
@@ -825,6 +1034,130 @@ struct WXDLLIMPEXP_DAP SetBreakpointsResponse : public Response {
     RESPONSE_CLASS(SetBreakpointsResponse, "setBreakpoints");
     JSON_SERIALIZE();
 };
+
+// *******************************************************************************************************
+// *******************************************************************************************************
+// ************************************* START Exception Breakpoints *************************************
+
+
+/// An ExceptionFilterOptions is used to specify an exception filter together
+/// with a condition for the setExceptionsFilter request.
+struct ExceptionFilterOptions {
+    // ID of an exception filter returned by the 'exceptionBreakpointFilters' capability.
+    wxString filterId;
+
+    // An optional expression for conditional exceptions.
+    // The exception will break into the debugger if the result of the condition
+    // is true.
+    wxAny condition;        // wxString
+};
+
+/// This enumeration defines all possible conditions when a thrown exception
+/// should result in a break. never: never breaks, always: always breaks,
+/// unhandled: breaks when exception unhandled,
+/// userUnhandled: breaks if the exception is not handled by user code.
+///
+/// Must be one of the following enumeration values:
+/// 'never', 'always', 'unhandled', 'userUnhandled'
+using ExceptionBreakMode = wxString;
+
+/// An ExceptionPathSegment represents a segment in a path that is used to match
+/// leafs or nodes in a tree of exceptions. If a segment consists of more than
+/// one name, it matches the names provided if 'negate' is false or missing or it
+/// matches anything except the names provided if 'negate' is true.
+struct ExceptionPathSegment {
+    // If false or missing this segment matches the names provided, otherwise it
+    // matches anything except the names provided.
+    wxAny negate;       // bool
+
+    // Depending on the value of 'negate' the names that should match or not
+    // match.
+    std::vector<wxString> names;
+};
+
+/// An ExceptionOptions assigns configuration options to a set of exceptions.
+struct ExceptionOptions {
+  // Condition when a thrown exception should result in a break.
+  ExceptionBreakMode breakMode = "never";
+
+  // A path that selects a single or multiple exceptions in a tree. If 'path' is
+  // missing, the whole tree is selected. By convention the first segment of the
+  // path is a category that is used to group exceptions in the UI.
+  wxAny path;       // std::vector<ExceptionPathSegment>>
+};
+
+
+/// Properties of a SetExceptionBreakpointsArguments passed to the setExceptionBreakpointsRequest  request.
+struct WXDLLIMPEXP_DAP SetExceptionBreakpointsArguments  : public Any {
+    /**
+    * Set of exception filters specified by their ID. The set of all possible
+    * exception filters is defined by the `exceptionBreakpointFilters`
+    * capability. The `filter` and `filterOptions` sets are additive.
+    */
+    std::vector<wxString> filters;
+
+    /**
+    * Set of exception filters and their options. The set of all possible
+    * exception filters is defined by the `exceptionBreakpointFilters`
+    * capability. This attribute is only honored by a debug adapter if the
+    * corresponding capability `supportsExceptionFilterOptions` is true. The
+    * `filter` and `filterOptions` sets are additive.
+    *
+    *    filterOptions?: ExceptionFilterOptions[];
+    */
+    wxAny filterOptions;      // std::vector<ExceptionFilterOptions>
+
+    /**
+    * Configuration options for selected exceptions.
+    * The attribute is only honored by a debug adapter if the corresponding
+    * capability `supportsExceptionOptions` is true.
+    *
+    * exceptionOptions?: ExceptionOptions[];
+    */
+    wxAny exceptionOptions;         // std::vector<ExceptionOptions>
+//    REQUEST_CLASS(SetExceptionBreakpointsArguments, "setExceptionBreakpoints");
+    JSON_SERIALIZE();
+};
+
+
+/// The request configures the debugger’s response to thrown exceptions.
+/// If an exception is configured to break, a stopped event is fired (with reason exception).
+/// Clients should only call this request if the corresponding capability exceptionBreakpointFilters returns one or more filters.
+struct WXDLLIMPEXP_DAP SetExceptionBreakpointsRequest : public Request {
+    SetExceptionBreakpointsArguments arguments;
+    REQUEST_CLASS(SetExceptionBreakpointsRequest, "setExceptionBreakpoints");
+    JSON_SERIALIZE();
+};
+
+
+/// Response to setExceptionBreakpoints request.
+/// The response contains an array of Breakpoint objects with information about each exception breakpoint or filter.
+/// The Breakpoint objects are in the same order as the elements of the filters, filterOptions, exceptionOptions
+///  arrays given as arguments. If both filters and filterOptions are given, the returned array must start with
+/// filters information first, followed by filterOptions information.
+struct WXDLLIMPEXP_DAP SetExceptionBreakpointsResponse  : public Response {
+#if 0
+//    body?: {
+        /**
+        * Information about the exception breakpoints or filters.
+        * The breakpoints returned are in the same order as the elements of the
+        * `filters`, `filterOptions`, `exceptionOptions` arrays in the arguments.
+        * If both `filters` and `filterOptions` are given, the returned array must
+        * start with `filters` information first, followed by `filterOptions`
+        * information.
+        */
+//        breakpoints?: Breakpoint[];
+//    };
+#endif
+    RESPONSE_CLASS(SetExceptionBreakpointsResponse , "setExceptionBreakpoints");
+#if 0
+    JSON_SERIALIZE();
+#endif
+};
+
+// ************************************* FINISH Exception Breakpoints ************************************
+// *******************************************************************************************************
+// *******************************************************************************************************
 
 struct WXDLLIMPEXP_DAP SetFunctionBreakpointsResponse : public SetBreakpointsResponse {
     RESPONSE_CLASS(SetFunctionBreakpointsResponse, "setFunctionBreakpoints");

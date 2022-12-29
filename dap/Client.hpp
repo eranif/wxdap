@@ -213,6 +213,11 @@ public:
     void SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines);
 
     /**
+     * @brief set breakpoint exceptions
+     */
+    void SetExceptionBreakpoints(const std::vector<wxString>& exceptionFilters);
+
+    /**
      * @brief set breakpoint on a function
      */
     void SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints);
