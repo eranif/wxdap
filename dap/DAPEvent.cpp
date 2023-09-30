@@ -38,6 +38,7 @@ DAPEvent::DAPEvent(const DAPEvent& event) { *this = event; }
 DAPEvent& DAPEvent::operator=(const DAPEvent& src)
 {
     m_object = src.m_object;
+    m_originatingRequest = src.m_originatingRequest;
     return *this;
 }
 

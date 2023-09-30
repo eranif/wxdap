@@ -110,15 +110,19 @@ protected:
     std::vector<source_loaded_cb> m_load_sources_queue;
     std::vector<evaluate_cb> m_evaluate_queue;
     std::vector<wxString> m_source_breakpoints_queue;
+    std::unordered_map<int, dap::Request*> m_in_flight_requests;
 
 protected:
     bool IsSupported(eFeatures feature) const { return m_features & feature; }
-    bool SendRequest(dap::ProtocolMessage& request);
+    bool SendRequest(dap::Request* request);
     void HandleSourceResponse(Json json);
     void HandleEvaluateResponse(Json json);
+    /// Return the originating request for `response`
+    /// Might return null
+    dap::Request* GetOriginatingRequest(dap::Response* response);
 
 protected:
-    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json, wxEvtHandler* owner = nullptr);
+    void SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json, Request* req);
 
     /**
      * @brief we maintain a reader thread that is responsible for reading
@@ -158,10 +162,10 @@ public:
     void SetWantsLogEvents(bool b) { m_wants_log_events = b; }
 
     template <typename RequestType>
-    RequestType MakeRequest()
+    RequestType* MakeRequest()
     {
-        RequestType req;
-        req.seq = GetNextSequence();
+        RequestType* req = new RequestType();
+        req->seq = GetNextSequence();
         return req;
     }
 

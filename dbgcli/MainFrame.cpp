@@ -37,7 +37,7 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker
 
 MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     : MainFrameBase(parent)
-    , m_ExecutableFileName(executableFileName)
+    , m_executableFileName(executableFileName)
 {
 
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
@@ -53,7 +53,7 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
         ctrl->MarkerDefine(MARKER_NUMBER, wxSTC_MARK_ARROW, *wxGREEN, *wxGREEN);
     }
 
-    m_filePickerSelectDebugFileName->SetPath(m_ExecutableFileName);
+    m_filePickerSelectDebugFileName->SetPath(m_executableFileName);
     m_filePickerSelectDebugFileName->Connect(m_filePickerSelectDebugFileName->GetEventType(),
                                              wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged), NULL,
                                              this);
@@ -96,7 +96,7 @@ void MainFrame::InitializeClient()
     // This is useful when the user wishes to use stdin/out for communicating with
     // the dap and not over socket
     dap::SocketTransport* transport = new dap::SocketTransport();
-    if(!transport->Connect("tcp://127.0.0.1:12345", 10)) {
+    if(!transport->Connect("tcp://127.0.0.1:4711", 10)) {
         wxMessageBox("Failed to connect to DAP server", "DAP Demo", wxICON_ERROR | wxOK | wxCENTRE);
         exit(1);
     }
@@ -170,8 +170,8 @@ void MainFrame::OnInitializeResponse(DAPEvent& event)
         m_client.Attach({});
 
     } else {
-        AddLog("Launching program: " + m_ExecutableFileName);
-        m_client.Launch({ m_ExecutableFileName });
+        AddLog("Launching program: " + m_executableFileName);
+        m_client.Launch({ m_executableFileName }, ::wxGetCwd());
     }
 }
 
@@ -308,11 +308,25 @@ void MainFrame::OnConnectionError(DAPEvent& event)
 void MainFrame::OnBreakpointSet(DAPEvent& event)
 {
     dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
-    if(resp) {
-        AddLog("Got reply for setBreakpoint command for file: " + resp->originSource);
+    auto request = event.GetOriginatingReuqest();
+    if(!request) {
+        return;
+    }
+    auto set_func_bp_req = request->As<dap::SetFunctionBreakpointsRequest>();
+    auto set_bp_req = request->As<dap::SetBreakpointsRequest>();
+    if(!set_func_bp_req && !set_bp_req)
+        return;
+    if(set_func_bp_req) {
+        for(const auto& bp : set_func_bp_req->arguments.breakpoints) {
+            AddLog("Got reply for SetFunctionBreakpoints command for function: " + bp.name);
+        }
+
+    } else if(set_bp_req) {
+        AddLog("Got reply for setBreakpoint command for file: " + set_bp_req->arguments.source.path);
         for(const auto& bp : resp->breakpoints) {
             wxString message;
-            message << "ID: " << bp.id << ". Verified: " << bp.verified << ". File: " << bp.source.path
+            message << "ID: " << bp.id << ". Verified: " << bp.verified
+                    << ". File: " << (bp.source.path.empty() ? set_bp_req->arguments.source.path : bp.source.path)
                     << ". Line: " << bp.line;
             AddLog(message);
         }
@@ -347,16 +361,17 @@ void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
 
     AddLog("Starting process: " + command);
     m_process = dap::ExecuteProcess(command);
-    dap::RunInTerminalResponse response = m_client.MakeRequest<dap::RunInTerminalResponse>();
-    response.request_seq = request->seq;
+    auto response = m_client.MakeRequest<dap::RunInTerminalResponse>();
+    response->request_seq = request->seq;
     if(!m_process) {
-        response.success = false;
-        response.processId = 0;
+        response->success = false;
+        response->processId = 0;
     } else {
-        response.success = true;
-        response.processId = m_process->GetProcessId();
+        response->success = true;
+        response->processId = m_process->GetProcessId();
     }
-    m_client.SendResponse(response);
+    m_client.SendResponse(*response);
+    wxDELETE(response);
 }
 
 /// ----------------------------------
@@ -422,7 +437,7 @@ void MainFrame::OnContinue(wxCommandEvent& event)
 void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt)
 {
     if(m_filePickerSelectDebugFileName) {
-        m_ExecutableFileName = evt.GetPath();
+        m_executableFileName = evt.GetPath();
         m_filePickerSelectDebugFileName->SetPath(evt.GetPath());
     }
 }

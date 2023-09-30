@@ -10,6 +10,8 @@ class WXDLLIMPEXP_DAP DAPEvent : public wxCommandEvent
 {
 protected:
     std::shared_ptr<dap::Any> m_object;
+    std::shared_ptr<dap::Request>
+        m_originatingRequest; // for events that holds a response, this pointer will contain the originating request
 
 public:
     DAPEvent(wxEventType commandType = wxEVT_NULL, int winid = 0);
@@ -18,6 +20,9 @@ public:
     virtual ~DAPEvent();
 
     void SetAnyObject(std::shared_ptr<dap::Any> any) { m_object = any; }
+    void SetOriginatingReuqest(std::shared_ptr<dap::Request> req) { m_originatingRequest = req; }
+    std::shared_ptr<dap::Request> GetOriginatingReuqest() { return m_originatingRequest; }
+
     wxEvent* Clone() const override;
     dap::Event* GetDapEvent() const;
     dap::Response* GetDapResponse() const;

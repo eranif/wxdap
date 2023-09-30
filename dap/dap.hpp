@@ -198,6 +198,7 @@ public:
 /// A client or debug adapter initiated request
 /// ->
 struct WXDLLIMPEXP_DAP Request : public ProtocolMessage {
+    typedef std::shared_ptr<Request> ptr_t;
     wxString command;
 
     Request() { type = "request"; }

@@ -12,7 +12,7 @@
 class MainFrame : public MainFrameBase
 {
     dap::Client m_client;
-    wxString m_ExecutableFileName;
+    wxString m_executableFileName;
     dap::Source m_current_source;
     std::vector<wxStyledTextCtrl*> m_ctrls;
     dap::Process* m_process = nullptr;

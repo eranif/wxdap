@@ -83,11 +83,7 @@ dap::Client::Client()
     m_terminated.store(false);
 }
 
-dap::Client::~Client()
-{
-    StopReaderThread();
-    wxDELETE(m_transport);
-}
+dap::Client::~Client() { Reset(); }
 
 void dap::Client::SetTransport(dap::Transport* transport)
 {
@@ -159,6 +155,16 @@ void dap::Client::StaticOnDataRead(Json json, wxObject* o)
     This->OnMessage(json);
 }
 
+dap::Request* dap::Client::GetOriginatingRequest(dap::Response* response)
+{
+    if(!response || (m_in_flight_requests.count(response->request_seq) == 0)) {
+        return nullptr;
+    }
+    auto req = m_in_flight_requests.find(response->request_seq)->second;
+    m_in_flight_requests.erase(response->request_seq);
+    return req;
+}
+
 #define ENABLE_FEATURE(FeatureName)         \
     if(body[#FeatureName].GetBool(false)) { \
         m_features |= FeatureName;          \
@@ -201,7 +207,7 @@ void dap::Client::OnMessage(Json json)
             ENABLE_FEATURE(supportsProgressReporting);
             ENABLE_FEATURE(supportsRunInTerminalRequest);
             ENABLE_FEATURE(supportsBreakpointLocationsRequest);
-            SendDAPEvent(wxEVT_DAP_INITIALIZE_RESPONSE, new dap::InitializeResponse, json);
+            SendDAPEvent(wxEVT_DAP_INITIALIZE_RESPONSE, new dap::InitializeResponse, json, nullptr);
         }
         return;
     }
@@ -220,24 +226,24 @@ void dap::Client::OnMessage(Json json)
         // received an event
         if(as_event->event == "stopped") {
             m_can_interact = true;
-            SendDAPEvent(wxEVT_DAP_STOPPED_EVENT, new dap::StoppedEvent, json);
+            SendDAPEvent(wxEVT_DAP_STOPPED_EVENT, new dap::StoppedEvent, json, nullptr);
         } else if(as_event->event == "process") {
-            SendDAPEvent(wxEVT_DAP_PROCESS_EVENT, new dap::ProcessEvent, json);
+            SendDAPEvent(wxEVT_DAP_PROCESS_EVENT, new dap::ProcessEvent, json, nullptr);
         } else if(as_event->event == "exited") {
-            SendDAPEvent(wxEVT_DAP_EXITED_EVENT, new dap::ExitedEvent, json);
+            SendDAPEvent(wxEVT_DAP_EXITED_EVENT, new dap::ExitedEvent, json, nullptr);
         } else if(as_event->event == "terminated") {
-            SendDAPEvent(wxEVT_DAP_TERMINATED_EVENT, new dap::TerminatedEvent, json);
+            SendDAPEvent(wxEVT_DAP_TERMINATED_EVENT, new dap::TerminatedEvent, json, nullptr);
         } else if(as_event->event == "initialized") {
-            SendDAPEvent(wxEVT_DAP_INITIALIZED_EVENT, new dap::InitializedEvent, json);
+            SendDAPEvent(wxEVT_DAP_INITIALIZED_EVENT, new dap::InitializedEvent, json, nullptr);
         } else if(as_event->event == "output") {
-            SendDAPEvent(wxEVT_DAP_OUTPUT_EVENT, new dap::OutputEvent, json);
+            SendDAPEvent(wxEVT_DAP_OUTPUT_EVENT, new dap::OutputEvent, json, nullptr);
         } else if(as_event->event == "breakpoint") {
-            SendDAPEvent(wxEVT_DAP_BREAKPOINT_EVENT, new dap::BreakpointEvent, json);
+            SendDAPEvent(wxEVT_DAP_BREAKPOINT_EVENT, new dap::BreakpointEvent, json, nullptr);
         } else if(as_event->event == "continued") {
             m_can_interact = false;
-            SendDAPEvent(wxEVT_DAP_CONTINUED_EVENT, new dap::ContinuedEvent, json);
+            SendDAPEvent(wxEVT_DAP_CONTINUED_EVENT, new dap::ContinuedEvent, json, nullptr);
         } else if(as_event->event == "module") {
-            SendDAPEvent(wxEVT_DAP_MODULE_EVENT, new dap::ModuleEvent, json);
+            SendDAPEvent(wxEVT_DAP_MODULE_EVENT, new dap::ModuleEvent, json, nullptr);
         } else {
             // TODO implement here the rest of the event
         }
@@ -249,7 +255,7 @@ void dap::Client::OnMessage(Json json)
                 response->refId = m_get_frames_queue.front();
                 m_get_frames_queue.erase(m_get_frames_queue.begin());
             }
-            SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, response, json);
+            SendDAPEvent(wxEVT_DAP_STACKTRACE_RESPONSE, response, json, GetOriginatingRequest(as_response));
 
         } else if(as_response->command == "scopes") {
             auto response = new dap::ScopesResponse;
@@ -257,7 +263,7 @@ void dap::Client::OnMessage(Json json)
                 response->refId = m_get_scopes_queue.front();
                 m_get_scopes_queue.erase(m_get_scopes_queue.begin());
             }
-            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response, json);
+            SendDAPEvent(wxEVT_DAP_SCOPES_RESPONSE, response, json, GetOriginatingRequest(as_response));
         } else if(as_response->command == "variables") {
             auto response = new dap::VariablesResponse;
             if(!m_get_variables_queue.empty()) {
@@ -266,7 +272,7 @@ void dap::Client::OnMessage(Json json)
                 m_get_variables_queue.erase(m_get_variables_queue.begin());
             }
 
-            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json);
+            SendDAPEvent(wxEVT_DAP_VARIABLES_RESPONSE, response, json, GetOriginatingRequest(as_response));
 
         } else if(as_response->command == "stepIn" || as_response->command == "stepOut" ||
                   as_response->command == "next" || as_response->command == "continue") {
@@ -283,10 +289,11 @@ void dap::Client::OnMessage(Json json)
                 ptr->filepath = m_requestIdToFilepath[as_response->request_seq];
                 m_requestIdToFilepath.erase(as_response->request_seq);
             }
-            SendDAPEvent(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, ptr, json);
+            SendDAPEvent(wxEVT_DAP_BREAKPOINT_LOCATIONS_RESPONSE, ptr, json, GetOriginatingRequest(as_response));
 
         } else if(as_response->command == "setFunctionBreakpoints") {
-            SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json);
+            SendDAPEvent(wxEVT_DAP_SET_FUNCTION_BREAKPOINT_RESPONSE, new dap::SetFunctionBreakpointsResponse, json,
+                         GetOriginatingRequest(as_response));
 
         } else if(as_response->command == "setBreakpoints") {
             auto ptr = new dap::SetBreakpointsResponse;
@@ -294,14 +301,16 @@ void dap::Client::OnMessage(Json json)
                 ptr->originSource = m_source_breakpoints_queue.front();
                 m_source_breakpoints_queue.erase(m_source_breakpoints_queue.begin());
             }
-            SendDAPEvent(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, ptr, json);
+            SendDAPEvent(wxEVT_DAP_SET_SOURCE_BREAKPOINT_RESPONSE, ptr, json, GetOriginatingRequest(as_response));
 
         } else if(as_response->command == "configurationDone") {
-            SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json);
+            SendDAPEvent(wxEVT_DAP_CONFIGURARIONE_DONE_RESPONSE, new dap::ConfigurationDoneResponse, json,
+                         GetOriginatingRequest(as_response));
         } else if(as_response->command == "launch") {
-            SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json);
+            SendDAPEvent(wxEVT_DAP_LAUNCH_RESPONSE, new dap::LaunchResponse, json, GetOriginatingRequest(as_response));
         } else if(as_response->command == "threads") {
-            SendDAPEvent(wxEVT_DAP_THREADS_RESPONSE, new dap::ThreadsResponse, json);
+            SendDAPEvent(wxEVT_DAP_THREADS_RESPONSE, new dap::ThreadsResponse, json,
+                         GetOriginatingRequest(as_response));
         } else if(as_response->command == "source") {
             HandleSourceResponse(json);
         } else if(as_response->command == "evaluate") {
@@ -310,7 +319,7 @@ void dap::Client::OnMessage(Json json)
     } else if(as_request) {
         // reverse requests: request arriving from the dap server to the IDE
         if(as_request->command == "runInTerminal") {
-            SendDAPEvent(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, new dap::RunInTerminalRequest, json);
+            SendDAPEvent(wxEVT_DAP_RUN_IN_TERMINAL_REQUEST, new dap::RunInTerminalRequest, json, nullptr);
         }
     }
 }
@@ -345,7 +354,7 @@ void dap::Client::HandleSourceResponse(Json json)
     callback(response.success, response.content, response.mimeType);
 }
 
-void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json, wxEvtHandler* owner)
+void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, Json json, Request* req)
 {
     std::shared_ptr<dap::Any> ptr{ dap_message };
     ptr->From(json);
@@ -357,11 +366,11 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
     DAPEvent event(type);
     event.SetAnyObject(ptr);
     event.SetEventObject(this);
-    if(owner) {
-        owner->ProcessEvent(event);
-    } else {
-        ProcessEvent(event);
+    if(req) {
+        std::shared_ptr<dap::Request> request{ req };
+        event.SetOriginatingReuqest(request);
     }
+    ProcessEvent(event);
 }
 
 void dap::Client::Reset()
@@ -383,20 +392,24 @@ void dap::Client::Reset()
     m_get_variables_queue.clear();
     m_source_breakpoints_queue.clear();
     m_evaluate_queue.clear();
+    for(auto& vt : m_in_flight_requests) {
+        wxDELETE(vt.second);
+    }
+    m_in_flight_requests.clear();
 }
 
 /// API
 void dap::Client::Initialize(const dap::InitializeRequestArguments* initArgs)
 {
     // Send initialize request
-    InitializeRequest req = MakeRequest<InitializeRequest>();
+    auto req = MakeRequest<InitializeRequest>();
     if(initArgs) {
-        req.arguments = *initArgs;
+        req->arguments = *initArgs;
 
     } else {
         // use the defaults
-        req.arguments.clientID = "wxdap";
-        req.arguments.clientName = "wxdap";
+        req->arguments.clientID = "wxdap";
+        req->arguments.clientName = "wxdap";
     }
     SendRequest(req);
     m_handshake_state = eHandshakeState::kInProgress;
@@ -405,10 +418,10 @@ void dap::Client::Initialize(const dap::InitializeRequestArguments* initArgs)
 void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap::SourceBreakpoint>& lines)
 {
     // Now that the initialize is done, we can call 'setBreakpoints' command
-    SetBreakpointsRequest req = MakeRequest<SetBreakpointsRequest>() = MakeRequest<SetBreakpointsRequest>();
-    req.arguments.breakpoints = lines;
-    req.arguments.source.path = file;
-    req.arguments.source.name = wxFileName(file).GetFullName();
+    auto req = MakeRequest<SetBreakpointsRequest>();
+    req->arguments.breakpoints = lines;
+    req->arguments.source.path = file;
+    req->arguments.source.name = wxFileName(file).GetFullName();
 
     // keep the originating source file
     m_source_breakpoints_queue.push_back(file);
@@ -417,66 +430,66 @@ void dap::Client::SetBreakpointsFile(const wxString& file, const std::vector<dap
 
 void dap::Client::ConfigurationDone()
 {
-    ConfigurationDoneRequest req = MakeRequest<ConfigurationDoneRequest>() = MakeRequest<ConfigurationDoneRequest>();
+    auto req = MakeRequest<ConfigurationDoneRequest>();
     SendRequest(req);
 }
 
 void dap::Client::Launch(std::vector<wxString>&& cmd, const wxString& workingDirectory, const dap::Environment& env)
 {
     m_active_thread_id = wxNOT_FOUND;
-    LaunchRequest req = MakeRequest<LaunchRequest>() = MakeRequest<LaunchRequest>();
-    req.arguments.program = cmd[0];
+    auto req = MakeRequest<LaunchRequest>();
+    req->arguments.program = cmd[0];
 
     cmd.erase(cmd.begin());
-    req.arguments.args = cmd; // the remainder are the args
+    req->arguments.args = cmd; // the remainder are the args
 
     // set the working directory & env vars
-    req.arguments.cwd = workingDirectory;
-    req.arguments.env = env;
+    req->arguments.cwd = workingDirectory;
+    req->arguments.env = env;
 
     SendRequest(req);
 }
 
 void dap::Client::GetThreads()
 {
-    ThreadsRequest req = MakeRequest<ThreadsRequest>() = MakeRequest<ThreadsRequest>();
+    auto req = MakeRequest<ThreadsRequest>();
     SendRequest(req);
 }
 
 void dap::Client::GetScopes(int frameId)
 {
-    ScopesRequest req = MakeRequest<ScopesRequest>() = MakeRequest<ScopesRequest>();
-    req.arguments.frameId = frameId;
+    auto req = MakeRequest<ScopesRequest>();
+    req->arguments.frameId = frameId;
     m_get_scopes_queue.push_back(frameId);
     SendRequest(req);
 }
 
 void dap::Client::GetFrames(int threadId, int starting_frame, int frame_count)
 {
-    StackTraceRequest req = MakeRequest<StackTraceRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req.arguments.levels = frame_count;
-    req.arguments.startFrame = starting_frame;
+    auto req = MakeRequest<StackTraceRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req->arguments.levels = frame_count;
+    req->arguments.startFrame = starting_frame;
 
-    m_get_frames_queue.push_back(req.arguments.threadId);
+    m_get_frames_queue.push_back(req->arguments.threadId);
     SendRequest(req);
 }
 
 void dap::Client::Next(int threadId, bool singleThread, SteppingGranularity granularity)
 {
-    NextRequest req = MakeRequest<NextRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req.arguments.singleThread = singleThread;
+    auto req = MakeRequest<NextRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req->arguments.singleThread = singleThread;
 
     switch(granularity) {
     case SteppingGranularity::LINE:
-        req.arguments.granularity = "line";
+        req->arguments.granularity = "line";
         break;
     case SteppingGranularity::STATEMENT:
-        req.arguments.granularity = "statement";
+        req->arguments.granularity = "statement";
         break;
     case SteppingGranularity::INSTRUCTION:
-        req.arguments.granularity = "instruction";
+        req->arguments.granularity = "instruction";
         break;
     }
     SendRequest(req);
@@ -484,51 +497,51 @@ void dap::Client::Next(int threadId, bool singleThread, SteppingGranularity gran
 
 void dap::Client::Continue(int threadId, bool all_threads)
 {
-    ContinueRequest req = MakeRequest<ContinueRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req.arguments.singleThread = !all_threads || (req.arguments.threadId == wxNOT_FOUND);
+    auto req = MakeRequest<ContinueRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req->arguments.singleThread = !all_threads || (req->arguments.threadId == wxNOT_FOUND);
     SendRequest(req);
 }
 
 void dap::Client::SetFunctionBreakpoints(const std::vector<dap::FunctionBreakpoint>& breakpoints)
 {
     // place breakpoint based on function name
-    SetFunctionBreakpointsRequest req = MakeRequest<SetFunctionBreakpointsRequest>();
-    req.arguments.breakpoints = breakpoints;
+    auto req = MakeRequest<SetFunctionBreakpointsRequest>();
+    req->arguments.breakpoints = breakpoints;
     SendRequest(req);
 }
 
 void dap::Client::StepIn(int threadId, bool singleThread)
 {
-    StepInRequest req = MakeRequest<StepInRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req.arguments.singleThread = singleThread;
+    auto req = MakeRequest<StepInRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req->arguments.singleThread = singleThread;
     SendRequest(req);
 }
 
 void dap::Client::StepOut(int threadId, bool singleThread)
 {
-    StepOutRequest req = MakeRequest<StepOutRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
-    req.arguments.singleThread = singleThread;
+    auto req = MakeRequest<StepOutRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    req->arguments.singleThread = singleThread;
     SendRequest(req);
 }
 
 void dap::Client::GetChildrenVariables(int variablesReference, EvaluateContext context, size_t count,
                                        ValueDisplayFormat format)
 {
-    VariablesRequest req = MakeRequest<VariablesRequest>();
-    req.arguments.variablesReference = variablesReference;
-    req.arguments.count = count;
-    req.arguments.format.hex = (format == ValueDisplayFormat::HEX);
+    auto req = MakeRequest<VariablesRequest>();
+    req->arguments.variablesReference = variablesReference;
+    req->arguments.count = count;
+    req->arguments.format.hex = (format == ValueDisplayFormat::HEX);
     m_get_variables_queue.push_back({ variablesReference, context });
     SendRequest(req);
 }
 
 void dap::Client::Pause(int threadId)
 {
-    PauseRequest req = MakeRequest<PauseRequest>();
-    req.arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
+    auto req = MakeRequest<PauseRequest>();
+    req->arguments.threadId = threadId == wxNOT_FOUND ? GetActiveThreadId() : threadId;
     SendRequest(req);
 }
 
@@ -538,23 +551,24 @@ void dap::Client::BreakpointLocations(const wxString& filepath, int start_line, 
         return;
     }
 
-    BreakpointLocationsRequest req = MakeRequest<BreakpointLocationsRequest>();
-    req.arguments.source.path = filepath;
-    req.arguments.line = start_line;
-    req.arguments.endLine = end_line;
+    auto req = MakeRequest<BreakpointLocationsRequest>();
+    req->arguments.source.path = filepath;
+    req->arguments.line = start_line;
+    req->arguments.endLine = end_line;
     SendRequest(req);
-    m_requestIdToFilepath.insert({ req.seq, filepath });
+    m_requestIdToFilepath.insert({ req->seq, filepath });
 }
 
-bool dap::Client::SendRequest(dap::ProtocolMessage& request)
+bool dap::Client::SendRequest(dap::Request* request)
 {
     try {
-        m_rpc.Send(request, m_transport);
+        m_rpc.Send(static_cast<dap::ProtocolMessage&>(*request), m_transport);
         if(m_wants_log_events) {
             DAPEvent log_event{ wxEVT_DAP_LOG_EVENT };
-            log_event.SetString("--> " + request.To().ToString(false));
+            log_event.SetString("--> " + request->To().ToString(false));
             ProcessEvent(log_event);
         }
+        m_in_flight_requests.insert({ request->seq, request });
 
     } catch(Exception& e) {
         // an error occured
@@ -586,9 +600,9 @@ bool dap::Client::LoadSource(const dap::Source& source, source_loaded_cb callbac
     if(source.sourceReference > 0) {
         // queue request
         m_load_sources_queue.emplace_back(std::move(callback));
-        SourceRequest req = MakeRequest<SourceRequest>();
-        req.arguments.source = source;
-        req.arguments.sourceReference = source.sourceReference;
+        auto req = MakeRequest<SourceRequest>();
+        req->arguments.source = source;
+        req->arguments.sourceReference = source.sourceReference;
         SendRequest(req);
         return true;
 
@@ -601,25 +615,25 @@ void dap::Client::EvaluateExpression(const wxString& expression, int frameId, Ev
                                      evaluate_cb callback, ValueDisplayFormat format)
 {
     m_evaluate_queue.emplace_back(std::move(callback));
-    EvaluateRequest req = MakeRequest<EvaluateRequest>();
-    req.arguments.frameId = frameId;
-    req.arguments.expression = expression;
-    req.arguments.format.hex = (format == ValueDisplayFormat::HEX);
+    auto req = MakeRequest<EvaluateRequest>();
+    req->arguments.frameId = frameId;
+    req->arguments.expression = expression;
+    req->arguments.format.hex = (format == ValueDisplayFormat::HEX);
     switch(context) {
     case EvaluateContext::CLIPBOARD:
-        req.arguments.context = "clipboard";
+        req->arguments.context = "clipboard";
         break;
     case EvaluateContext::HOVER:
-        req.arguments.context = "hover";
+        req->arguments.context = "hover";
         break;
     case EvaluateContext::REPL:
-        req.arguments.context = "repl";
+        req->arguments.context = "repl";
         break;
     case EvaluateContext::VARIABLES:
-        req.arguments.context = "variables";
+        req->arguments.context = "variables";
         break;
     case EvaluateContext::WATCH:
-        req.arguments.context = "watch";
+        req->arguments.context = "watch";
         break;
     }
     SendRequest(req);
@@ -627,7 +641,7 @@ void dap::Client::EvaluateExpression(const wxString& expression, int frameId, Ev
 
 void dap::Client::Attach(int pid, const std::vector<wxString>& arguments)
 {
-    AttachRequest req = MakeRequest<AttachRequest>();
-    req.arguments.arguments = arguments;
+    auto req = MakeRequest<AttachRequest>();
+    req->arguments.arguments = arguments;
     SendRequest(req);
 }
