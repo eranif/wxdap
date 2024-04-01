@@ -1,3 +1,5 @@
+#include <wx/platform.h>
+
 #ifdef __WIN32__
 #include "Process.hpp"
 #include "StringUtils.hpp"

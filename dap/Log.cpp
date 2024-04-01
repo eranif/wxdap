@@ -4,7 +4,6 @@
 
 #include <chrono>
 #include <sstream>
-#include <sys/time.h>
 #include <wx/crt.h>
 
 namespace dap
@@ -190,8 +189,6 @@ void Log::Flush()
 wxString Log::Prefix(int verbosity)
 {
     if(verbosity <= m_verbosity) {
-        timeval tim;
-        gettimeofday(&tim, NULL);
         auto start = std::chrono::system_clock::now();
         auto as_time_t = std::chrono::system_clock::to_time_t(start);
         wxString timeString = ctime(&as_time_t);

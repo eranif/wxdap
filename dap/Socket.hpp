@@ -4,7 +4,6 @@
 #include "dap_exports.hpp"
 
 #include <memory>
-#include <sys/param.h>
 #include <wx/string.h>
 #if defined(__WXOSX__) || defined(BSD)
 #include <sys/errno.h>
