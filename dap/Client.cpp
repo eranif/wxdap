@@ -368,7 +368,7 @@ void dap::Client::SendDAPEvent(wxEventType type, ProtocolMessage* dap_message, J
     event.SetEventObject(this);
     if(req) {
         std::shared_ptr<dap::Request> request{ req };
-        event.SetOriginatingReuqest(request);
+        event.SetOriginatingRequest(request);
     }
     ProcessEvent(event);
 }
@@ -571,7 +571,7 @@ bool dap::Client::SendRequest(dap::Request* request)
         m_in_flight_requests.insert({ request->seq, request });
 
     } catch(Exception& e) {
-        // an error occured
+        // an error occurred
         OnConnectionError();
         return false;
     }
@@ -588,7 +588,7 @@ bool dap::Client::SendResponse(dap::Response& response)
             ProcessEvent(log_event);
         }
     } catch(Exception& e) {
-        // an error occured
+        // an error occurred
         OnConnectionError();
         return false;
     }

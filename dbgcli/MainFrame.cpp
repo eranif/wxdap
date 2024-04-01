@@ -308,7 +308,7 @@ void MainFrame::OnConnectionError(DAPEvent& event)
 void MainFrame::OnBreakpointSet(DAPEvent& event)
 {
     dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
-    auto request = event.GetOriginatingReuqest();
+    auto request = event.GetOriginatingRequest();
     if(!request) {
         return;
     }

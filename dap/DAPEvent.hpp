@@ -20,8 +20,8 @@ public:
     virtual ~DAPEvent();
 
     void SetAnyObject(std::shared_ptr<dap::Any> any) { m_object = any; }
-    void SetOriginatingReuqest(std::shared_ptr<dap::Request> req) { m_originatingRequest = req; }
-    std::shared_ptr<dap::Request> GetOriginatingReuqest() { return m_originatingRequest; }
+    void SetOriginatingRequest(std::shared_ptr<dap::Request> req) { m_originatingRequest = req; }
+    std::shared_ptr<dap::Request> GetOriginatingRequest() { return m_originatingRequest; }
 
     wxEvent* Clone() const override;
     dap::Event* GetDapEvent() const;

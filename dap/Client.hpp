@@ -27,7 +27,7 @@ public:
     /**
      * @brief return from the network with a given timeout
      * @returns true on success, false in case of an error. True is also returned when timeout occurs, check the buffer
-     * length if it is 0, timeout occured
+     * length if it is 0, timeout occurred
      */
     virtual bool Read(wxString& WXUNUSED(buffer), int msTimeout) = 0;
 
@@ -103,7 +103,7 @@ protected:
     /// wxdap and the dap-server
     bool m_wants_log_events = false;
 
-    /// the ID if thread that called GetFrames()
+    /// the ID of threads that called GetFrames()
     std::vector<int> m_get_frames_queue;
     std::vector<int> m_get_scopes_queue;
     std::vector<std::pair<int, EvaluateContext>> m_get_variables_queue;
@@ -131,7 +131,7 @@ protected:
     void StartReaderThread();
 
     /**
-     * @brief stop the reader thread if needed and clean any resources allocted
+     * @brief stop the reader thread if needed and clean any resources allocated
      */
     void StopReaderThread();
 
@@ -185,7 +185,7 @@ public:
     }
 
     /**
-     * @brief set the tranposrt for this client. The `Client` takes
+     * @brief set the transport for this client. The `Client` takes
      * the ownership for this pointer and will free it when its done with it.
      * This means that transport **must** be allocated on the heap
      */
