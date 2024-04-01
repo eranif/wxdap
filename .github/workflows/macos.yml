@@ -1,0 +1,59 @@
+name: macos
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'CMakeLists.txt'
+      - 'dap/**'
+      - 'dbgcli/**'
+      - 'tests/**'
+      - '.github/workflows/macos.yml'
+  pull_request:
+    paths:
+      - 'CMakeLists.txt'
+      - 'dap/**'
+      - 'dbgcli/**'
+      - 'tests/**'
+      - '.github/workflows/macos.yml'
+
+jobs:
+  macos:
+    runs-on: macos-latest
+
+    steps:
+
+    # WxWidgets
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+          repository: wxWidgets/wxWidgets
+          path: wxWidgets
+          ref: v3.2.4
+          submodules: recursive
+
+    - name: Build and install wxWidgets
+      run: |
+        mkdir wxWidgets/build-release
+        cd wxWidgets/build-release
+        ../configure --enable-shared --enable-monolithic --with-osx_cocoa CXX='clang++ -std=c++17 -stdlib=libc++ -I../src/tiff/libtiff' CC=clang --disable-debug --disable-mediactrl --enable-stl
+        make -j$(sysctl -n hw.physicalcpu)
+        sudo make install
+
+    # wxdap
+    - name: Checkout wxdap
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build wxdap
+      run: |
+        mkdir build-release
+        cd build-release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=1
+        cmake --build . -j $(sysctl -n hw.physicalcpu)
+
+    - name: test
+      run: |
+        cd build-release
+        ctest --output-on-failure
