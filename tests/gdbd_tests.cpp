@@ -11,21 +11,22 @@ using namespace std;
 
 #define CHECK_REQUEST(obj, str) \
     CHECK_CONDITION(obj, str);  \
-    CHECK_STRING(obj->As<dap::Request>()->command.c_str(), str)
+    CHECK_STRING(obj->As<dap::Request>()->command.c_str().AsChar(), str)
 
 #define CHECK_RESPONSE(obj, str) \
     CHECK_CONDITION(obj, str);   \
-    CHECK_STRING(obj->As<dap::Response>()->command.c_str(), str)
+    CHECK_STRING(obj->As<dap::Response>()->command.c_str().AsChar(), str)
 
 #define CHECK_EVENT(obj, str)  \
     CHECK_CONDITION(obj, str); \
-    CHECK_STRING(obj->As<dap::Event>()->event.c_str(), str)
+    CHECK_STRING(obj->As<dap::Event>()->event.c_str().AsChar(), str)
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
     dap::Initialize();
 
     Tester::Instance()->RunTests();
+    Tester::Release();
     return 0;
 }
 
@@ -103,25 +104,38 @@ TEST_FUNC(Check_Event_Allocations)
 
 TEST_FUNC(Check_Parsing_JSON_RPC_Message)
 {
-    dap::JsonRPC rpc;
-
-    const string buffer = "Content-Length: 112\r\n"
+    const std::string jsonStr = "{\n"
+                                "    \"seq\": 153,\n"
+                                "    \"type\": \"request\",\n"
+                                "    \"command\": \"next\",\n"
+                                "    \"arguments\": {\n"
+                                "        \"threadId\": 3\n"
+                                "    }\n"
+                                "}";
+    const string header = "Content-Length: " + std::to_string(jsonStr.size()) +
                           "\r\n"
-                          "{\n"
-                          "    \"seq\": 153,\n"
-                          "    \"type\": \"request\",\n"
-                          "    \"command\": \"next\",\n"
-                          "    \"arguments\": {\n"
-                          "        \"threadId\": 3\n"
-                          "    }\n"
-                          "}";
-    
-    size_t msglen = buffer.length();
-    UNUSED(msglen);
-    rpc.SetBuffer(buffer);
-    dap::ProtocolMessage::Ptr_t message = rpc.ProcessBuffer();
-    CHECK_REQUEST(message, "next");
-    CHECK_NUMBER(message->As<dap::NextRequest>()->arguments.threadId, 3);
-    CHECK_NUMBER(message->seq, 153);
+                          "\r\n";
+
+    dap::JsonRPC rpc;
+    rpc.SetBuffer(header + jsonStr);
+
+    int count = 0;
+    rpc.ProcessBuffer([&](const dap::Json& json, wxObject*) {
+
+        CHECK_NUMBER(json["seq"].GetNumber(), 153);
+        CHECK_STRING(json["type"].GetString().c_str().AsChar(), "request");
+        CHECK_STRING(json["command"].GetString().c_str().AsChar(), "next");
+        CHECK_NUMBER(json["arguments"]["threadId"].GetNumber(), 3);
+        dap::NextRequest nextRequest;
+        nextRequest.From(json);
+        CHECK_NUMBER(nextRequest.seq, 153);
+        CHECK_STRING(nextRequest.type.c_str().AsChar(), "request");
+        CHECK_STRING(nextRequest.command.c_str().AsChar(), "next");
+        CHECK_NUMBER(nextRequest.arguments.threadId, 3);
+
+        ++count;
+        return true;
+    }, nullptr);
+    CHECK_NUMBER(count, 1);
     return true;
 }

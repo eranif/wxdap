@@ -12,3 +12,8 @@ endif()
 
 add_subdirectory(dap)
 add_subdirectory(dbgcli)
+
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
