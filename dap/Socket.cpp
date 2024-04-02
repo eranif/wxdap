@@ -76,12 +76,12 @@ void Socket::Send(const wxString& msg)
     }
 
     auto buffer = msg.mb_str(wxConvUTF8);
-    char* pdata = buffer.data();
-    int bytesLeft = msg.length();
+    const char* pdata = buffer.data();
+    int bytesLeft = buffer.length();
     while(bytesLeft) {
         if(SelectWriteMS(1000) == kTimeout)
             continue;
-        int bytesSent = ::send(m_socket, (const char*)pdata, bytesLeft, 0);
+        const int bytesSent = ::send(m_socket, pdata, bytesLeft, 0);
         if(bytesSent <= 0)
             throw Exception("Send error: " + error());
         pdata += bytesSent;
