@@ -70,11 +70,11 @@ namespace dap
 {
 void WXDLLIMPEXP_DAP Initialize();
 
-/// Enviroment format
-/// some adapters (e.g. codelldb) accpets the environment in the form of:
+/// Environment format
+/// some adapters (e.g. codelldb) accept the environment in the form of:
 /// {"ENV_1": "value", "ENV_2": 1}
-/// and others (e.g. lldb-vscode) uses this format:
-/// ["ENV_1=value", "ENV_2=1]
+/// and others (e.g. lldb-vscode) use this format:
+/// ["ENV_1=value", "ENV_2=1"]
 enum class EnvFormat {
     DICTIONARY,
     LIST,
