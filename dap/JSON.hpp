@@ -31,6 +31,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <wx/arrstr.h>
 #include <wx/string.h>
 
 namespace dap

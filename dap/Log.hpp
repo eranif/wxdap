@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <wx/arrstr.h>
 #include <wx/string.h>
 
 // manipulator function

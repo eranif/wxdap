@@ -1,0 +1,78 @@
+name: windows
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'CMakeLists.txt'
+      - 'dap/**'
+      - 'dbgcli/**'
+      - 'tests/**'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    paths:
+      - 'CMakeLists.txt'
+      - 'dap/**'
+      - 'dbgcli/**'
+      - 'tests/**'
+      - '.github/workflows/windows.yml'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+
+    # WxWidgets
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        repository: wxWidgets/wxWidgets
+        path: wxWidgets
+        ref: v3.2.4
+        submodules: recursive
+
+    - name: build and install wxWidgets
+      run: |
+        mkdir wxWidgets/build-release
+        cd wxWidgets/build-release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DwxBUILD_DEBUG_LEVEL=1 -DwxBUILD_MONOLITHIC=0 -DwxBUILD_SAMPLES=SOME -DwxUSE_STL=1
+        cmake --build . --config Release && cmake --build . -t install
+
+    # wxdap
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: build wxdap
+      run: |
+        mkdir build-release
+        cd build-release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=1
+        cmake --build . --config Release
+
+    # Upload artefact
+    - name: artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: codelite
+        path: |
+          build-release/dap/Release/**.*
+          build-release/dbgcli/Release/**.*
+          build-release/tests/Release/**.*
+
+    - name: artifact # Cannot be with above artifact as no common path :-(
+      uses: actions/upload-artifact@v4
+      with:
+        name: wxwidgets
+        path: |
+          c:/Program Files (x86)/wxWidgets/**/*
+
+    #- name: test # DLL issue?
+    #  shell: bash
+    #  run: |
+    #    cd build-release
+    #    cp dap/Release/dapcxx.dll tests/Release/
+    #    cp "/c/Program Files (x86)/wxWidgets/lib/vc_x64_dll/*.dll" tests/Release/
+    #    ctest -C Release --output-on-failure

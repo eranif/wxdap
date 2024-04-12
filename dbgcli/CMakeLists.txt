@@ -13,5 +13,5 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR})
 FILE(GLOB SRCS "*.cpp")
 
-add_executable(dap_demo ${SRCS})
+add_executable(dap_demo WIN32 ${SRCS})
 target_link_libraries(dap_demo dapcxx ${wxWidgets_LIBRARIES})

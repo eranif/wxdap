@@ -36,4 +36,6 @@ set(ADDITIONAL_LIBRARIES "-lws2_32")
 endif()
 
 add_library(dapcxx SHARED ${SRCS})
+target_compile_definitions(dapcxx PRIVATE WXMAKINGDLL_DAP)
+target_compile_definitions(dapcxx INTERFACE WXUSINGDLL_DAP)
 target_link_libraries(dapcxx ${wxWidgets_LIBRARIES} ${ADDITIONAL_LIBRARIES})

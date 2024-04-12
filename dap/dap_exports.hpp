@@ -1,6 +1,7 @@
 #ifndef DAPEXPORTS_HPP
 #define DAPEXPORTS_HPP
 
+#include <wx/platform.h>
 #ifdef __WXMSW__
 
 #ifdef WXMAKINGDLL_DAP
