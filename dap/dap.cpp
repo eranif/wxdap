@@ -698,6 +698,8 @@ Json AttachRequestArguments::To() const
     CREATE_JSON();
     json.Add("arguments", arguments);
     json.Add("pid", pid);
+    json.Add("redirectOutput", true);
+    json.AddArray("debugOptions").Add("RedirectOutput").Add("ShowReturnValue");
     return json;
 }
 
