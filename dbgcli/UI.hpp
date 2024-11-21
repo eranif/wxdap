@@ -4,8 +4,8 @@
 // Do not modify this file by hand!
 //////////////////////////////////////////////////////////////////////
 
-#ifndef _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
-#define _DBGD_DBGCLI_UI_BASE_CLASSES_HPP
+#ifndef _WXDAP_DBGCLI_UI_BASE_CLASSES_HPP
+#define _WXDAP_DBGCLI_UI_BASE_CLASSES_HPP
 
 // clang-format off
 #include <wx/settings.h>
@@ -15,6 +15,7 @@
 #include <wx/iconbndl.h>
 #include <wx/artprov.h>
 #include <wx/sizer.h>
+#include <wx/menu.h>
 #include <wx/toolbar.h>
 #include <wx/panel.h>
 #include <wx/stattext.h>
@@ -49,10 +50,17 @@ public:
     };
 
 protected:
+    wxMenuBar* m_menuBar59;
+    wxMenu* m_menu60;
+    wxMenuItem* m_menuItem61;
+    wxMenuItem* m_menuItem63;
+    wxMenuItem* m_menuItem62;
     wxToolBar* m_toolbar12;
     wxPanel* m_panel2;
     wxStaticText* m_staticTextSelectDebugFileName;
     wxFilePickerCtrl* m_filePickerSelectDebugFileName;
+    wxStaticText* m_staticText64;
+    wxFilePickerCtrl* m_filePickerDebugger;
     wxSplitterWindow* m_splitter4;
     wxPanel* m_splitterPageSourceFile;
     wxStyledTextCtrl* m_stcTextSourceFile;
@@ -68,6 +76,8 @@ protected:
     wxStyledTextCtrl* m_stcScopes;
 
 protected:
+    virtual void OnClear(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnExit(wxCommandEvent& event) { event.Skip(); }
     virtual void OnConnect(wxCommandEvent& event) { event.Skip(); }
     virtual void OnConnectUI(wxUpdateUIEvent& event) { event.Skip(); }
     virtual void OnAttach(wxCommandEvent& event) { event.Skip(); }
@@ -88,9 +98,12 @@ protected:
     virtual void OnEvalUI(wxUpdateUIEvent& event) { event.Skip(); }
 
 public:
+    wxMenuBar* GetMenuBar59() { return m_menuBar59; }
     wxToolBar* GetToolbar12() { return m_toolbar12; }
     wxStaticText* GetStaticTextSelectDebugFileName() { return m_staticTextSelectDebugFileName; }
     wxFilePickerCtrl* GetFilePickerSelectDebugFileName() { return m_filePickerSelectDebugFileName; }
+    wxStaticText* GetStaticText64() { return m_staticText64; }
+    wxFilePickerCtrl* GetFilePickerDebugger() { return m_filePickerDebugger; }
     wxStyledTextCtrl* GetStcTextSourceFile() { return m_stcTextSourceFile; }
     wxPanel* GetSplitterPageSourceFile() { return m_splitterPageSourceFile; }
     wxStyledTextCtrl* GetStcStack() { return m_stcStack; }

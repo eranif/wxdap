@@ -9,18 +9,44 @@
 // Declare the bitmap loading function
 extern void wxC10A1InitBitmapResources();
 
-static bool bBitmapLoaded = false;
+namespace
+{
+// return the wxBORDER_SIMPLE that matches the current application theme
+wxBorder get_border_simple_theme_aware_bit()
+{
+#if wxVERSION_NUMBER >= 3300 && defined(__WXMSW__)
+    return wxSystemSettings::GetAppearance().IsDark() ? wxBORDER_SIMPLE : wxBORDER_DEFAULT;
+#else
+    return wxBORDER_DEFAULT;
+#endif
+} // get_border_simple_theme_aware_bit
+bool bBitmapLoaded = false;
+} // namespace
 
 MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos,
                              const wxSize& size, long style)
     : wxFrame(parent, id, title, pos, size, style)
 {
-    if(!bBitmapLoaded) {
+    if (!bBitmapLoaded) {
         // We need to initialise the default bitmap handler
         wxXmlResource::Get()->AddHandler(new wxBitmapXmlHandler);
         wxC10A1InitBitmapResources();
         bBitmapLoaded = true;
     }
+
+    m_menuBar59 = new wxMenuBar(0);
+    this->SetMenuBar(m_menuBar59);
+
+    m_menu60 = new wxMenu();
+    m_menuBar59->Append(m_menu60, _("&File"));
+
+    m_menuItem61 = new wxMenuItem(m_menu60, wxID_CLEAR, _("Clear"), wxT(""), wxITEM_NORMAL);
+    m_menu60->Append(m_menuItem61);
+
+    m_menu60->AppendSeparator();
+
+    m_menuItem62 = new wxMenuItem(m_menu60, wxID_EXIT, _("&Exit"), wxT(""), wxITEM_NORMAL);
+    m_menu60->Append(m_menuItem62);
 
     m_toolbar12 = this->CreateToolBar(wxTB_HORZ_TEXT | wxTB_NOICONS | wxTB_FLAT, wxID_ANY);
     m_toolbar12->SetToolBitmapSize(wxSize(16, 16));
@@ -76,17 +102,28 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
 
     boxSizer48->Add(flexGridSizer51, 0, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
-    m_staticTextSelectDebugFileName = new wxStaticText(m_panel2, wxID_ANY, _("Debug File Name"), wxDefaultPosition,
+    m_staticTextSelectDebugFileName = new wxStaticText(m_panel2, wxID_ANY, _("Executable to debug:"), wxDefaultPosition,
                                                        wxDLG_UNIT(m_panel2, wxSize(-1, -1)), 0);
 
-    flexGridSizer51->Add(m_staticTextSelectDebugFileName, 0, wxLEFT | wxTOP | wxBOTTOM | wxALIGN_CENTER_VERTICAL,
+    flexGridSizer51->Add(m_staticTextSelectDebugFileName, 0, wxLEFT | wxTOP | wxBOTTOM | wxALIGN_RIGHT,
                          WXC_FROM_DIP(5));
 
     m_filePickerSelectDebugFileName =
         new wxFilePickerCtrl(m_panel2, wxID_ANY, wxEmptyString, _("Select a file"), wxT("*"), wxDefaultPosition,
                              wxDLG_UNIT(m_panel2, wxSize(600, -1)), wxFLP_DEFAULT_STYLE | wxFLP_SMALL);
 
-    flexGridSizer51->Add(m_filePickerSelectDebugFileName, 1, wxEXPAND, WXC_FROM_DIP(5));
+    flexGridSizer51->Add(m_filePickerSelectDebugFileName, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+
+    m_staticText64 = new wxStaticText(m_panel2, wxID_ANY, _("Debugger:"), wxDefaultPosition,
+                                      wxDLG_UNIT(m_panel2, wxSize(-1, -1)), 0);
+
+    flexGridSizer51->Add(m_staticText64, 0, wxALL | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, WXC_FROM_DIP(5));
+
+    m_filePickerDebugger =
+        new wxFilePickerCtrl(m_panel2, wxID_ANY, wxEmptyString, _("Select a file"), wxT("*"), wxDefaultPosition,
+                             wxDLG_UNIT(m_panel2, wxSize(-1, -1)), wxFLP_DEFAULT_STYLE | wxFLP_SMALL);
+
+    flexGridSizer51->Add(m_filePickerDebugger, 0, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
     m_splitter4 = new wxSplitterWindow(m_panel2, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_panel2, wxSize(-1, -1)),
                                        wxSP_LIVE_UPDATE | wxSP_NO_XP_THEME | wxSP_3DSASH);
@@ -283,7 +320,7 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     m_stcLog->SetLexer(wxSTC_LEX_NULL);
     // Set default font / styles
     m_stcLog->StyleClearAll();
-    m_stcLog->SetWrapMode(0);
+    m_stcLog->SetWrapMode(1);
     m_stcLog->SetIndentationGuides(0);
     m_stcLog->SetKeyWords(0, wxT(""));
     m_stcLog->SetKeyWords(1, wxT(""));
@@ -341,7 +378,7 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
     boxSizer31->Add(m_stcScopes, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
 #if wxVERSION_NUMBER >= 2900
-    if(!wxPersistenceManager::Get().Find(m_notebookDAPDebugInfo)) {
+    if (!wxPersistenceManager::Get().Find(m_notebookDAPDebugInfo)) {
         wxPersistenceManager::Get().RegisterAndRestore(m_notebookDAPDebugInfo);
     } else {
         wxPersistenceManager::Get().Restore(m_notebookDAPDebugInfo);
@@ -350,20 +387,22 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
 
     SetName(wxT("MainFrameBase"));
     SetSize(wxDLG_UNIT(this, wxSize(800, 600)));
-    if(GetSizer()) {
+    if (GetSizer()) {
         GetSizer()->Fit(this);
     }
-    if(GetParent()) {
+    if (GetParent()) {
         CentreOnParent(wxBOTH);
     } else {
         CentreOnScreen(wxBOTH);
     }
-    if(!wxPersistenceManager::Get().Find(this)) {
+    if (!wxPersistenceManager::Get().Find(this)) {
         wxPersistenceManager::Get().RegisterAndRestore(this);
     } else {
         wxPersistenceManager::Get().Restore(this);
     }
     // Connect events
+    this->Bind(wxEVT_MENU, &MainFrameBase::OnClear, this, m_menuItem61->GetId());
+    this->Bind(wxEVT_MENU, &MainFrameBase::OnExit, this, m_menuItem62->GetId());
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_NETWORK);
     this->Bind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_NETWORK);
     this->Bind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnAttach, this, ID_ATTACH);
@@ -386,6 +425,8 @@ MainFrameBase::MainFrameBase(wxWindow* parent, wxWindowID id, const wxString& ti
 
 MainFrameBase::~MainFrameBase()
 {
+    this->Unbind(wxEVT_MENU, &MainFrameBase::OnClear, this, m_menuItem61->GetId());
+    this->Unbind(wxEVT_MENU, &MainFrameBase::OnExit, this, m_menuItem62->GetId());
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnConnect, this, wxID_NETWORK);
     this->Unbind(wxEVT_UPDATE_UI, &MainFrameBase::OnConnectUI, this, wxID_NETWORK);
     this->Unbind(wxEVT_COMMAND_TOOL_CLICKED, &MainFrameBase::OnAttach, this, ID_ATTACH);

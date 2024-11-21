@@ -14,16 +14,16 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
     m_goingDown.store(false);
 
     // Open the pipes
-    if(!m_childStdin.Open() || !m_childStderr.Open() || !m_childStdout.Open()) {
+    if (!m_childStdin.Open() || !m_childStderr.Open() || !m_childStdout.Open()) {
         LOG_ERROR() << "Could not open redirection pipes." << strerror(errno);
         return;
     }
 
     child_pid = fork();
-    if(child_pid == -1) {
+    if (child_pid == -1) {
         LOG_ERROR() << "Failed to start child process" << strerror(errno);
     }
-    if(child_pid == 0) {
+    if (child_pid == 0) {
         // In child process
         dup2(m_childStdin.GetReadFd(), STDIN_FILENO);
         dup2(m_childStdout.GetWriteFd(), STDOUT_FILENO);
@@ -39,7 +39,7 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
         }
 
         char** argv = new char*[args.size() + 1];
-        for(size_t i = 0; i < args.size(); ++i) {
+        for (size_t i = 0; i < args.size(); ++i) {
             const wxString& arg = args[i];
             argv[i] = new char[arg.length() + 1];
             strcpy(argv[i], arg.c_str());
@@ -48,7 +48,7 @@ UnixProcess::UnixProcess(const vector<wxString>& args)
         argv[args.size()] = 0;
         int result = execvp(argv[0], const_cast<char* const*>(argv));
         int errNo = errno;
-        if(result == -1) {
+        if (result == -1) {
             // Note: no point writing to stdout here, it has been redirected
             LOG_ERROR() << "Error: Failed to launch program:" << args;
             exit(EXIT_FAILURE);
@@ -65,12 +65,13 @@ UnixProcess::~UnixProcess()
 {
     // Kill the child process (if it is still alive)
     Terminate();
+    Process::Cleanup();
 }
 
 #define CHUNK_SIZE 1024
 #define MAX_BUFF_SIZE (1024 * 2048)
 
-bool UnixProcess::ReadAll(int fd, wxString& content, int timeoutMilliseconds)
+bool UnixProcess::ReadAll(int fd, std::string& content, int timeoutMilliseconds)
 {
     fd_set rset;
     char buff[CHUNK_SIZE];
@@ -81,14 +82,14 @@ bool UnixProcess::ReadAll(int fd, wxString& content, int timeoutMilliseconds)
     int ms = timeoutMilliseconds % 1000;
 
     struct timeval tv = { seconds, ms * 1000 }; //  10 milliseconds timeout
-    while(true) {
+    while (true) {
         int rc = ::select(fd + 1, &rset, nullptr, nullptr, &tv);
-        if(rc > 0) {
+        if (rc > 0) {
             int len = read(fd, buff, (sizeof(buff) - 1));
-            if(len > 0) {
+            if (len > 0) {
                 buff[len] = 0;
                 content.append(buff);
-                if(content.length() >= MAX_BUFF_SIZE) {
+                if (content.length() >= MAX_BUFF_SIZE) {
                     return true;
                 }
                 // clear the tv struct so next select() call will return immediately
@@ -98,7 +99,7 @@ bool UnixProcess::ReadAll(int fd, wxString& content, int timeoutMilliseconds)
                 FD_SET(fd, &rset);
                 continue;
             }
-        } else if(rc == 0) {
+        } else if (rc == 0) {
             // timeout
             return true;
         }
@@ -113,19 +114,19 @@ bool UnixProcess::Write(int fd, const wxString& message, atomic_bool& shutdown)
     int bytes = 0;
     wxString tmp = message;
     const int chunkSize = 4096;
-    while(!tmp.empty() && !shutdown.load()) {
+    while (!tmp.empty() && !shutdown.load()) {
         errno = 0;
         bytes = ::write(fd, tmp.c_str(), tmp.length() > chunkSize ? chunkSize : tmp.length());
         int errCode = errno;
-        if(bytes < 0) {
-            if((errCode == EWOULDBLOCK) || (errCode == EAGAIN)) {
+        if (bytes < 0) {
+            if ((errCode == EWOULDBLOCK) || (errCode == EAGAIN)) {
                 this_thread::sleep_for(chrono::milliseconds(10));
-            } else if(errCode == EINTR) {
+            } else if (errCode == EINTR) {
                 continue;
             } else {
                 break;
             }
-        } else if(bytes) {
+        } else if (bytes) {
             tmp.erase(0, bytes);
         }
     }
@@ -135,7 +136,7 @@ bool UnixProcess::Write(int fd, const wxString& message, atomic_bool& shutdown)
 
 int UnixProcess::Wait()
 {
-    if(child_pid != -1) {
+    if (child_pid != -1) {
         int status = 0;
         waitpid(child_pid, &status, WNOHANG);
         return WEXITSTATUS(status);
@@ -146,7 +147,7 @@ int UnixProcess::Wait()
 
 void UnixProcess::Stop()
 {
-    if(child_pid != -1) {
+    if (child_pid != -1) {
         ::kill(child_pid, SIGTERM);
     }
 }
@@ -156,9 +157,9 @@ bool UnixProcess::Write(const wxString& message)
     return UnixProcess::Write(m_childStdin.GetWriteFd(), message, m_goingDown);
 }
 
-bool UnixProcess::DoRead(wxString& str, wxString& err_buff)
+bool UnixProcess::DoRead(std::string& str, std::string& err_buff)
 {
-    if(!IsAlive()) {
+    if (!IsAlive()) {
         return false;
     }
     ReadAll(m_childStdout.GetReadFd(), str, 10);

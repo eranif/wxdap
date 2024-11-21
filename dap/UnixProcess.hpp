@@ -19,7 +19,7 @@
 
 // Wrapping pipe in a class makes sure they are closed when we leave scope
 #define CLOSE_FD(fd) \
-    if(fd != -1) {   \
+    if (fd != -1) {  \
         ::close(fd); \
         fd = -1;     \
     }
@@ -44,7 +44,7 @@ public:
     bool Open()
     {
         int fd[2];
-        if(pipe(fd) == 0) {
+        if (pipe(fd) == 0) {
             m_readFd = fd[0];
             m_writeFd = fd[1];
             return true;
@@ -62,15 +62,15 @@ private:
     CPipe m_childStdout;
     CPipe m_childStderr;
     atomic_bool m_goingDown;
-    wxString m_stdout;
-    wxString m_stderr;
+    std::string m_stdout;
+    std::string m_stderr;
 
 protected:
     // sync operations
-    static bool ReadAll(int fd, wxString& content, int timeoutMilliseconds);
+    static bool ReadAll(int fd, std::string& content, int timeoutMilliseconds);
     static bool Write(int fd, const wxString& message, atomic_bool& shutdown);
 
-    bool DoRead(wxString& str, wxString& err_buff) override;
+    bool DoRead(std::string& str, std::string& err_buff) override;
 
 public:
     int child_pid = -1;

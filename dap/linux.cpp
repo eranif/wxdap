@@ -15,7 +15,7 @@ Process* ExecuteProcess(const wxString& cmd, const wxString& workingDir)
     std::vector<wxString> args = DapStringUtils::BuildArgv(cmd);
     LOG_DEBUG() << "Starting process:" << args;
     UnixProcess* process = new UnixProcess(args);
-    process->StartReaderThread();
+    process->StartThreads();
     process->SetProcessId(process->child_pid);
     return process;
 }

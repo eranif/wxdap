@@ -3,6 +3,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 namespace dap
@@ -24,21 +25,21 @@ public:
         cv.notify_all();
     }
 
-    T pop(const std::chrono::milliseconds& ms)
+    std::optional<T> pop(const std::chrono::milliseconds& ms)
     {
         std::unique_lock<std::mutex> locker(mutex_lock);
-        if(cv.wait_for(locker, ms, [this]() { return !Q.empty(); })) {
-            if(Q.empty()) {
+        if (cv.wait_for(locker, ms, [this]() { return !Q.empty(); })) {
+            if (Q.empty()) {
                 // spuriously wakeup?
-                return T();
+                return {};
             }
             // get the first item from the list
             T o = (*Q.begin());
             Q.erase(Q.begin());
             return o;
         }
-        return T();
+        return {};
     }
 };
-};     // namespace dap
+}; // namespace dap
 #endif // QUEUE_HPP

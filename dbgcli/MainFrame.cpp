@@ -1,20 +1,35 @@
 #include "MainFrame.hpp"
 
-#include "dap/Log.hpp"
 #include "dap/Process.hpp"
 
 #include <vector>
 #include <wx/ffile.h>
 #include <wx/msgdlg.h>
+#include <wx/stdpaths.h>
 #include <wx/textdlg.h>
 
 namespace
 {
+
+struct Config {
+    wxString debuggee;
+    wxString debugger;
+
+    static std::vector<wxString> GetDebuggerCommand(const wxString& path)
+    {
+        if (path.Contains("gdb")) {
+            return { path, "-i=dap" };
+        } else {
+            return { path };
+        }
+    }
+};
+
 constexpr int MARKER_NUMBER = 4;
 
 void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker = false)
 {
-    if(line == wxNOT_FOUND) {
+    if (line == wxNOT_FOUND) {
         line = ctrl->LineFromPosition(ctrl->GetLastPosition());
     }
     int lines_on_screen = ctrl->LinesOnScreen();
@@ -27,36 +42,72 @@ void center_line(wxStyledTextCtrl* ctrl, int line = wxNOT_FOUND, bool add_marker
     ctrl->SetSelectionEnd(pos);
     ctrl->SetAnchor(pos);
     ctrl->EnsureCaretVisible();
-    if(add_marker) {
+    if (add_marker) {
         ctrl->MarkerDeleteAll(MARKER_NUMBER);
         ctrl->MarkerAdd(line, MARKER_NUMBER);
     }
     ctrl->SetFirstVisibleLine(first_visible_line);
 }
+
+void SaveConfig(const Config& config)
+{
+    wxFileName conf_file{ wxStandardPaths::Get().GetUserDataDir(), "wxdap.json" };
+    conf_file.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+    dap::Json root = dap::Json::CreateObject();
+    root.Add("debuggee", config.debuggee);
+    root.Add("debugger", config.debugger);
+
+    wxFFile fp(conf_file.GetFullPath(), "w+");
+    fp.Write(root.ToString());
+    fp.Close();
+}
+
+Config ReadConfig()
+{
+    wxFileName conf_file{ wxStandardPaths::Get().GetUserDataDir(), "wxdap.json" };
+    conf_file.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+    wxFFile fp(conf_file.GetFullPath(), "r");
+    wxString content;
+    fp.ReadAll(&content);
+    fp.Close();
+
+    Config config;
+    auto root = dap::Json::Parse(content);
+    config.debuggee = root["debuggee"].GetString();
+    config.debugger = root["debugger"].GetString();
+    return config;
+}
+
 } // namespace
 
 MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     : MainFrameBase(parent)
     , m_executableFileName(executableFileName)
 {
-
+    auto config = ReadConfig();
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
 
     m_ctrls = { m_stcLog, m_stcTextSourceFile, m_stcThreads, m_stcStack, m_stcScopes };
-    for(int i = 0; i < wxSTC_STYLE_MAX; ++i) {
-        for(auto ctrl : m_ctrls) {
+    for (int i = 0; i < wxSTC_STYLE_MAX; ++i) {
+        for (auto ctrl : m_ctrls) {
             ctrl->StyleSetFont(i, code_font);
         }
     }
 
-    for(auto ctrl : m_ctrls) {
+    for (auto ctrl : m_ctrls) {
         ctrl->MarkerDefine(MARKER_NUMBER, wxSTC_MARK_ARROW, *wxGREEN, *wxGREEN);
     }
 
-    m_filePickerSelectDebugFileName->SetPath(m_executableFileName);
-    m_filePickerSelectDebugFileName->Connect(m_filePickerSelectDebugFileName->GetEventType(),
-                                             wxFileDirPickerEventHandler(MainFrame::OnDebugFileNameChanged), NULL,
-                                             this);
+    m_filePickerDebugger->SetPath(config.debugger);
+    m_filePickerSelectDebugFileName->SetPath(config.debuggee);
+
+    if (!m_executableFileName.empty()) {
+        m_filePickerSelectDebugFileName->SetPath(m_executableFileName);
+        config.debuggee = m_executableFileName;
+        SaveConfig(config);
+    } else {
+        m_executableFileName = config.debuggee;
+    }
 
     // bind the client events
     m_client.Bind(wxEVT_DAP_STOPPED_EVENT, &MainFrame::OnStopped, this);
@@ -79,7 +130,14 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     m_client.SetWantsLogEvents(true); // send use log events
 }
 
-MainFrame::~MainFrame() {}
+MainFrame::~MainFrame()
+{
+    // Store the configuration
+    Config config;
+    config.debugger = m_filePickerDebugger->GetPath();
+    config.debuggee = m_filePickerSelectDebugFileName->GetPath();
+    SaveConfig(config);
+}
 
 /// Initialize the DAP client:
 /// - Bind events
@@ -95,11 +153,13 @@ void MainFrame::InitializeClient()
     // to write your own transport that implements the dap::Transport interface
     // This is useful when the user wishes to use stdin/out for communicating with
     // the dap and not over socket
-    dap::SocketTransport* transport = new dap::SocketTransport();
-    if(!transport->Connect("tcp://127.0.0.1:4711", 10)) {
-        wxMessageBox("Failed to connect to DAP server", "DAP Demo", wxICON_ERROR | wxOK | wxCENTRE);
-        exit(1);
-    }
+    dap::StdoutTransport* transport = new dap::StdoutTransport();
+    auto command = Config::GetDebuggerCommand(m_filePickerDebugger->GetPath());
+    transport->Execute(command);
+    //    if (!transport->Connect("tcp://127.0.0.1:4711", 10)) {
+    //        wxMessageBox("Failed to connect to DAP server", "DAP Demo", wxICON_ERROR | wxOK | wxCENTRE);
+    //        exit(1);
+    //    }
 
     // construct new client with the transport
     m_client.SetTransport(transport);
@@ -153,7 +213,7 @@ void MainFrame::OnLaunchResponse(DAPEvent& event)
 {
     // Check that the debugee was started successfully
     dap::LaunchResponse* resp = event.GetDapResponse()->As<dap::LaunchResponse>();
-    if(resp && !resp->success) {
+    if (resp && !resp->success) {
         // launch failed!
         wxMessageBox("Failed to launch debuggee: " + resp->message, "DAP",
                      wxICON_ERROR | wxOK | wxOK_DEFAULT | wxCENTRE);
@@ -165,13 +225,21 @@ void MainFrame::OnLaunchResponse(DAPEvent& event)
 void MainFrame::OnInitializeResponse(DAPEvent& event)
 {
     wxUnusedVar(event);
-    if(m_attaching) {
+    if (m_attaching) {
         AddLog("Attaching to dap server");
         m_client.Attach({});
 
     } else {
         AddLog("Launching program: " + m_executableFileName);
-        m_client.Launch({ m_executableFileName }, ::wxGetCwd());
+
+        // On Windows, gdb requires paths to be using forward slash "/"
+        bool is_gdb = m_filePickerDebugger->GetPath().Contains("gdb");
+        wxString exe = m_executableFileName;
+        if (is_gdb) {
+            exe.Replace("\\", "/");
+        }
+
+        m_client.Launch({ exe }, ::wxGetCwd());
     }
 }
 
@@ -194,7 +262,7 @@ void MainFrame::OnStopped(DAPEvent& event)
 {
     // got stopped event
     dap::StoppedEvent* stopped_data = event.GetDapEvent()->As<dap::StoppedEvent>();
-    if(stopped_data) {
+    if (stopped_data) {
         AddLog(wxString() << "Stopped reason:" << stopped_data->reason);
         AddLog(wxString() << "All threads stopped:" << stopped_data->allThreadsStopped);
         AddLog(wxString() << "Stopped thread ID:" << stopped_data->threadId
@@ -209,9 +277,9 @@ void MainFrame::OnScopes(DAPEvent& event)
 {
     m_stcScopes->AppendText("-- Requesting variables for scopes --\n");
     dap::ScopesResponse* resp = event.GetDapResponse()->As<dap::ScopesResponse>();
-    if(resp) {
+    if (resp) {
         wxString scopes_display = "[";
-        for(const auto& scope : resp->scopes) {
+        for (const auto& scope : resp->scopes) {
             scopes_display << scope.name << " id: " << scope.variablesReference << ", ";
             m_client.GetChildrenVariables(scope.variablesReference);
         }
@@ -225,8 +293,8 @@ void MainFrame::OnScopes(DAPEvent& event)
 void MainFrame::OnVariables(DAPEvent& event)
 {
     dap::VariablesResponse* resp = event.GetDapResponse()->As<dap::VariablesResponse>();
-    if(resp) {
-        for(const auto& var : resp->variables) {
+    if (resp) {
+        for (const auto& var : resp->variables) {
             wxString button = (var.variablesReference > 0 ? "> " : "  ");
             wxString value = var.value.empty() ? "\"\"" : var.value;
             button << " [ref: " << resp->refId << "] ";
@@ -241,10 +309,10 @@ void MainFrame::OnVariables(DAPEvent& event)
 void MainFrame::OnStackTrace(DAPEvent& event)
 {
     dap::StackTraceResponse* stack_trace_data = event.GetDapResponse()->As<dap::StackTraceResponse>();
-    if(stack_trace_data) {
+    if (stack_trace_data) {
         m_stcStack->ClearAll();
         AddLog("Received stack trace event");
-        if(!stack_trace_data->stackFrames.empty()) {
+        if (!stack_trace_data->stackFrames.empty()) {
             LoadFile(stack_trace_data->stackFrames[0].source,
                      stack_trace_data->stackFrames[0].line - 1 /* 0 based lines*/);
 
@@ -254,7 +322,7 @@ void MainFrame::OnStackTrace(DAPEvent& event)
             m_client.GetScopes(stack_trace_data->stackFrames[0].id);
         }
 
-        for(const auto& stack : stack_trace_data->stackFrames) {
+        for (const auto& stack : stack_trace_data->stackFrames) {
             m_stcStack->AppendText(wxString() << stack.id << "," << stack.name << "," << stack.source.path << ","
                                               << stack.line << "\n");
         }
@@ -273,9 +341,6 @@ void MainFrame::OnTerminated(DAPEvent& event)
     wxUnusedVar(event);
     AddLog(wxString() << "Session terminated!");
     m_client.Reset();
-    for(auto ctrl : m_ctrls) {
-        ctrl->ClearAll();
-    }
     m_current_source = {};
     m_frame_id = wxNOT_FOUND;
 }
@@ -283,7 +348,7 @@ void MainFrame::OnTerminated(DAPEvent& event)
 void MainFrame::OnOutput(DAPEvent& event)
 {
     dap::OutputEvent* output_data = event.GetDapEvent()->As<dap::OutputEvent>();
-    if(output_data) {
+    if (output_data) {
         AddLog(wxString() << output_data->category << ":" << output_data->output);
     }
 }
@@ -291,9 +356,9 @@ void MainFrame::OnOutput(DAPEvent& event)
 void MainFrame::OnBreakpointLocations(DAPEvent& event)
 {
     dap::BreakpointLocationsResponse* d = event.GetDapResponse()->As<dap::BreakpointLocationsResponse>();
-    if(d) {
+    if (d) {
         AddLog(_("==> Breakpoints:\n"));
-        for(const auto& bp : d->breakpoints) {
+        for (const auto& bp : d->breakpoints) {
             AddLog(wxString() << d->filepath << ":" << bp.line);
         }
     }
@@ -309,21 +374,21 @@ void MainFrame::OnBreakpointSet(DAPEvent& event)
 {
     dap::SetBreakpointsResponse* resp = event.GetDapResponse()->As<dap::SetBreakpointsResponse>();
     auto request = event.GetOriginatingRequest();
-    if(!request) {
+    if (!request) {
         return;
     }
     auto set_func_bp_req = request->As<dap::SetFunctionBreakpointsRequest>();
     auto set_bp_req = request->As<dap::SetBreakpointsRequest>();
-    if(!set_func_bp_req && !set_bp_req)
+    if (!set_func_bp_req && !set_bp_req)
         return;
-    if(set_func_bp_req) {
-        for(const auto& bp : set_func_bp_req->arguments.breakpoints) {
+    if (set_func_bp_req) {
+        for (const auto& bp : set_func_bp_req->arguments.breakpoints) {
             AddLog("Got reply for SetFunctionBreakpoints command for function: " + bp.name);
         }
 
-    } else if(set_bp_req) {
+    } else if (set_bp_req) {
         AddLog("Got reply for setBreakpoint command for file: " + set_bp_req->arguments.source.path);
-        for(const auto& bp : resp->breakpoints) {
+        for (const auto& bp : resp->breakpoints) {
             wxString message;
             message << "ID: " << bp.id << ". Verified: " << bp.verified
                     << ". File: " << (bp.source.path.empty() ? set_bp_req->arguments.source.path : bp.source.path)
@@ -338,7 +403,7 @@ void MainFrame::OnDapModuleEvent(DAPEvent& event)
 {
     AddLog("Got MODULE event!");
     auto event_data = event.GetDapEvent()->As<dap::ModuleEvent>();
-    if(!event_data)
+    if (!event_data)
         return;
 
     wxString log_entry;
@@ -351,11 +416,11 @@ void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
 {
     AddLog("Handling `OnRunInTerminalRequest` event");
     auto request = event.GetDapRequest()->As<dap::RunInTerminalRequest>();
-    if(!request) {
+    if (!request) {
         return;
     }
     wxString command;
-    for(const wxString& cmd : request->arguments.args) {
+    for (const wxString& cmd : request->arguments.args) {
         command << cmd << " ";
     }
 
@@ -363,7 +428,7 @@ void MainFrame::OnRunInTerminalRequest(DAPEvent& event)
     m_process = dap::ExecuteProcess(command);
     auto response = m_client.MakeRequest<dap::RunInTerminalResponse>();
     response->request_seq = request->seq;
-    if(!m_process) {
+    if (!m_process) {
         response->success = false;
         response->processId = 0;
     } else {
@@ -387,20 +452,20 @@ void MainFrame::AddLog(const wxString& log)
 void MainFrame::LoadFile(const dap::Source& sourceId, int line_number)
 {
     // easy path
-    if(sourceId == m_current_source) {
+    if (sourceId == m_current_source) {
         center_line(m_stcTextSourceFile, line_number, true);
         return;
     }
 
-    if(!m_client.LoadSource(
-           sourceId, [this, sourceId, line_number](bool success, const wxString& content, const wxString& mimeType) {
-               if(!success) {
-                   return;
-               }
-               m_current_source = sourceId;
-               m_stcTextSourceFile->SetText(content);
-               center_line(m_stcTextSourceFile, line_number, true);
-           })) {
+    if (!m_client.LoadSource(
+            sourceId, [this, sourceId, line_number](bool success, const wxString& content, const wxString& mimeType) {
+                if (!success) {
+                    return;
+                }
+                m_current_source = sourceId;
+                m_stcTextSourceFile->SetText(content);
+                center_line(m_stcTextSourceFile, line_number, true);
+            })) {
         // not a server file, load it locally
         wxFileName fp(sourceId.path);
 
@@ -408,7 +473,7 @@ void MainFrame::LoadFile(const dap::Source& sourceId, int line_number)
         wxString file_to_load = fp.GetFullPath();
         AddLog(wxString() << "Loading file.." << file_to_load);
         wxFileName fn(file_to_load);
-        if(fn.FileExists()) {
+        if (fn.FileExists()) {
             m_current_source = sourceId;
             m_stcTextSourceFile->LoadFile(fn.GetFullPath());
             center_line(m_stcTextSourceFile, line_number, true);
@@ -434,13 +499,8 @@ void MainFrame::OnContinue(wxCommandEvent& event)
     m_client.Continue();
 }
 
-void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt)
-{
-    if(m_filePickerSelectDebugFileName) {
-        m_executableFileName = evt.GetPath();
-        m_filePickerSelectDebugFileName->SetPath(evt.GetPath());
-    }
-}
+void MainFrame::OnDebugFileNameChanged(wxFileDirPickerEvent& evt) { evt.Skip(); }
+
 void MainFrame::OnSetBreakpointUI(wxUpdateUIEvent& event)
 {
     event.Enable(m_client.IsConnected() && m_client.CanInteract());
@@ -451,11 +511,11 @@ void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
     wxString location =
         wxGetTextFromUser("Set breakpoint", "Location",
                           wxString() << m_current_source.path << ":" << (m_stcTextSourceFile->GetCurrentLine() + 1));
-    if(location.empty()) {
+    if (location.empty()) {
         return;
     }
 
-    if(location.Contains(":")) {
+    if (location.Contains(":")) {
         // file:line
         wxString file = location.BeforeLast(':');
         file.Trim().Trim(false);
@@ -472,7 +532,7 @@ void MainFrame::OnSetBreakpoint(wxCommandEvent& event)
 void MainFrame::OnEval(wxCommandEvent& event)
 {
     wxString text = wxGetTextFromUser("Expression", "Evaluate expression", m_stcTextSourceFile->GetSelectedText());
-    if(text.empty()) {
+    if (text.empty()) {
         return;
     }
 
@@ -480,7 +540,7 @@ void MainFrame::OnEval(wxCommandEvent& event)
         text, m_frame_id, dap::EvaluateContext::HOVER,
         [this, text](bool success, const wxString& result, const wxString& type, int variablesReference) {
             wxString output;
-            if(!success) {
+            if (!success) {
                 output << "ERROR: failed to evaluate expression: `" << text << "`";
                 AddLog(output);
                 return;
@@ -493,3 +553,15 @@ void MainFrame::OnEval(wxCommandEvent& event)
 
 void MainFrame::OnEvalUI(wxUpdateUIEvent& event) { event.Enable(m_client.IsConnected() && m_client.CanInteract()); }
 void MainFrame::OnAttachUI(wxUpdateUIEvent& event) { event.Enable(!m_client.IsConnected()); }
+void MainFrame::OnClear(wxCommandEvent& event)
+{
+    for (auto ctrl : m_ctrls) {
+        ctrl->ClearAll();
+    }
+}
+
+void MainFrame::OnExit(wxCommandEvent& event)
+{
+    event.Skip();
+    Close();
+}

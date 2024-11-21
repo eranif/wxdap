@@ -3,6 +3,7 @@
 
 #include "UI.hpp"
 #include "dap/Client.hpp"
+#include "dap/DAPEvent.hpp"
 #include "dap/Process.hpp"
 
 #include <vector>
@@ -21,9 +22,11 @@ class MainFrame : public MainFrameBase
 
 public:
     MainFrame(wxWindow* parent, wxString executableFileName);
-    virtual ~MainFrame();
+    ~MainFrame() override;
 
 protected:
+    void OnClear(wxCommandEvent& event) override;
+    void OnExit(wxCommandEvent& event) override;
     void OnAttach(wxCommandEvent& event) override;
     void OnAttachUI(wxUpdateUIEvent& event) override;
     void OnEval(wxCommandEvent& event) override;

@@ -136,7 +136,7 @@ struct WXDLLIMPEXP_DAP ProtocolMessage : public Any {
 
     dap::Event* AsEvent() const
     {
-        if(type != "event") {
+        if (type != "event") {
             return nullptr;
         } else {
             return As<dap::Event>();
@@ -144,7 +144,7 @@ struct WXDLLIMPEXP_DAP ProtocolMessage : public Any {
     }
     dap::Request* AsRequest() const
     {
-        if(type != "request") {
+        if (type != "request") {
             return nullptr;
         } else {
             return As<dap::Request>();
@@ -153,7 +153,7 @@ struct WXDLLIMPEXP_DAP ProtocolMessage : public Any {
 
     dap::Response* AsResponse() const
     {
-        if(type != "response") {
+        if (type != "response") {
             return nullptr;
         } else {
             return As<dap::Response>();
@@ -615,6 +615,9 @@ struct WXDLLIMPEXP_DAP LaunchRequestArguments : public Any {
 
     /// environment variables
     Environment env;
+
+    /// If provided, stop at main
+    bool stopAtBeginningOfMainSubprogram = true;
 
     ANY_CLASS(LaunchRequestArguments);
     JSON_SERIALIZE();

@@ -1,14 +1,14 @@
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
+#pragma once
 
-#include "DAPEvent.hpp"
 #include "JsonRPC.hpp"
+#include "Process.hpp"
+#include "Queue.hpp"
 #include "Socket.hpp"
 #include "dap_exports.hpp"
 
 #include <atomic>
 #include <functional>
-#include <queue>
+#include <vector>
 #include <wx/event.h>
 #include <wx/string.h>
 
@@ -52,6 +52,26 @@ public:
 
     // socket specific
     bool Connect(const wxString& connection_string, int timeoutSeconds);
+};
+
+/// simple socket implementation for Socket
+class WXDLLIMPEXP_DAP StdoutTransport : public Transport
+{
+public:
+    StdoutTransport();
+    virtual ~StdoutTransport();
+
+    bool Read(wxString& buffer, int msTimeout) override;
+    size_t Send(const wxString& buffer) override;
+
+    /// Execute the DAP server and connect to it by redirecting stdin/out
+    bool Execute(const std::vector<wxString>& command, const wxString& workingDirectory = {});
+
+protected:
+    bool IsAlive() const;
+
+private:
+    Process* m_process = nullptr;
 };
 
 typedef std::function<void(bool, const wxString&, const wxString&)> source_loaded_cb;
@@ -332,5 +352,4 @@ public:
                             ValueDisplayFormat format = ValueDisplayFormat::NATIVE);
 };
 
-};     // namespace dap
-#endif // CLIENT_HPP
+}; // namespace dap
