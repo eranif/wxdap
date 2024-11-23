@@ -15,3 +15,7 @@ FILE(GLOB SRCS "*.cpp")
 
 add_executable(dap_demo WIN32 ${SRCS})
 target_link_libraries(dap_demo dapcxx ${wxWidgets_LIBRARIES})
+set_property(TARGET dapcxx PROPERTY CXX_STANDARD 17)
+set_property(TARGET dapcxx PROPERTY CXX_EXTENSIONS OFF)
+STRING(REPLACE "-std=c++11" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+

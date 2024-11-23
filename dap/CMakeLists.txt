@@ -39,3 +39,7 @@ add_library(dapcxx SHARED ${SRCS})
 target_compile_definitions(dapcxx PRIVATE WXMAKINGDLL_DAP)
 target_compile_definitions(dapcxx INTERFACE WXUSINGDLL_DAP)
 target_link_libraries(dapcxx ${wxWidgets_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+set_property(TARGET dapcxx PROPERTY CXX_STANDARD 17)
+set_property(TARGET dapcxx PROPERTY CXX_EXTENSIONS OFF)
+STRING(REPLACE "-std=c++11" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
