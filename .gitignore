@@ -1,0 +1,6 @@
+Makefile
+*.mk
+compile_commands.json
+build-release/*
+builde-debug/*
+*.xrc
