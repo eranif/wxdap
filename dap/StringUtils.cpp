@@ -4,8 +4,14 @@
 #include <cstring>
 #include <locale>
 #include <sstream>
+#include <string.h>
 #include <wx/arrstr.h>
 #include <wx/tokenzr.h>
+
+#if defined(_MSC_VER)
+/* We are on Windows using MSVC */
+#define strtok_r strtok_s
+#endif
 
 wxString& DapStringUtils::Rtrim(wxString& str) { return str.Trim(); }
 
