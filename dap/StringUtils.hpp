@@ -32,20 +32,24 @@ public:
 
     /// Both left + right trim
     static wxString& Trim(wxString& str);
+    static std::string& Trim(std::string& str);
 
     /// Gets all characters before the first occurrence of ch.
     /// Returns the whole wxString if ch is not found.
     static wxString BeforeFirst(const wxString& str, char ch);
+    static std::string BeforeFirst(const std::string& str, char ch);
 
     /// Gets all the characters after the first occurrence of ch.
     /// Returns the empty wxString if ch is not found.
     static wxString AfterFirst(const wxString& str, char ch);
+    static std::string AfterFirst(const std::string& str, char ch);
 
     /// Check if wxString starts with a given prefix
     static bool StartsWith(const wxString& str, const wxString& prefix);
 
     /// Split a wxString
     static std::vector<wxString> Split(const wxString& str, char ch = '\n');
+    static std::vector<std::string> Split(const std::string& str, const std::string& delims = "\n");
 
     /// Convert to wxString to uppercase
     static wxString ToUpper(const wxString& str);

@@ -152,7 +152,7 @@ void UnixProcess::Stop()
     }
 }
 
-bool UnixProcess::Write(const wxString& message)
+bool UnixProcess::Write(const std::string& message)
 {
     return UnixProcess::Write(m_childStdin.GetWriteFd(), message, m_goingDown);
 }
@@ -175,6 +175,6 @@ void UnixProcess::Terminate()
     Wait();
 }
 
-bool UnixProcess::WriteLn(const wxString& message) { return Write(message + "\n"); }
+bool UnixProcess::WriteLn(const std::string& message) { return Write(message + "\n"); }
 
 #endif // OSX & GTK

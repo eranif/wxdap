@@ -14,11 +14,12 @@ void dap::ServerProtocol::Initialize()
     // Attempt to read something from the network
     enum eState { kWaitingInitRequest, kDone };
     eState state = kWaitingInitRequest;
-    while(state != kDone) {
-        wxString network_buffer;
-        if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess) {
-            if(m_conn->Read(network_buffer) == dap::Socket::kSuccess) {
-                LOG_DEBUG1() << "Read: " << network_buffer;
+    while (state != kDone) {
+        std::string network_buffer;
+        if (m_conn->SelectReadMS(10) == dap::Socket::kSuccess) {
+            if (m_conn->Read(network_buffer) == dap::Socket::kSuccess) {
+                LOG_DEBUG1() << "Read: " << network_buffer << endl;
+
                 // Append the buffer to what we already have
                 m_rpc.AppendBuffer(network_buffer);
 
@@ -26,7 +27,7 @@ void dap::ServerProtocol::Initialize()
                 m_rpc.ProcessBuffer(
                     [&](Json json, wxObject*) {
                         dap::ProtocolMessage::Ptr_t request = ObjGenerator::Get().FromJSON(json);
-                        if(request && request->type == "request" && request->As<dap::InitializeRequest>()) {
+                        if (request && request->type == "request" && request->As<dap::InitializeRequest>()) {
                             dap::InitializeResponse initResponse;
                             m_rpc.Send(initResponse, m_conn);
                             LOG_DEBUG() << "Sending InitializeRequest";
@@ -47,10 +48,10 @@ void dap::ServerProtocol::Initialize()
 
 void dap::ServerProtocol::Check()
 {
-    if(m_onNetworkMessage) {
+    if (m_onNetworkMessage) {
         // First try to read something from the network
-        wxString content;
-        if(m_conn->SelectReadMS(10) == dap::Socket::kSuccess && m_conn->Read(content) == Socket::kSuccess) {
+        std::string content;
+        if (m_conn->SelectReadMS(10) == dap::Socket::kSuccess && m_conn->Read(content) == Socket::kSuccess) {
             m_rpc.AppendBuffer(content);
         }
 
@@ -58,7 +59,7 @@ void dap::ServerProtocol::Check()
         m_rpc.ProcessBuffer(
             [&](Json json, wxObject*) {
                 dap::ProtocolMessage::Ptr_t message = ObjGenerator::Get().FromJSON(json);
-                if(message) {
+                if (message) {
                     return m_onNetworkMessage(message);
                 }
             },

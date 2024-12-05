@@ -20,7 +20,7 @@ Socket::Socket(socket_t sockfd)
     : m_socket(sockfd)
     , m_closeOnExit(true)
 {
-    if(m_socket != INVALID_SOCKET) {
+    if (m_socket != INVALID_SOCKET) {
         MakeSocketBlocking(false);
     }
 }
@@ -35,15 +35,13 @@ void Socket::Initialize()
 #endif
 }
 
-int Socket::Read(wxString& content)
+int Socket::Read(std::string& content)
 {
-    char buffer[4096];
+    char buffer[16 << 10];
     size_t bytesRead = 0;
-    int rc = Read(buffer, sizeof(buffer) - 1, bytesRead);
-    if(rc == kSuccess) {
-        buffer[bytesRead] = 0;
-        content.reserve(bytesRead + 1);
-        content = buffer;
+    int rc = Read(buffer, sizeof(buffer), bytesRead);
+    if (rc == kSuccess) {
+        content = std::string(buffer, bytesRead);
     }
     return rc;
 }
@@ -51,13 +49,13 @@ int Socket::Read(wxString& content)
 int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead)
 {
     int res = recv(m_socket, buffer, bufferSize, 0);
-    if(res < 0) {
+    if (res < 0) {
         int err = GetLastError();
-        if(eWouldBlock == err) {
+        if (eWouldBlock == err) {
             return kTimeout;
         }
         throw Exception("Read failed: " + error(err));
-    } else if(0 == res) {
+    } else if (0 == res) {
         throw Exception("Read failed: " + error());
     }
 
@@ -66,23 +64,22 @@ int Socket::Read(char* buffer, size_t bufferSize, size_t& bytesRead)
 }
 
 // Send API
-void Socket::Send(const wxString& msg)
+void Socket::Send(const std::string& msg)
 {
-    if(m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
     }
-    if(msg.empty()) {
+    if (msg.empty()) {
         return;
     }
 
-    auto buffer = msg.mb_str(wxConvUTF8);
-    const char* pdata = buffer.data();
-    int bytesLeft = buffer.length();
-    while(bytesLeft) {
-        if(SelectWriteMS(1000) == kTimeout)
+    const char* pdata = msg.data();
+    int bytesLeft = msg.length();
+    while (bytesLeft) {
+        if (SelectWriteMS(1000) == kTimeout)
             continue;
         const int bytesSent = ::send(m_socket, pdata, bytesLeft, 0);
-        if(bytesSent <= 0)
+        if (bytesSent <= 0)
             throw Exception("Send error: " + error());
         pdata += bytesSent;
         bytesLeft -= bytesSent;
@@ -105,7 +102,7 @@ wxString Socket::error(const int errorCode)
     wxString err;
 #ifdef _WIN32
     // Get the error message, if any.
-    if(errorCode == 0)
+    if (errorCode == 0)
         return "No error message has been recorded";
 
     LPSTR messageBuffer = nullptr;
@@ -126,8 +123,8 @@ wxString Socket::error(const int errorCode)
 
 void Socket::DestroySocket()
 {
-    if(IsCloseOnExit()) {
-        if(m_socket != INVALID_SOCKET) {
+    if (IsCloseOnExit()) {
+        if (m_socket != INVALID_SOCKET) {
 #ifdef _WIN32
             ::shutdown(m_socket, 2);
             ::closesocket(m_socket);
@@ -153,7 +150,7 @@ void Socket::MakeSocketBlocking(bool blocking)
     // set socket to non-blocking mode
     int flags;
     flags = ::fcntl(m_socket, F_GETFL);
-    if(blocking) {
+    if (blocking) {
         flags &= ~O_NONBLOCK;
     } else {
         flags |= O_NONBLOCK;
@@ -167,11 +164,11 @@ void Socket::MakeSocketBlocking(bool blocking)
 
 int Socket::SelectWriteMS(long milliSeconds)
 {
-    if(milliSeconds < 0) {
+    if (milliSeconds < 0) {
         throw Exception("Invalid timeout");
     }
 
-    if(m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
     }
 #ifdef __WXMAC__
@@ -184,11 +181,11 @@ int Socket::SelectWriteMS(long milliSeconds)
     FD_SET(m_socket, &write_set);
     errno = 0;
     int rc = select(m_socket + 1, NULL, &write_set, NULL, &tv);
-    if(rc == 0) {
+    if (rc == 0) {
         // timeout
         return kTimeout;
 
-    } else if(rc < 0) {
+    } else if (rc < 0) {
         // an error occurred
         throw Exception("SelectWriteMS failed: " + error());
 
@@ -200,11 +197,11 @@ int Socket::SelectWriteMS(long milliSeconds)
 
 int Socket::SelectReadMS(long milliSeconds)
 {
-    if(milliSeconds < 0) {
+    if (milliSeconds < 0) {
         throw Exception("Invalid timeout");
     }
 
-    if(m_socket == INVALID_SOCKET) {
+    if (m_socket == INVALID_SOCKET) {
         throw Exception("Invalid socket!");
     }
     int seconds = milliSeconds / 1000; // convert the number into seconds
@@ -215,11 +212,11 @@ int Socket::SelectReadMS(long milliSeconds)
     FD_ZERO(&readfds);
     FD_SET(m_socket, &readfds);
     int rc = select(m_socket + 1, &readfds, NULL, NULL, &tv);
-    if(rc == 0) {
+    if (rc == 0) {
         // timeout
         return kTimeout;
 
-    } else if(rc < 0) {
+    } else if (rc < 0) {
         // an error occurred
         throw Exception("SelectRead failed: " + error());
 

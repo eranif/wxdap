@@ -29,13 +29,13 @@ public:
      * @returns true on success, false in case of an error. True is also returned when timeout occurs, check the buffer
      * length if it is 0, timeout occurred
      */
-    virtual bool Read(wxString& WXUNUSED(buffer), int msTimeout) = 0;
+    virtual bool Read(std::string& WXUNUSED(buffer), int msTimeout) = 0;
 
     /**
      * @brief send data over the network
      * @return number of bytes written
      */
-    virtual size_t Send(const wxString& WXUNUSED(buffer)) = 0;
+    virtual size_t Send(const std::string& WXUNUSED(buffer)) = 0;
 };
 
 /// simple socket implementation for Socket
@@ -47,11 +47,11 @@ public:
     SocketTransport();
     virtual ~SocketTransport();
 
-    bool Read(wxString& buffer, int msTimeout) override;
-    size_t Send(const wxString& buffer) override;
+    bool Read(std::string& buffer, int msTimeout) override;
+    size_t Send(const std::string& buffer) override;
 
     // socket specific
-    bool Connect(const wxString& connection_string, int timeoutSeconds);
+    bool Connect(const std::string& connection_string, int timeoutSeconds);
 };
 
 /// simple socket implementation for Socket
@@ -61,8 +61,8 @@ public:
     StdoutTransport();
     virtual ~StdoutTransport();
 
-    bool Read(wxString& buffer, int msTimeout) override;
-    size_t Send(const wxString& buffer) override;
+    bool Read(std::string& buffer, int msTimeout) override;
+    size_t Send(const std::string& buffer) override;
 
     /// Execute the DAP server and connect to it by redirecting stdin/out
     bool Execute(const std::vector<wxString>& command, const wxString& workingDirectory = {});
@@ -158,7 +158,7 @@ protected:
     /**
      * @brief this callback is called by the reader thread whenever data arrives on the socket
      */
-    void OnDataRead(const wxString& buffer);
+    void OnDataRead(const std::string& buffer);
 
     /**
      * @brief lost connection to the DAP server

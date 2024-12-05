@@ -26,7 +26,7 @@ dap::SocketTransport::~SocketTransport()
     wxDELETE(m_socket);
 }
 
-bool dap::SocketTransport::Connect(const wxString& connection_string, int timeoutSeconds)
+bool dap::SocketTransport::Connect(const std::string& connection_string, int timeoutSeconds)
 {
     long loops = timeoutSeconds;
 #ifndef _WIN32
@@ -44,7 +44,7 @@ bool dap::SocketTransport::Connect(const wxString& connection_string, int timeou
     return false;
 }
 
-bool dap::SocketTransport::Read(wxString& buffer, int msTimeout)
+bool dap::SocketTransport::Read(std::string& buffer, int msTimeout)
 {
     try {
         buffer.clear();
@@ -65,7 +65,7 @@ bool dap::SocketTransport::Read(wxString& buffer, int msTimeout)
     return false;
 }
 
-size_t dap::SocketTransport::Send(const wxString& buffer)
+size_t dap::SocketTransport::Send(const std::string& buffer)
 {
     try {
         m_socket->Send(buffer);
@@ -96,7 +96,7 @@ bool dap::StdoutTransport::Execute(const std::vector<wxString>& command, const w
 
 bool dap::StdoutTransport::IsAlive() const { return m_process != nullptr && m_process->IsAlive(); }
 
-bool dap::StdoutTransport::Read(wxString& buffer, int msTimeout)
+bool dap::StdoutTransport::Read(std::string& buffer, int msTimeout)
 {
     if (!IsAlive()) {
         // process terminated
@@ -112,15 +112,16 @@ bool dap::StdoutTransport::Read(wxString& buffer, int msTimeout)
     }
 
     buffer = message.value();
+    LOG_DEBUG() << "dap(stdout)-->" << buffer << endl;
 
     auto errmsg = m_process->ReadStderr(1);
     if (errmsg.has_value()) {
-        LOG_INFO() << "**stderr**" << errmsg.value() << endl;
+        LOG_INFO() << "dap(stderr)-->" << errmsg.value() << endl;
     }
     return true;
 }
 
-size_t dap::StdoutTransport::Send(const wxString& buffer)
+size_t dap::StdoutTransport::Send(const std::string& buffer)
 {
     if (!IsAlive()) {
         return 0;
@@ -176,7 +177,7 @@ void dap::Client::StartReaderThread()
         [this](dap::Client* sink) {
             LOG_INFO() << "Reader thread successfully started" << endl;
             while (!m_shutdown.load()) {
-                wxString content;
+                std::string content;
                 bool success = m_transport->Read(content, 5);
                 if (success && !content.empty()) {
                     sink->CallAfter(&dap::Client::OnDataRead, content);
@@ -198,12 +199,13 @@ void dap::Client::OnConnectionError()
     Reset();
 }
 
-void dap::Client::OnDataRead(const wxString& buffer)
+void dap::Client::OnDataRead(const std::string& buffer)
 {
     // process the buffer
     if (buffer.empty())
         return;
 
+    LOG_DEBUG() << "Processing buffer:" << buffer << endl;
     m_rpc.AppendBuffer(buffer);
 
     // dap::Client::StaticOnDataRead will get called for every Json payload that will arrive over the network

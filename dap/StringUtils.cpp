@@ -13,10 +13,17 @@ wxString& DapStringUtils::Ltrim(wxString& str) { return str.Trim(false); }
 
 wxString& DapStringUtils::Trim(wxString& str) { return str.Trim().Trim(false); }
 
+std::string& DapStringUtils::Trim(std::string& str)
+{
+    str.erase(0, str.find_first_not_of(" \n\r\t"));
+    str.erase(str.find_last_not_of(" \n\r\t") + 1);
+    return str;
+}
+
 wxString DapStringUtils::BeforeFirst(const wxString& str, char ch)
 {
     size_t where = str.find(ch);
-    if(where == wxString::npos) {
+    if (where == wxString::npos) {
         return str;
     }
     return str.substr(0, where);
@@ -25,10 +32,46 @@ wxString DapStringUtils::BeforeFirst(const wxString& str, char ch)
 wxString DapStringUtils::AfterFirst(const wxString& str, char ch)
 {
     size_t where = str.find(ch);
-    if(where == wxString::npos) {
+    if (where == wxString::npos) {
         return "";
     }
     return str.substr(where + 1);
+}
+
+std::string DapStringUtils::BeforeFirst(const std::string& str, char ch)
+{
+    size_t where = str.find(ch);
+    if (where == std::string::npos) {
+        return str;
+    }
+    return str.substr(0, where);
+}
+
+std::string DapStringUtils::AfterFirst(const std::string& str, char ch)
+{
+    size_t where = str.find(ch);
+    if (where == std::string::npos) {
+        return "";
+    }
+    return str.substr(where + 1);
+}
+
+std::vector<std::string> DapStringUtils::Split(const std::string& str, const std::string& delims)
+{
+    std::vector<std::string> v;
+    std::string tmp = str;
+    char* p = (char*)tmp.c_str();
+    char* saved_ptr = nullptr;
+    char* token = strtok_r(p, delims.c_str(), &saved_ptr);
+    while (token) {
+        std::string t = token;
+        Trim(t);
+        if (!t.empty()) {
+            v.push_back(t);
+        }
+        token = strtok_r(nullptr, delims.c_str(), &saved_ptr);
+    }
+    return v;
 }
 
 std::vector<wxString> DapStringUtils::Split(const wxString& str, char ch)
@@ -49,7 +92,7 @@ wxString DapStringUtils::ToUpper(const wxString& str) { return str.Upper(); }
 #define ARGV_STATE_BACKTICK 4
 #define PUSH_CURTOKEN()          \
     {                            \
-        if(!curstr.empty()) {    \
+        if (!curstr.empty()) {   \
             A.push_back(curstr); \
             curstr.clear();      \
         }                        \
@@ -73,10 +116,10 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
     int state = ARGV_STATE_NORMAL;
     int prev_state = ARGV_STATE_NORMAL;
     wxString curstr;
-    for(char ch : str) {
-        switch(state) {
+    for (char ch : str) {
+        switch (state) {
         case ARGV_STATE_NORMAL: {
-            switch(ch) {
+            switch (ch) {
             case ' ':
             case '\t':
                 PUSH_CURTOKEN();
@@ -99,8 +142,8 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
             }
         } break;
         case ARGV_STATE_ESCAPE: {
-            if(prev_state == ARGV_STATE_DQUOTE) {
-                switch(ch) {
+            if (prev_state == ARGV_STATE_DQUOTE) {
+                switch (ch) {
                 case '"':
                     curstr << "\"";
                     RESTORE_STATE();
@@ -110,8 +153,8 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
                     RESTORE_STATE();
                     break;
                 }
-            } else if(prev_state == ARGV_STATE_BACKTICK) {
-                switch(ch) {
+            } else if (prev_state == ARGV_STATE_BACKTICK) {
+                switch (ch) {
                 case '`':
                     curstr << "`";
                     RESTORE_STATE();
@@ -122,7 +165,7 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
                     break;
                 }
             } else { // single quote
-                switch(ch) {
+                switch (ch) {
                 case '\'':
                     curstr << "'";
                     RESTORE_STATE();
@@ -135,7 +178,7 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
             }
         } break;
         case ARGV_STATE_DQUOTE: {
-            switch(ch) {
+            switch (ch) {
             case '\\':
                 CHANGE_STATE(ARGV_STATE_ESCAPE);
                 break;
@@ -149,7 +192,7 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
             }
         } break;
         case ARGV_STATE_SQUOTE: {
-            switch(ch) {
+            switch (ch) {
             case '\\':
                 CHANGE_STATE(ARGV_STATE_ESCAPE);
                 break;
@@ -163,7 +206,7 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
             }
         } break;
         case ARGV_STATE_BACKTICK: {
-            switch(ch) {
+            switch (ch) {
             case '\\':
                 CHANGE_STATE(ARGV_STATE_ESCAPE);
                 break;
@@ -179,18 +222,18 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
         }
     }
 
-    if(!curstr.empty()) {
+    if (!curstr.empty()) {
         A.push_back(curstr);
         curstr.clear();
     }
 
-    if(A.empty()) {
+    if (A.empty()) {
         return nullptr;
     }
 
     char** argv = new char*[A.size() + 1];
     argv[A.size()] = NULL;
-    for(size_t i = 0; i < A.size(); ++i) {
+    for (size_t i = 0; i < A.size(); ++i) {
         argv[i] = strdup(A[i].c_str());
     }
     argc = (int)A.size();
@@ -199,7 +242,7 @@ char** DapStringUtils::BuildArgv(const wxString& str, int& argc)
 
 void DapStringUtils::FreeArgv(char** argv, int argc)
 {
-    for(int i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         free(argv[i]);
     }
     delete[] argv;
@@ -210,13 +253,13 @@ std::vector<wxString> DapStringUtils::BuildArgv(const wxString& str)
     int argc = 0;
     char** argv = BuildArgv(str, argc);
     std::vector<wxString> arrArgv;
-    for(int i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         arrArgv.push_back(argv[i]);
     }
     FreeArgv(argv, argc);
 
-    for(wxString& s : arrArgv) {
-        if((s.length() > 1) && (s[0] == '"') && (s.Last() == '"')) {
+    for (wxString& s : arrArgv) {
+        if ((s.length() > 1) && (s[0] == '"') && (s.Last() == '"')) {
             s.RemoveLast();
             s.erase(0, 1);
         }
@@ -237,11 +280,11 @@ static wxString& ConvertSlashes(wxString& path, char source, char target)
     char last_char = 0;
     wxString tmp;
     tmp.reserve(path.length());
-    for(wxChar ch : path) {
-        if(ch == source) {
+    for (wxChar ch : path) {
+        if (ch == source) {
             ch = target;
         }
-        if(ch == target && last_char == target) {
+        if (ch == target && last_char == target) {
             // Skip it
         } else {
             tmp.append(1, ch);
@@ -273,10 +316,10 @@ wxString DapStringUtils::ToNativePath(const wxString& path)
 
 wxString& DapStringUtils::WrapWithQuotes(wxString& str)
 {
-    if(str.empty()) {
+    if (str.empty()) {
         return str;
     }
-    if(str.find(' ') == wxString::npos) {
+    if (str.find(' ') == wxString::npos) {
         return str;
     }
     str.insert(str.begin(), '"');
@@ -286,10 +329,10 @@ wxString& DapStringUtils::WrapWithQuotes(wxString& str)
 
 wxString DapStringUtils::WrapWithQuotes(const wxString& str)
 {
-    if(str.empty()) {
+    if (str.empty()) {
         return str;
     }
-    if(str.find(' ') == wxString::npos) {
+    if (str.find(' ') == wxString::npos) {
         return str;
     }
     wxString tmpstr = str;
@@ -300,12 +343,12 @@ wxString DapStringUtils::WrapWithQuotes(const wxString& str)
 
 bool DapStringUtils::StartsWith(const wxString& str, const wxString& prefix)
 {
-    if(str.length() < prefix.length()) {
+    if (str.length() < prefix.length()) {
         return false;
     }
 
-    for(size_t i = 0; i < prefix.length(); ++i) {
-        if(str[i] != prefix[i]) {
+    for (size_t i = 0; i < prefix.length(); ++i) {
+        if (str[i] != prefix[i]) {
             return false;
         }
     }

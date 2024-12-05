@@ -1,5 +1,6 @@
 #include "MainFrame.hpp"
 
+#include "dap/Log.hpp"
 #include "dap/Process.hpp"
 
 #include <vector>
@@ -84,6 +85,11 @@ MainFrame::MainFrame(wxWindow* parent, wxString executableFileName)
     : MainFrameBase(parent)
     , m_executableFileName(executableFileName)
 {
+#if defined(__WXMAC__) || defined(__WXGTK__)
+    dap::Log::OpenLog("/tmp/dap_demo.log", dap::Log::Developer);
+    LOG_INFO() << "DAP demo started" << dap::endl;
+#endif
+
     auto config = ReadConfig();
     wxFont code_font = wxFont(wxFontInfo(12).Family(wxFONTFAMILY_TELETYPE));
 

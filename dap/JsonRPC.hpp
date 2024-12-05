@@ -17,10 +17,10 @@ namespace dap
 class WXDLLIMPEXP_DAP JsonRPC
 {
 protected:
-    wxString m_buffer;
+    std::string m_buffer;
 
 protected:
-    int ReadHeaders(std::unordered_map<wxString, wxString>& headers);
+    int ReadHeaders(std::unordered_map<std::string, std::string>& headers);
     Json DoProcessBuffer();
 
 public:
@@ -31,12 +31,12 @@ public:
      * @brief provide input buffer.
      * NOTE: this method is intended for testing purposes and should not be used
      */
-    void SetBuffer(const wxString& buffer);
+    void SetBuffer(const std::string& buffer);
 
     /**
      * @brief append content to the existing buffer
      */
-    void AppendBuffer(const wxString& buffer);
+    void AppendBuffer(const std::string& buffer);
 
     /**
      * @brief Check if we have a complete Json message in the internal buffer and invoke callback
@@ -49,16 +49,16 @@ public:
 
     /**
      * @brief send protocol message over the network
-     * TransportPtr must have a Send(const wxString&) method
+     * TransportPtr must have a Send(const std::string&) method
      */
     template <typename TransportPtr>
     void Send(ProtocolMessage& msg, TransportPtr conn) const
     {
-        if(!conn) {
+        if (!conn) {
             throw Exception("Invalid connection");
         }
-        wxString network_buffer;
-        wxString payload = msg.ToString();
+        std::string network_buffer;
+        std::string payload = msg.ToString().ToStdString();
         network_buffer = "Content-Length: ";
         network_buffer += std::to_string(payload.length());
         network_buffer += "\r\n\r\n";
@@ -73,14 +73,14 @@ public:
     template <typename TransportPtr>
     void Send(ProtocolMessage::Ptr_t msg, TransportPtr conn) const
     {
-        if(!msg) {
+        if (!msg) {
             throw Exception("Unable to send empty message");
         }
-        if(!conn) {
+        if (!conn) {
             throw Exception("Invalid connection");
         }
         Send(*msg.get(), conn);
     }
 };
-};     // namespace dap
+}; // namespace dap
 #endif // JSONRPC_HPP

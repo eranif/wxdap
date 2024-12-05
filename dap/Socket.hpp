@@ -79,7 +79,7 @@ public:
      * @brief send message. This function blocks until the entire buffer is sent
      * @throws SocketException
      */
-    void Send(const wxString& msg);
+    void Send(const std::string& msg);
 
     /**
      * @brief
@@ -90,12 +90,12 @@ public:
     int Read(char* buffer, size_t bufferSize, size_t& bytesRead);
 
     /**
-     * @brief read wxString content from remote server
+     * @brief read std::string content from remote server
      * @param content [output]
      * @return kSuccess or kTimeout
      * @throws SocketException
      */
-    int Read(wxString& content);
+    int Read(std::string& content);
 
     /**
      * @brief select for read. Same as above, but use milli seconds instead
@@ -124,5 +124,5 @@ protected:
      */
     void DestroySocket();
 };
-};     // namespace dap
+}; // namespace dap
 #endif // CLSOCKETBASE_H

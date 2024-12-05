@@ -23,8 +23,8 @@ public:
     Process() {}
     virtual ~Process();
 
-    virtual bool Write(const wxString& str) = 0;
-    virtual bool WriteLn(const wxString& str) = 0;
+    virtual bool Write(const std::string& str) = 0;
+    virtual bool WriteLn(const std::string& str) = 0;
     virtual bool IsAlive() const = 0;
     virtual void Terminate() = 0;
     virtual void Cleanup();

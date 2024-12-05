@@ -82,10 +82,10 @@ public:
     int Wait();
 
     // Write to the process
-    bool Write(const wxString& message) override;
+    bool Write(const std::string& message) override;
 
     // Same as Write, but add LF at the end of the message
-    bool WriteLn(const wxString& message) override;
+    bool WriteLn(const std::string& message) override;
 
     // stop the running process
     void Stop();
