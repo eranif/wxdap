@@ -75,13 +75,13 @@ public:
 protected:
     bool DoReadFromPipe(HANDLE pipe, std::string& buff);
     bool DoRead(std::string& ostrout, std::string& ostrerr) override;
-    bool DoWrite(const wxString& str, bool appendLf);
+    bool DoWrite(const std::string& str, bool appendLf);
 
 public:
     ProcessMSW() {}
     ~ProcessMSW() override { Cleanup(); }
-    bool Write(const wxString& str) override;
-    bool WriteLn(const wxString& str) override;
+    bool Write(const std::string& str) override;
+    bool WriteLn(const std::string& str) override;
     bool IsAlive() const override;
     void Cleanup() override;
     void Terminate() override;
@@ -208,16 +208,16 @@ bool ProcessMSW::DoReadFromPipe(HANDLE pipe, std::string& buff)
     return read_something;
 }
 
-bool ProcessMSW::Write(const wxString& buff) { return DoWrite(buff, false); }
+bool ProcessMSW::Write(const std::string& buff) { return DoWrite(buff, false); }
 
-bool ProcessMSW::WriteLn(const wxString& buff) { return DoWrite(buff, true); }
+bool ProcessMSW::WriteLn(const std::string& buff) { return DoWrite(buff, true); }
 
-bool ProcessMSW::DoWrite(const wxString& buff, bool appendLf)
+bool ProcessMSW::DoWrite(const std::string& buff, bool appendLf)
 {
     DWORD dwMode;
     DWORD dwTimeout;
 
-    wxString tmpCmd = buff;
+    std::string tmpCmd = buff;
     DapStringUtils::Rtrim(tmpCmd);
     if (appendLf) {
         tmpCmd += "\n";

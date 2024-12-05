@@ -9,6 +9,12 @@
 
 wxString& DapStringUtils::Rtrim(wxString& str) { return str.Trim(); }
 
+std::string& DapStringUtils::Rtrim(std::string& str)
+{
+    str.erase(str.find_last_not_of(" \n\r\t") + 1);
+    return str;
+}
+
 wxString& DapStringUtils::Ltrim(wxString& str) { return str.Trim(false); }
 
 wxString& DapStringUtils::Trim(wxString& str) { return str.Trim().Trim(false); }

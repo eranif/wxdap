@@ -26,6 +26,7 @@ protected:
 public:
     /// Right trim
     static wxString& Rtrim(wxString& str);
+    static std::string& Rtrim(std::string& str);
 
     /// Left trim
     static wxString& Ltrim(wxString& str);
