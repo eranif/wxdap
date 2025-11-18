@@ -1,7 +1,7 @@
 #ifndef UNIX_PROCESS_H
 #define UNIX_PROCESS_H
 
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__APPLE__) || defined(__linux__) || defined(__CYGWIN__)
 
 #include "Process.hpp"
 #include "Queue.hpp"

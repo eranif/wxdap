@@ -1,6 +1,6 @@
 #include "UnixProcess.hpp"
 
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__APPLE__) || defined(__linux__) || defined(__CYGWIN__)
 #include "Log.hpp"
 
 #include <csignal>
